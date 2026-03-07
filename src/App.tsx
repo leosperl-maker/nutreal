@@ -6,7 +6,7 @@ import OfflineBanner from './components/OfflineBanner';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
-import ProductScanner from './pages/ProductScanner';
+import SportPage from './pages/SportPage';
 import MealPlanPage from './pages/MealPlanPage';
 import Profile from './pages/Profile';
 import FoodJournal from './pages/FoodJournal';
@@ -34,7 +34,7 @@ export default function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
               <Route path="scanner" element={<Scanner />} />
-              <Route path="product-scanner" element={<ProductScanner />} />
+              <Route path="sport" element={<SportPage />} />
               <Route path="meal-plan" element={<MealPlanPage />} />
               <Route path="profile" element={<Profile />} />
               <Route path="journal" element={<FoodJournal />} />

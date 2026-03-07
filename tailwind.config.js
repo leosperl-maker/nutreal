@@ -1,8 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: '#E8F5E9',
@@ -28,32 +35,16 @@ export default {
           800: '#EF6C00',
           900: '#E65100',
         },
-        accent: {
-          blue: '#42A5F5',
-          red: '#EF5350',
-          purple: '#AB47BC',
-        },
         surface: {
           50: '#FAFAFA',
           100: '#F5F5F5',
           200: '#EEEEEE',
-          300: '#E0E0E0',
-        }
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+        },
       },
       borderRadius: {
-        'xl': '16px',
-        '2xl': '20px',
+        '2xl': '16px',
         '3xl': '24px',
       },
-      boxShadow: {
-        'card': '0 4px 12px rgba(0,0,0,0.08)',
-        'card-hover': '0 8px 24px rgba(0,0,0,0.12)',
-        'float': '0 8px 32px rgba(76,175,80,0.3)',
-      }
     },
   },
   plugins: [],

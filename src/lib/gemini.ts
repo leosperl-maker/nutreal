@@ -1,6 +1,6 @@
 /**
  * Gemini 2.0 Flash API integration for food photo analysis.
- * Uses Google's Generative AI REST API directly.
+ * Specialized for French Caribbean cuisine (Guadeloupe/Martinique).
  */
 
 export interface GeminiAnalysisResult {
@@ -19,6 +19,7 @@ export interface GeminiAnalysisResult {
   totalFat: number;
   totalCarbs: number;
   totalFiber: number;
+  nutritionalScore?: string;
   tip: string;
 }
 
@@ -32,15 +33,11 @@ function getApiKey(): string | null {
   return key.trim();
 }
 
-/**
- * Convert a File to a base64 data string (without the data:... prefix)
- */
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Remove the data:image/...;base64, prefix
       const base64 = result.split(',')[1];
       resolve(base64);
     };
@@ -49,10 +46,34 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const ANALYSIS_PROMPT = `Tu es un nutritionniste expert. Analyse cette photo de plat/repas et retourne UNIQUEMENT un JSON valide (sans markdown, sans backticks, sans texte avant ou après) avec cette structure exacte :
+const CARIBBEAN_ANALYSIS_PROMPT = `Tu es un nutritionniste expert spécialisé dans la cuisine antillaise et caribéenne. Analyse cette photo de plat/repas prise aux Antilles françaises (Guadeloupe/Martinique).
+
+Identifie TOUS les plats et aliments visibles, y compris les plats locaux caribéens tels que :
+- Colombo (poulet, cabri, porc)
+- Accras (morue, crevettes)
+- Riz djon djon
+- Gratin (christophine, banane, igname)
+- Boudin créole (noir, blanc)
+- Bokits
+- Court-bouillon de poisson
+- Fricassée de lambi/chatrou
+- Dombrés
+- Féroce d'avocat
+- Poulet boucané
+- Ti-nain morue (banane verte et morue)
+- Matoutou de crabe
+- Calalou
+- Chiquetaille de morue
+- Pâté en pot
+- Trempage
+- Blanc-manger coco
+- Sorbet coco
+- Dachine, igname, fruit à pain, banane plantain, patate douce, madère, christophine, giraumon
+
+Retourne UNIQUEMENT un JSON valide (sans markdown, sans backticks, sans texte avant ou après) avec cette structure exacte :
 
 {
-  "dishName": "Nom du plat en français",
+  "dishName": "Nom du plat en français (nom créole si applicable)",
   "foods": [
     {
       "name": "Nom de l'aliment",
@@ -69,6 +90,7 @@ const ANALYSIS_PROMPT = `Tu es un nutritionniste expert. Analyse cette photo de 
   "totalFat": 15.2,
   "totalCarbs": 45.0,
   "totalFiber": 6.0,
+  "nutritionalScore": "excellent",
   "tip": "Un conseil nutritionnel personnalisé en français sur ce repas (2-3 phrases max)"
 }
 
@@ -76,14 +98,12 @@ Règles :
 - Identifie TOUS les aliments visibles dans l'assiette
 - Estime les quantités en grammes de manière réaliste
 - Les valeurs nutritionnelles doivent être précises et basées sur des données nutritionnelles réelles
-- Le tip doit être un conseil utile et encourageant en français
+- Pour les plats créoles, utilise les valeurs nutritionnelles spécifiques (ex: colombo avec épices, lait de coco, etc.)
+- Le nutritionalScore doit être "excellent", "good", "average" ou "poor"
+- Le tip doit être un conseil utile et encourageant en français, adapté au contexte antillais
 - Les totaux doivent être la somme des aliments individuels
 - Retourne UNIQUEMENT le JSON, rien d'autre`;
 
-/**
- * Analyze a food photo using Gemini 2.0 Flash Vision API.
- * Returns null if API key is not configured (falls back to simulation).
- */
 export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysisResult | null> {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -99,9 +119,7 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
       contents: [
         {
           parts: [
-            {
-              text: ANALYSIS_PROMPT,
-            },
+            { text: CARIBBEAN_ANALYSIS_PROMPT },
             {
               inline_data: {
                 mime_type: mimeType,
@@ -119,11 +137,11 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
       },
     };
 
+    console.info('[NutriLens] Envoi de la photo à Gemini 2.0 Flash...');
+
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
 
@@ -134,15 +152,13 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
     }
 
     const data = await response.json();
-
-    // Extract the text response from Gemini
     const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!textResponse) {
       console.error('[NutriLens] Réponse Gemini vide');
       return null;
     }
 
-    // Clean the response - remove any markdown code blocks if present
     let cleanJson = textResponse.trim();
     if (cleanJson.startsWith('```')) {
       cleanJson = cleanJson.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
@@ -150,19 +166,19 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
 
     const result: GeminiAnalysisResult = JSON.parse(cleanJson);
 
-    // Validate the structure
     if (!result.dishName || !Array.isArray(result.foods) || result.foods.length === 0) {
       console.error('[NutriLens] Structure de réponse Gemini invalide');
       return null;
     }
 
-    // Recalculate totals to ensure accuracy
+    // Recalculate totals
     result.totalCalories = result.foods.reduce((sum, f) => sum + f.calories, 0);
     result.totalProtein = Math.round(result.foods.reduce((sum, f) => sum + f.protein_g, 0) * 10) / 10;
     result.totalFat = Math.round(result.foods.reduce((sum, f) => sum + f.fat_g, 0) * 10) / 10;
     result.totalCarbs = Math.round(result.foods.reduce((sum, f) => sum + f.carbs_g, 0) * 10) / 10;
     result.totalFiber = Math.round(result.foods.reduce((sum, f) => sum + f.fiber_g, 0) * 10) / 10;
 
+    console.info('[NutriLens] Analyse Gemini réussie:', result.dishName);
     return result;
   } catch (error) {
     console.error('[NutriLens] Erreur analyse Gemini:', error);
@@ -170,9 +186,6 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
   }
 }
 
-/**
- * Check if Gemini API is configured and available.
- */
 export function isGeminiConfigured(): boolean {
   return getApiKey() !== null;
 }

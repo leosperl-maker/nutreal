@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Check, Leaf, User, Ruler, Activity, Heart, Utensils } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Leaf, User, Ruler, Activity, Heart, Utensils, MapPin, Wallet, ShoppingCart, Apple } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { calculateNutritionPlan, type UserProfile } from '../lib/nutrition';
+import {
+  calculateNutritionPlan,
+  type UserProfile,
+  LOCATION_OPTIONS,
+  FOOD_PREFERENCE_OPTIONS,
+  GROCERY_FREQUENCY_OPTIONS,
+  getCurrencyForLocation,
+} from '../lib/nutrition';
 
 const steps = [
   { icon: User, title: 'Qui êtes-vous ?', subtitle: 'Informations de base' },
   { icon: Ruler, title: 'Vos mensurations', subtitle: 'Taille et poids' },
+  { icon: MapPin, title: 'Votre localisation', subtitle: 'Où vivez-vous ?' },
   { icon: Activity, title: 'Votre activité', subtitle: 'Niveau d\'activité physique' },
   { icon: Heart, title: 'Votre santé', subtitle: 'Conditions médicales' },
   { icon: Utensils, title: 'Vos préférences', subtitle: 'Régime alimentaire' },
+  { icon: Apple, title: 'Vos aliments', subtitle: 'Ce que vous aimez manger' },
+  { icon: ShoppingCart, title: 'Vos courses', subtitle: 'Budget et fréquence' },
 ];
 
 const activityLevels = [
@@ -44,7 +54,7 @@ export default function Onboarding() {
   const { setProfile, setOnboardingComplete, addWeightLog } = useStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     sex: '' as 'M' | 'F' | '',
@@ -52,17 +62,21 @@ export default function Onboarding() {
     heightCm: '',
     weightCurrentKg: '',
     weightGoalKg: '',
+    location: '',
     activityLevel: '',
     medicalConditions: [] as string[],
     allergyDetails: '',
     dietPreferences: [] as string[],
+    foodPreferences: [] as string[],
+    groceryBudget: '',
+    groceryFrequency: 'weekly',
   });
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleArrayField = (field: 'medicalConditions' | 'dietPreferences', value: string) => {
+  const toggleArrayField = (field: 'medicalConditions' | 'dietPreferences' | 'foodPreferences', value: string) => {
     setFormData(prev => {
       const arr = prev[field];
       if (value === 'none') {
@@ -76,27 +90,32 @@ export default function Onboarding() {
     });
   };
 
+  const currency = formData.location === 'usa' ? '$' : '€';
+
   const canProceed = () => {
     switch (currentStep) {
       case 0: return formData.name && formData.sex && formData.birthDate;
       case 1: return formData.heightCm && formData.weightCurrentKg && formData.weightGoalKg;
-      case 2: return formData.activityLevel;
-      case 3: return formData.medicalConditions.length > 0;
-      case 4: return formData.dietPreferences.length > 0;
+      case 2: return formData.location;
+      case 3: return formData.activityLevel;
+      case 4: return formData.medicalConditions.length > 0;
+      case 5: return formData.dietPreferences.length > 0;
+      case 6: return formData.foodPreferences.length > 0;
+      case 7: return formData.groceryBudget && formData.groceryFrequency;
       default: return false;
     }
   };
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Calculate and show summary
       setShowSummary(true);
     }
   };
 
   const handleComplete = () => {
+    const locationLabel = LOCATION_OPTIONS.find(l => l.value === formData.location)?.label || formData.location;
     const userProfile: UserProfile = {
       name: formData.name,
       sex: formData.sex as 'M' | 'F',
@@ -104,9 +123,14 @@ export default function Onboarding() {
       heightCm: Number(formData.heightCm),
       weightCurrentKg: Number(formData.weightCurrentKg),
       weightGoalKg: Number(formData.weightGoalKg),
-      activityLevel: formData.activityLevel as any,
+      activityLevel: formData.activityLevel,
       medicalConditions: formData.medicalConditions.filter(c => c !== 'none'),
       dietPreferences: formData.dietPreferences.filter(p => p !== 'none'),
+      location: formData.location,
+      groceryBudget: Number(formData.groceryBudget),
+      groceryCurrency: currency,
+      foodPreferences: formData.foodPreferences,
+      groceryFrequency: formData.groceryFrequency,
     };
 
     const plan = calculateNutritionPlan(userProfile);
@@ -125,12 +149,15 @@ export default function Onboarding() {
       macroTargets: plan.macroTargets,
       tdee: plan.tdee,
       estimatedGoalDate: plan.estimatedGoalDate,
+      location: userProfile.location,
+      groceryBudget: userProfile.groceryBudget,
+      groceryCurrency: userProfile.groceryCurrency,
+      foodPreferences: userProfile.foodPreferences,
+      groceryFrequency: userProfile.groceryFrequency,
     });
 
-    // Log initial weight
     const today = new Date().toISOString().split('T')[0];
     addWeightLog(today, userProfile.weightCurrentKg);
-
     setOnboardingComplete(true);
   };
 
@@ -141,12 +168,20 @@ export default function Onboarding() {
     heightCm: Number(formData.heightCm),
     weightCurrentKg: Number(formData.weightCurrentKg),
     weightGoalKg: Number(formData.weightGoalKg),
-    activityLevel: formData.activityLevel as any,
+    activityLevel: formData.activityLevel,
     medicalConditions: formData.medicalConditions,
     dietPreferences: formData.dietPreferences,
+    location: formData.location,
+    groceryBudget: Number(formData.groceryBudget),
+    groceryCurrency: currency,
+    foodPreferences: formData.foodPreferences,
+    groceryFrequency: formData.groceryFrequency,
   }) : null;
 
   if (showSummary && plan) {
+    const locationLabel = LOCATION_OPTIONS.find(l => l.value === formData.location)?.label || formData.location;
+    const freqLabel = GROCERY_FREQUENCY_OPTIONS.find(f => f.value === formData.groceryFrequency)?.label || formData.groceryFrequency;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-500 to-primary-700 flex flex-col items-center justify-center px-6 py-12">
         <motion.div
@@ -190,6 +225,10 @@ export default function Onboarding() {
 
             <div className="bg-surface-100 rounded-xl p-3">
               <div className="flex justify-between text-sm">
+                <span className="text-gray-500">BMR</span>
+                <span className="font-semibold text-gray-700">{plan.bmr} kcal</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
                 <span className="text-gray-500">TDEE</span>
                 <span className="font-semibold text-gray-700">{plan.tdee} kcal</span>
               </div>
@@ -198,24 +237,32 @@ export default function Onboarding() {
                 <span className="font-semibold text-secondary-500">-{plan.deficit} kcal</span>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-gray-500">Objectif estimé</span>
-                <span className="font-semibold text-primary-600">
-                  {plan.estimatedWeeksToGoal > 0
-                    ? `${plan.estimatedWeeksToGoal} semaines`
-                    : 'Maintien'}
-                </span>
+                <span className="text-gray-500">Localisation</span>
+                <span className="font-semibold text-gray-700">{locationLabel}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Budget courses</span>
+                <span className="font-semibold text-gray-700">{formData.groceryBudget}{currency} / {freqLabel.toLowerCase()}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Aliments préférés</span>
+                <span className="font-semibold text-gray-700">{formData.foodPreferences.length} sélectionnés</span>
               </div>
               {plan.estimatedWeeksToGoal > 0 && (
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Date estimée</span>
-                  <span className="font-semibold text-gray-700">
-                    {new Date(plan.estimatedGoalDate).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
+                <>
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-gray-500">Objectif estimé</span>
+                    <span className="font-semibold text-primary-600">{plan.estimatedWeeksToGoal} semaines</span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-gray-500">Date estimée</span>
+                    <span className="font-semibold text-gray-700">
+                      {new Date(plan.estimatedGoalDate).toLocaleDateString('fr-FR', {
+                        day: 'numeric', month: 'long', year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -242,12 +289,11 @@ export default function Onboarding() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-800 font-display">NutriLens</h1>
-            <p className="text-xs text-gray-400">Étape {currentStep + 1} sur 5</p>
+            <p className="text-xs text-gray-400">Étape {currentStep + 1} sur {steps.length}</p>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="flex gap-1.5">
+        <div className="flex gap-1">
           {steps.map((_, i) => (
             <div
               key={i}
@@ -260,7 +306,7 @@ export default function Onboarding() {
       </div>
 
       {/* Step Content */}
-      <div className="flex-1 px-6 py-4">
+      <div className="flex-1 px-6 py-4 overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -274,7 +320,7 @@ export default function Onboarding() {
             </h2>
             <p className="text-sm text-gray-400 mb-6">{steps[currentStep].subtitle}</p>
 
-            {/* Step 1: Basic Info */}
+            {/* Step 0: Basic Info */}
             {currentStep === 0 && (
               <div className="space-y-4">
                 <div>
@@ -287,7 +333,6 @@ export default function Onboarding() {
                     className="w-full px-4 py-3 bg-surface-100 rounded-xl text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                   />
                 </div>
-
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-2 block">Sexe</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -307,14 +352,11 @@ export default function Onboarding() {
                         <span className="text-2xl">{option.emoji}</span>
                         <span className={`text-sm font-medium ${
                           formData.sex === option.value ? 'text-primary-600' : 'text-gray-600'
-                        }`}>
-                          {option.label}
-                        </span>
+                        }`}>{option.label}</span>
                       </button>
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">Date de naissance</label>
                   <input
@@ -327,7 +369,7 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 2: Measurements */}
+            {/* Step 1: Measurements */}
             {currentStep === 1 && (
               <div className="space-y-4">
                 <div>
@@ -365,8 +407,36 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 3: Activity Level */}
+            {/* Step 2: Location */}
             {currentStep === 2 && (
+              <div className="space-y-2">
+                {LOCATION_OPTIONS.map(loc => (
+                  <button
+                    key={loc.value}
+                    onClick={() => updateField('location', loc.value)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
+                      formData.location === loc.value
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-gray-100 bg-white'
+                    }`}
+                  >
+                    <span className="text-2xl">{loc.emoji}</span>
+                    <span className={`font-semibold text-sm ${
+                      formData.location === loc.value ? 'text-primary-600' : 'text-gray-700'
+                    }`}>{loc.label}</span>
+                    {formData.location === loc.value && (
+                      <Check size={18} className="text-primary-500 ml-auto" />
+                    )}
+                  </button>
+                ))}
+                <p className="text-[10px] text-gray-400 mt-2 text-center">
+                  Votre localisation nous aide à adapter les recettes et la devise
+                </p>
+              </div>
+            )}
+
+            {/* Step 3: Activity */}
+            {currentStep === 3 && (
               <div className="space-y-2">
                 {activityLevels.map(level => (
                   <button
@@ -382,9 +452,7 @@ export default function Onboarding() {
                     <div>
                       <p className={`font-semibold text-sm ${
                         formData.activityLevel === level.value ? 'text-primary-600' : 'text-gray-700'
-                      }`}>
-                        {level.label}
-                      </p>
+                      }`}>{level.label}</p>
                       <p className="text-xs text-gray-400">{level.desc}</p>
                     </div>
                   </button>
@@ -392,8 +460,8 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* Step 4: Medical Conditions */}
-            {currentStep === 3 && (
+            {/* Step 4: Medical */}
+            {currentStep === 4 && (
               <div className="space-y-2">
                 {medicalOptions.map(option => (
                   <button
@@ -408,20 +476,14 @@ export default function Onboarding() {
                     <span className="text-xl">{option.emoji}</span>
                     <span className={`font-medium text-sm ${
                       formData.medicalConditions.includes(option.value) ? 'text-primary-600' : 'text-gray-700'
-                    }`}>
-                      {option.label}
-                    </span>
+                    }`}>{option.label}</span>
                     {formData.medicalConditions.includes(option.value) && (
                       <Check size={18} className="text-primary-500 ml-auto" />
                     )}
                   </button>
                 ))}
-                
                 {formData.medicalConditions.includes('food_allergies') && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                  >
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
                     <input
                       type="text"
                       value={formData.allergyDetails}
@@ -435,7 +497,7 @@ export default function Onboarding() {
             )}
 
             {/* Step 5: Diet Preferences */}
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <div className="grid grid-cols-2 gap-2">
                 {dietOptions.map(option => (
                   <button
@@ -450,11 +512,105 @@ export default function Onboarding() {
                     <span className="text-2xl">{option.emoji}</span>
                     <span className={`text-xs font-medium text-center ${
                       formData.dietPreferences.includes(option.value) ? 'text-primary-600' : 'text-gray-600'
-                    }`}>
-                      {option.label}
-                    </span>
+                    }`}>{option.label}</span>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Step 6: Food Preferences */}
+            {currentStep === 6 && (
+              <div>
+                <p className="text-xs text-gray-400 mb-4">
+                  Sélectionnez les aliments que vous aimez. Les aliments non sélectionnés ne seront <strong>jamais</strong> proposés dans vos plans repas.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {FOOD_PREFERENCE_OPTIONS.map(food => (
+                    <button
+                      key={food.value}
+                      onClick={() => toggleArrayField('foodPreferences', food.value)}
+                      className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                        formData.foodPreferences.includes(food.value)
+                          ? 'bg-primary-500 text-white shadow-sm'
+                          : 'bg-white text-gray-600 border border-gray-100 hover:bg-surface-50'
+                      }`}
+                    >
+                      <span>{food.emoji}</span>
+                      <span>{food.label}</span>
+                      {formData.foodPreferences.includes(food.value) && (
+                        <Check size={14} className="ml-0.5" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, foodPreferences: FOOD_PREFERENCE_OPTIONS.map(f => f.value) }))}
+                    className="text-xs text-primary-500 font-semibold hover:text-primary-600"
+                  >
+                    Tout sélectionner
+                  </button>
+                  <span className="text-gray-300">•</span>
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, foodPreferences: [] }))}
+                    className="text-xs text-gray-400 font-semibold hover:text-gray-500"
+                  >
+                    Tout désélectionner
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-3">
+                  {formData.foodPreferences.length} aliment{formData.foodPreferences.length > 1 ? 's' : ''} sélectionné{formData.foodPreferences.length > 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
+
+            {/* Step 7: Grocery Budget & Frequency */}
+            {currentStep === 7 && (
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1.5 block">
+                    Budget courses ({currency})
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">{currency}</span>
+                    <input
+                      type="number"
+                      value={formData.groceryBudget}
+                      onChange={(e) => updateField('groceryBudget', e.target.value)}
+                      placeholder={currency === '€' ? '80' : '100'}
+                      className="w-full pl-10 pr-4 py-3 bg-surface-100 rounded-xl text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Budget hebdomadaire pour vos courses alimentaires</p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-2 block">Fréquence des courses</label>
+                  <div className="space-y-2">
+                    {GROCERY_FREQUENCY_OPTIONS.map(freq => (
+                      <button
+                        key={freq.value}
+                        onClick={() => updateField('groceryFrequency', freq.value)}
+                        className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
+                          formData.groceryFrequency === freq.value
+                            ? 'border-primary-500 bg-primary-50'
+                            : 'border-gray-100 bg-white'
+                        }`}
+                      >
+                        <span className="text-xl">{freq.emoji}</span>
+                        <div>
+                          <p className={`font-semibold text-sm ${
+                            formData.groceryFrequency === freq.value ? 'text-primary-600' : 'text-gray-700'
+                          }`}>{freq.label}</p>
+                          <p className="text-xs text-gray-400">{freq.desc}</p>
+                        </div>
+                        {formData.groceryFrequency === freq.value && (
+                          <Check size={18} className="text-primary-500 ml-auto" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
@@ -476,7 +632,7 @@ export default function Onboarding() {
           disabled={!canProceed()}
           className="flex-1 bg-primary-500 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-primary-600 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          {currentStep === 4 ? 'Voir mon plan' : 'Continuer'}
+          {currentStep === steps.length - 1 ? 'Voir mon plan' : 'Continuer'}
           <ArrowRight size={18} />
         </button>
       </div>
