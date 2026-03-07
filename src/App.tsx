@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import Layout from './components/Layout';
+import OfflineBanner from './components/OfflineBanner';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
@@ -16,6 +17,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <OfflineBanner />
       <Routes>
         {!isAuthenticated ? (
           <>

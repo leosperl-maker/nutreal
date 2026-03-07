@@ -2,10 +2,11 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera, Image, Loader2, Check, X, Plus, Minus, Lightbulb,
-  ChevronDown, Sparkles, AlertCircle, Flame
+  ChevronDown, Sparkles, AlertCircle, Flame, Zap
 } from 'lucide-react';
 import { useStore, type FoodItem, type Meal } from '../store/useStore';
 import { getNutritionalScore } from '../lib/nutrition';
+import { analyzeWithGemini, isGeminiConfigured } from '../lib/gemini';
 
 type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner';
 
@@ -16,8 +17,11 @@ const mealTypes: { value: MealType; label: string; emoji: string }[] = [
   { value: 'dinner', label: 'Dîner', emoji: '🌙' },
 ];
 
-// Simulated AI analysis for demo
-function simulateAIAnalysis(imageFile: File): Promise<{
+/**
+ * Fallback simulation when Gemini API is not configured.
+ * Returns realistic mock data for demo purposes.
+ */
+function simulateAIAnalysis(): Promise<{
   dishName: string;
   foods: FoodItem[];
   totalCalories: number;
@@ -46,7 +50,7 @@ function simulateAIAnalysis(imageFile: File): Promise<{
           totalFat: 17.7,
           totalCarbs: 35.5,
           totalFiber: 9,
-          tip: 'Excellent petit-déjeuner ! Riche en fibres et en bonnes graisses. L\'avocat apporte des acides gras mono-insaturés bénéfiques pour le cœur.',
+          tip: '🔬 Mode démo — Excellent petit-déjeuner ! Riche en fibres et en bonnes graisses. L\'avocat apporte des acides gras mono-insaturés bénéfiques pour le cœur.',
         };
       } else if (hour < 15) {
         result = {
@@ -63,7 +67,7 @@ function simulateAIAnalysis(imageFile: File): Promise<{
           totalFat: 9.6,
           totalCarbs: 53,
           totalFiber: 5.5,
-          tip: 'Très bon ratio protéines/calories ! Le brocoli apporte des vitamines C et K. Pensez à ajouter une source de fibres supplémentaire comme des lentilles.',
+          tip: '🔬 Mode démo — Très bon ratio protéines/calories ! Le brocoli apporte des vitamines C et K. Pensez à ajouter une source de fibres supplémentaire.',
         };
       } else {
         result = {
@@ -80,7 +84,7 @@ function simulateAIAnalysis(imageFile: File): Promise<{
           totalFat: 18.2,
           totalCarbs: 26.8,
           totalFiber: 4.8,
-          tip: 'Le saumon est riche en oméga-3, excellents pour le cerveau et le cœur. Le quinoa complète bien avec ses protéines végétales.',
+          tip: '🔬 Mode démo — Le saumon est riche en oméga-3, excellents pour le cerveau et le cœur. Le quinoa complète bien avec ses protéines végétales.',
         };
       }
 
@@ -101,6 +105,10 @@ export default function Scanner() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [editedFoods, setEditedFoods] = useState<FoodItem[]>([]);
   const [saved, setSaved] = useState(false);
+  const [usedGemini, setUsedGemini] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const geminiReady = isGeminiConfigured();
 
   const handleImageCapture = async (file: File) => {
     const reader = new FileReader();
@@ -110,14 +118,30 @@ export default function Scanner() {
     reader.readAsDataURL(file);
 
     setStep('analyzing');
+    setAnalysisError(null);
 
     try {
-      const result = await simulateAIAnalysis(file);
+      // Try Gemini first if configured
+      let result = null;
+      if (geminiReady) {
+        result = await analyzeWithGemini(file);
+        if (result) {
+          setUsedGemini(true);
+        }
+      }
+
+      // Fallback to simulation if Gemini fails or is not configured
+      if (!result) {
+        setUsedGemini(false);
+        result = await simulateAIAnalysis();
+      }
+
       setAnalysisResult(result);
       setEditedFoods([...result.foods]);
       setStep('result');
     } catch (error) {
       console.error('Analysis failed:', error);
+      setAnalysisError('L\'analyse a échoué. Veuillez réessayer.');
       setStep('capture');
     }
   };
@@ -131,12 +155,13 @@ export default function Scanner() {
     setEditedFoods(prev => {
       const updated = [...prev];
       const food = updated[index];
-      const ratio = (food.quantity_g + delta) / food.quantity_g;
-      if (food.quantity_g + delta <= 0) return prev;
+      const newQuantity = food.quantity_g + delta;
+      if (newQuantity <= 0) return prev;
+      const ratio = newQuantity / food.quantity_g;
 
       updated[index] = {
         ...food,
-        quantity_g: food.quantity_g + delta,
+        quantity_g: newQuantity,
         calories: Math.round(food.calories * ratio),
         protein_g: Math.round(food.protein_g * ratio * 10) / 10,
         fat_g: Math.round(food.fat_g * ratio * 10) / 10,
@@ -188,6 +213,7 @@ export default function Scanner() {
       setAnalysisResult(null);
       setEditedFoods([]);
       setSaved(false);
+      setUsedGemini(false);
     }, 2000);
   };
 
@@ -197,6 +223,8 @@ export default function Scanner() {
     setAnalysisResult(null);
     setEditedFoods([]);
     setSaved(false);
+    setUsedGemini(false);
+    setAnalysisError(null);
   };
 
   const totals = editedFoods.length > 0 ? getTotals() : null;
@@ -219,8 +247,37 @@ export default function Scanner() {
                 <Camera size={36} className="text-primary-500" />
               </div>
               <h1 className="text-2xl font-bold text-gray-800 font-display mb-2">Scanner IA</h1>
-              <p className="text-gray-400 text-sm">Photographiez votre plat pour une analyse nutritionnelle instantanée</p>
+              <p className="text-gray-400 text-sm">
+                Photographiez votre plat pour une analyse nutritionnelle instantanée
+              </p>
+
+              {/* AI Engine Badge */}
+              <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-50 border border-gray-100">
+                {geminiReady ? (
+                  <>
+                    <Zap size={13} className="text-blue-500" />
+                    <span className="text-[11px] font-medium text-gray-500">Propulsé par Gemini 2.0 Flash</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={13} className="text-amber-500" />
+                    <span className="text-[11px] font-medium text-gray-500">Mode démo — configurez VITE_GEMINI_API_KEY</span>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Error Message */}
+            {analysisError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-sm mb-4 bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-2"
+              >
+                <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+                <p className="text-xs text-red-600">{analysisError}</p>
+              </motion.div>
+            )}
 
             {/* Meal Type Selector */}
             <div className="w-full max-w-sm mb-6">
@@ -301,7 +358,9 @@ export default function Scanner() {
             />
 
             <p className="text-xs text-gray-300 mt-6 text-center max-w-xs">
-              L'IA analysera votre plat et estimera les calories et macronutriments
+              {geminiReady
+                ? 'Gemini 2.0 Flash analysera votre plat et estimera les calories et macronutriments'
+                : 'Mode démo : les résultats sont simulés. Ajoutez votre clé Gemini pour l\'analyse réelle.'}
             </p>
           </motion.div>
         )}
@@ -327,7 +386,7 @@ export default function Scanner() {
             </div>
 
             <h2 className="text-lg font-bold text-gray-800 font-display mb-2">
-              NutriLens analyse votre plat...
+              {geminiReady ? 'Gemini analyse votre plat...' : 'NutriLens analyse votre plat...'}
             </h2>
             <p className="text-sm text-gray-400 text-center">
               Identification des aliments et calcul nutritionnel en cours
@@ -338,9 +397,16 @@ export default function Scanner() {
                 className="h-full bg-primary-500 rounded-full"
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
-                transition={{ duration: 2.5, ease: 'easeInOut' }}
+                transition={{ duration: geminiReady ? 5 : 2.5, ease: 'easeInOut' }}
               />
             </div>
+
+            {geminiReady && (
+              <div className="mt-4 flex items-center gap-1.5 text-xs text-blue-500">
+                <Zap size={12} />
+                <span>Gemini 2.0 Flash</span>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -366,6 +432,21 @@ export default function Scanner() {
               >
                 <X size={16} />
               </button>
+
+              {/* AI Badge on image */}
+              <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm">
+                {usedGemini ? (
+                  <>
+                    <Zap size={11} className="text-blue-400" />
+                    <span className="text-[10px] font-medium text-white">Gemini IA</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={11} className="text-amber-400" />
+                    <span className="text-[10px] font-medium text-white">Démo</span>
+                  </>
+                )}
+              </div>
             </div>
 
             <h2 className="text-xl font-bold text-gray-800 font-display mb-1">
@@ -452,7 +533,9 @@ export default function Scanner() {
                   <Lightbulb size={16} className="text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-primary-700 mb-1">Conseil NutriLens</p>
+                  <p className="text-xs font-semibold text-primary-700 mb-1">
+                    {usedGemini ? 'Conseil Gemini IA' : 'Conseil NutriLens'}
+                  </p>
                   <p className="text-xs text-primary-600 leading-relaxed">{analysisResult.tip}</p>
                 </div>
               </div>
