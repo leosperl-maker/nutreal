@@ -1,165 +1,220 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ChevronRight, Flame, BookOpen } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { getWaterTarget } from '../lib/nutrition';
+import AnimatedPage from '../components/AnimatedPage';
+import AnimatedCard from '../components/AnimatedCard';
+import AnimatedCounter from '../components/AnimatedCounter';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
 import CircularProgress from '../components/CircularProgress';
-import MacroBar from '../components/MacroBar';
-import WaterTracker from '../components/WaterTracker';
-import StepsTracker from '../components/StepsTracker';
-import MealCard from '../components/MealCard';
+import ScrollReveal from '../components/ScrollReveal';
+import { DashboardSkeleton } from '../components/ShimmerSkeleton';
+import { Droplets, Plus, Minus, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+
+const QUOTES = [
+  "Chaque repas est une opportunité de nourrir ton corps. 🌱",
+  "La constance bat l'intensité. Continue ! 💪",
+  "Ton corps est ton temple, prends-en soin. ✨",
+  "Un pas à la fois vers tes objectifs. 🎯",
+  "La nutrition est la base de tout progrès. 🍎",
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile, getMealsForDate, getTodayCalories, dailySteps, streak, removeMeal } = useStore();
-  
+  const { profile, meals, waterLogs, dailySteps, stepsGoal, sportSessions, streak, calculateStreak, addWater, getTodayCalories } = useStore();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { calculateStreak(); setTimeout(() => setLoading(false), 600); }, []);
+
+  if (!profile || loading) return <DashboardSkeleton />;
+
   const today = new Date().toISOString().split('T')[0];
-  const todayMeals = getMealsForDate(today);
-  const todayCalories = getTodayCalories();
-  const burned = Math.round(dailySteps * 0.04);
+  const todayStats = getTodayCalories();
+  const todaySport = sportSessions.filter(s => s.date === today);
+  const burned = todaySport.reduce((s, ss) => s + ss.caloriesBurned, 0);
+  const remaining = profile.dailyCalorieBudget + burned - todayStats.consumed;
+  const waterToday = waterLogs.find(w => w.date === today)?.amount || 0;
+  const waterTarget = getWaterTarget(profile.weightCurrentKg);
+  const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  const todayMeals = meals.filter(m => m.date === today);
 
-  if (!profile) return null;
-
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
-  };
+  const macros = [
+    { label: 'Protéines', value: todayStats.protein, target: profile.macroTargets.protein_g, color: 'bg-primary-500', unit: 'g' },
+    { label: 'Glucides', value: todayStats.carbs, target: profile.macroTargets.carbs_g, color: 'bg-warning-300', unit: 'g' },
+    { label: 'Lipides', value: todayStats.fat, target: profile.macroTargets.fat_g, color: 'bg-error-300', unit: 'g' },
+    { label: 'Fibres', value: todayStats.fiber, target: profile.macroTargets.fiber_g, color: 'bg-success-400', unit: 'g' },
+  ];
 
   return (
-    <div className="px-4 pt-12 pb-4 max-w-lg mx-auto">
+    <AnimatedPage className="px-4 pt-12 pb-4 max-w-lg mx-auto">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 font-display">
-            {greeting()}, {profile.name} 👋
-          </h1>
-          <p className="text-sm text-gray-400">
-            {new Date().toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </p>
+          <h1 className="text-2xl font-bold text-text-primary font-display">Bonjour, {profile.name} 👋</h1>
+          <p className="text-sm text-text-secondary">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         {streak > 0 && (
-          <div className="flex items-center gap-1 bg-secondary-50 px-3 py-1.5 rounded-full">
-            <Flame size={16} className="text-secondary-500" />
-            <span className="text-sm font-bold text-secondary-600">{streak}</span>
-          </div>
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.3 }}
+            className="bg-warning-50 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+            <Flame size={16} className="text-warning-300" />
+            <span className="text-sm font-bold text-warning-500">{streak}j</span>
+          </motion.div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Calorie Circle */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-3xl p-6 shadow-card mb-4"
-      >
-        <div className="flex justify-center mb-4">
-          <CircularProgress
-            consumed={todayCalories.consumed}
-            budget={profile.dailyCalorieBudget}
-            burned={burned}
-          />
+      {/* Quote */}
+      <ScrollReveal>
+        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3">
+          <Sparkles size={20} className="text-primary-400 flex-shrink-0" />
+          <p className="text-sm text-text-secondary italic">{quote}</p>
         </div>
-        
-        <div className="text-center mb-4">
-          <p className="text-xs text-gray-400">
-            Budget : <span className="font-semibold text-gray-600">{profile.dailyCalorieBudget} kcal</span>
-          </p>
+      </ScrollReveal>
+
+      {/* Calorie Ring */}
+      <ScrollReveal delay={0.05}>
+        <AnimatedCard className="p-6 mb-4" index={0}>
+          <div className="flex justify-center mb-4">
+            <CircularProgress value={todayStats.consumed} max={profile.dailyCalorieBudget} size={180} color="#2A6B8A">
+              <div className="text-center">
+                <AnimatedCounter value={remaining} className="text-3xl font-bold text-text-primary font-display" />
+                <p className="text-xs text-text-secondary mt-0.5">Restant</p>
+              </div>
+            </CircularProgress>
+          </div>
+          <div className="grid grid-cols-3 text-center gap-2 text-xs">
+            <div className="bg-primary-50 rounded-xl py-2 px-1">
+              <p className="font-bold text-primary-500"><AnimatedCounter value={profile.dailyCalorieBudget} /></p>
+              <p className="text-text-muted">Budget</p>
+            </div>
+            <div className="bg-success-50 rounded-xl py-2 px-1">
+              <p className="font-bold text-success-400"><AnimatedCounter value={todayStats.consumed} /></p>
+              <p className="text-text-muted">Consommé</p>
+            </div>
+            <div className="bg-warning-50 rounded-xl py-2 px-1">
+              <p className="font-bold text-warning-300"><AnimatedCounter value={burned} /></p>
+              <p className="text-text-muted">Brûlé</p>
+            </div>
+          </div>
+        </AnimatedCard>
+      </ScrollReveal>
+
+      {/* Macros */}
+      <ScrollReveal delay={0.1}>
+        <AnimatedCard className="p-4 mb-4" index={1}>
+          <h3 className="text-sm font-semibold text-text-primary mb-3">Macronutriments</h3>
+          <div className="space-y-3">
+            {macros.map((m, i) => (
+              <div key={m.label}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-text-secondary">{m.label}</span>
+                  <span className="font-medium text-text-primary">{Math.round(m.value)}/{m.target}{m.unit}</span>
+                </div>
+                <AnimatedProgressBar percentage={m.target > 0 ? (m.value / m.target) * 100 : 0} color={m.color} delay={0.2 + i * 0.1} />
+              </div>
+            ))}
+          </div>
+        </AnimatedCard>
+      </ScrollReveal>
+
+      {/* Water */}
+      <ScrollReveal delay={0.15}>
+        <AnimatedCard className="p-4 mb-4" index={2}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <Droplets size={20} className="text-blue-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Hydratation</h3>
+                <p className="text-xs text-text-secondary">{waterToday} / {waterTarget} ml</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => addWater(today, -250)}
+                className="w-8 h-8 bg-surface-200 rounded-lg flex items-center justify-center">
+                <Minus size={14} className="text-text-secondary" />
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => addWater(today, 250)}
+                className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                <Plus size={14} className="text-white" />
+              </motion.button>
+            </div>
+          </div>
+          <AnimatedProgressBar percentage={waterTarget > 0 ? (waterToday / waterTarget) * 100 : 0} color="bg-blue-500" className="mt-3" />
+        </AnimatedCard>
+      </ScrollReveal>
+
+      {/* Steps & Sport */}
+      <ScrollReveal delay={0.2}>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <AnimatedCard className="p-4" index={3}>
+            <div className="flex items-center gap-2 mb-2">
+              <Footprints size={18} className="text-primary-400" />
+              <span className="text-xs font-medium text-text-secondary">Pas</span>
+            </div>
+            <AnimatedCounter value={dailySteps} className="text-xl font-bold text-text-primary" />
+            <p className="text-xs text-text-muted">/ {stepsGoal.toLocaleString()}</p>
+          </AnimatedCard>
+          <AnimatedCard className="p-4" index={4} onClick={() => navigate('/sport')}>
+            <div className="flex items-center gap-2 mb-2">
+              <Dumbbell size={18} className="text-success-400" />
+              <span className="text-xs font-medium text-text-secondary">Sport</span>
+            </div>
+            <AnimatedCounter value={todaySport.length} className="text-xl font-bold text-text-primary" suffix=" séance(s)" />
+            <p className="text-xs text-text-muted">{burned} kcal brûlées</p>
+          </AnimatedCard>
         </div>
+      </ScrollReveal>
 
-        {/* Macro Bars */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <MacroBar
-            label="Protéines"
-            current={todayCalories.protein}
-            target={profile.macroTargets.protein_g}
-            color="#EF5350"
-          />
-          <MacroBar
-            label="Lipides"
-            current={todayCalories.fat}
-            target={profile.macroTargets.fat_g}
-            color="#FFC107"
-          />
-          <MacroBar
-            label="Glucides"
-            current={todayCalories.carbs}
-            target={profile.macroTargets.carbs_g}
-            color="#FF9800"
-          />
-          <MacroBar
-            label="Fibres"
-            current={todayCalories.fiber}
-            target={profile.macroTargets.fiber_g}
-            color="#4CAF50"
-          />
-        </div>
-      </motion.div>
-
-      {/* Water & Steps */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 gap-3 mb-4"
-      >
-        <WaterTracker />
-        <StepsTracker />
-      </motion.div>
-
-      {/* Today's Meals */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mb-4"
-      >
+      {/* Today's meals */}
+      <ScrollReveal delay={0.25}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-800 font-display">Journal du jour</h2>
-          <button
-            onClick={() => navigate('/journal')}
-            className="flex items-center gap-1 text-primary-500 text-sm font-medium"
-          >
-            <BookOpen size={14} />
-            Voir tout
-            <ChevronRight size={14} />
+          <h3 className="text-sm font-semibold text-text-primary">Repas du jour</h3>
+          <button onClick={() => navigate('/journal')} className="text-xs text-primary-500 font-medium flex items-center gap-1">
+            Journal <ChevronRight size={14} />
           </button>
         </div>
-
         {todayMeals.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 shadow-card text-center">
-            <div className="text-4xl mb-3">🍽️</div>
-            <p className="text-gray-400 text-sm">Aucun repas enregistré</p>
-            <p className="text-gray-300 text-xs mt-1">Scannez votre premier repas !</p>
-          </div>
+          <AnimatedCard className="p-6 text-center" index={5}>
+            <BookOpen size={32} className="text-text-muted mx-auto mb-2" />
+            <p className="text-sm text-text-secondary">Aucun repas enregistré</p>
+            <button onClick={() => navigate('/scanner')} className="text-primary-500 text-sm font-medium mt-2">Scanner un repas →</button>
+          </AnimatedCard>
         ) : (
           <div className="space-y-2">
-            {todayMeals.map(meal => (
-              <MealCard key={meal.id} meal={meal} onDelete={removeMeal} />
+            {todayMeals.map((meal, i) => (
+              <AnimatedCard key={meal.id} className="p-3 flex items-center gap-3" index={5 + i}>
+                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-lg">
+                  {meal.mealType === 'breakfast' ? '🌅' : meal.mealType === 'lunch' ? '☀️' : meal.mealType === 'snack' ? '🍎' : '🌙'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{meal.dishName}</p>
+                  <p className="text-xs text-text-muted">{meal.totalCalories} kcal</p>
+                </div>
+              </AnimatedCard>
             ))}
           </div>
         )}
-      </motion.div>
+      </ScrollReveal>
 
-      {/* Floating Action Button */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.5, type: 'spring' }}
-        onClick={() => navigate('/scanner')}
-        className="fixed bottom-24 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-float flex items-center justify-center hover:bg-primary-600 active:scale-90 transition-all z-40"
-      >
-        <Plus size={28} />
-      </motion.button>
-    </div>
+      {/* Quick actions */}
+      <ScrollReveal delay={0.3}>
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate('/scanner')}
+            className="bg-primary-500 text-white rounded-2xl p-4 text-left shadow-float">
+            <TrendingUp size={20} className="mb-2" />
+            <p className="text-sm font-semibold">Scanner</p>
+            <p className="text-xs text-white/70">Photo ou code-barres</p>
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate('/meal-plan')}
+            className="bg-success-400 text-white rounded-2xl p-4 text-left shadow-float">
+            <BookOpen size={20} className="mb-2" />
+            <p className="text-sm font-semibold">Plan repas</p>
+            <p className="text-xs text-white/70">Planifier la semaine</p>
+          </motion.button>
+        </div>
+      </ScrollReveal>
+    </AnimatedPage>
   );
 }

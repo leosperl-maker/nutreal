@@ -20,37 +20,21 @@ export default function Layout() {
     <div className="min-h-screen bg-surface-100 pb-20">
       <Outlet />
       <Toast />
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 glass border-t border-surface-200 safe-bottom z-50">
+      <nav className="fixed bottom-0 left-0 right-0 glass-strong safe-bottom z-50 border-t border-white/20">
         <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-1">
           {tabs.map((tab) => {
             const isActive = location.pathname === tab.path;
             const Icon = tab.icon;
-
             return (
-              <button
-                key={tab.path}
-                onClick={() => navigate(tab.path)}
-                className="relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-all"
-              >
+              <button key={tab.path} onClick={() => navigate(tab.path)}
+                className="relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px]">
                 {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
+                  <motion.div layoutId="activeTab"
                     className="absolute -top-1 w-8 h-1 bg-primary-500 rounded-full"
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
                 )}
-                <Icon
-                  size={22}
-                  className={`transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400'}`}
-                  strokeWidth={isActive ? 2.5 : 1.5}
-                />
-                <span
-                  className={`text-[10px] mt-0.5 font-medium transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400'}`}
-                >
-                  {tab.label}
-                </span>
+                <Icon size={22} className={isActive ? 'text-primary-500' : 'text-text-muted'} strokeWidth={isActive ? 2.5 : 1.5} />
+                <span className={`text-[10px] mt-0.5 font-medium ${isActive ? 'text-primary-500' : 'text-text-muted'}`}>{tab.label}</span>
               </button>
             );
           })}

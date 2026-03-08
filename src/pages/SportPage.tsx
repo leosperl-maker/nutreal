@@ -1,269 +1,179 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Dumbbell, Plus, Flame, Clock, Trash2, X, Check,
-  Activity, Bike, Footprints, Waves, Zap, Heart
-} from 'lucide-react';
 import { useStore } from '../store/useStore';
+import AnimatedPage from '../components/AnimatedPage';
+import AnimatedCard from '../components/AnimatedCard';
+import AnimatedButton from '../components/AnimatedButton';
+import ScrollReveal from '../components/ScrollReveal';
+import SuccessCheckmark from '../components/SuccessCheckmark';
+import { Dumbbell, Play, Clock, Flame, Plus, Trash2, Trophy } from 'lucide-react';
 
-const sportTypes = [
-  { id: 'running', name: 'Course à pied', icon: Footprints, emoji: '🏃', calPerMin: 10 },
-  { id: 'cycling', name: 'Vélo', icon: Bike, emoji: '🚴', calPerMin: 8 },
-  { id: 'swimming', name: 'Natation', icon: Waves, emoji: '🏊', calPerMin: 9 },
-  { id: 'gym', name: 'Musculation', icon: Dumbbell, emoji: '🏋️', calPerMin: 7 },
-  { id: 'hiit', name: 'HIIT', icon: Zap, emoji: '⚡', calPerMin: 12 },
-  { id: 'yoga', name: 'Yoga', icon: Heart, emoji: '🧘', calPerMin: 4 },
-  { id: 'walking', name: 'Marche', icon: Footprints, emoji: '🚶', calPerMin: 5 },
-  { id: 'cardio', name: 'Cardio', icon: Activity, emoji: '❤️‍🔥', calPerMin: 9 },
-  { id: 'dance', name: 'Danse / Zouk', icon: Activity, emoji: '💃', calPerMin: 7 },
-  { id: 'other', name: 'Autre', icon: Activity, emoji: '🎯', calPerMin: 6 },
+const EXERCISES = [
+  { name: 'Course à pied', emoji: '🏃', calPerMin: 10, type: 'cardio' },
+  { name: 'Marche rapide', emoji: '🚶', calPerMin: 5, type: 'cardio' },
+  { name: 'Natation', emoji: '🏊', calPerMin: 9, type: 'cardio' },
+  { name: 'Vélo', emoji: '🚴', calPerMin: 8, type: 'cardio' },
+  { name: 'Corde à sauter', emoji: '⏭️', calPerMin: 12, type: 'cardio' },
+  { name: 'Musculation', emoji: '🏋️', calPerMin: 7, type: 'strength' },
+  { name: 'Pompes', emoji: '💪', calPerMin: 8, type: 'strength' },
+  { name: 'Squats', emoji: '🦵', calPerMin: 7, type: 'strength' },
+  { name: 'Abdominaux', emoji: '🔥', calPerMin: 6, type: 'strength' },
+  { name: 'Yoga', emoji: '🧘', calPerMin: 3, type: 'flexibility' },
+  { name: 'Stretching', emoji: '🤸', calPerMin: 2, type: 'flexibility' },
+  { name: 'Danse', emoji: '💃', calPerMin: 7, type: 'cardio' },
 ];
 
 export default function SportPage() {
   const { sportSessions, addSportSession, removeSportSession, showToast } = useStore();
-  const [showForm, setShowForm] = useState(false);
-  const [selectedType, setSelectedType] = useState(sportTypes[0]);
-  const [duration, setDuration] = useState('30');
-  const [notes, setNotes] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [selected, setSelected] = useState<typeof EXERCISES[0] | null>(null);
+  const [duration, setDuration] = useState(30);
+  const [saved, setSaved] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const todaySessions = sportSessions.filter(s => s.date === today);
-  const todayCaloriesBurned = todaySessions.reduce((sum, s) => sum + s.caloriesBurned, 0);
-  const todayDuration = todaySessions.reduce((sum, s) => sum + s.duration_min, 0);
+  const totalBurned = todaySessions.reduce((s, ss) => s + ss.caloriesBurned, 0);
 
-  const handleAdd = () => {
-    const dur = parseInt(duration) || 30;
-    const calories = Math.round(dur * selectedType.calPerMin);
-
+  const addSession = () => {
+    if (!selected) return;
+    const cal = Math.round(selected.calPerMin * duration);
     addSportSession({
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      date: today,
-      type: selectedType.id,
-      name: selectedType.name,
-      duration_min: dur,
-      caloriesBurned: calories,
-      notes: notes.trim() || undefined,
-      createdAt: new Date().toISOString(),
+      id: Date.now().toString(), date: today, type: selected.type, name: selected.name,
+      duration_min: duration, caloriesBurned: cal, createdAt: new Date().toISOString(),
     });
-
-    showToast(`🏋️ ${selectedType.name} — ${calories} kcal brûlées`);
-    setShowForm(false);
-    setDuration('30');
-    setNotes('');
-  };
-
-  const handleDelete = (id: string) => {
-    removeSportSession(id);
-    showToast('Session supprimée');
+    setSaved(true); showToast(`${selected.name} ajouté ! 🔥 ${cal} kcal brûlées`);
+    setTimeout(() => { setSaved(false); setShowAdd(false); setSelected(null); setDuration(30); }, 1500);
   };
 
   return (
-    <div className="px-4 pt-12 pb-24 max-w-lg mx-auto">
-      {/* Header */}
+    <AnimatedPage className="px-4 pt-12 pb-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 font-display">Sport</h1>
-          <p className="text-xs text-gray-400">Suivez vos activités physiques</p>
-        </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center text-white shadow-float hover:bg-primary-600 active:scale-90 transition-all"
-        >
-          <Plus size={20} />
-        </button>
+        <h1 className="text-2xl font-bold text-text-primary font-display">Sport</h1>
+        <AnimatedButton onClick={() => setShowAdd(true)} className="px-4 py-2 text-sm flex items-center gap-2">
+          <Plus size={16} /> Ajouter
+        </AnimatedButton>
       </div>
 
-      {/* Today Summary */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 mb-6 text-white"
-      >
-        <p className="text-xs font-medium text-white/70 mb-3">Aujourd'hui</p>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <Dumbbell size={20} className="mx-auto mb-1 text-white/80" />
-            <p className="text-2xl font-bold">{todaySessions.length}</p>
-            <p className="text-[10px] text-white/60">séances</p>
+      {/* Today stats */}
+      <ScrollReveal>
+        <AnimatedCard className="p-4 mb-4" index={0}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-text-secondary">Aujourd'hui</p>
+              <p className="text-2xl font-bold text-text-primary font-display">{totalBurned} kcal</p>
+              <p className="text-xs text-text-muted">{todaySessions.length} séance(s)</p>
+            </div>
+            <div className="w-14 h-14 bg-success-50 rounded-2xl flex items-center justify-center">
+              <Flame size={28} className="text-success-400" />
+            </div>
           </div>
-          <div className="text-center">
-            <Clock size={20} className="mx-auto mb-1 text-white/80" />
-            <p className="text-2xl font-bold">{todayDuration}</p>
-            <p className="text-[10px] text-white/60">minutes</p>
-          </div>
-          <div className="text-center">
-            <Flame size={20} className="mx-auto mb-1 text-white/80" />
-            <p className="text-2xl font-bold">{todayCaloriesBurned}</p>
-            <p className="text-[10px] text-white/60">kcal brûlées</p>
-          </div>
-        </div>
-      </motion.div>
+        </AnimatedCard>
+      </ScrollReveal>
 
-      {/* Sessions List */}
-      {todaySessions.length > 0 ? (
-        <div className="space-y-3 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700">Séances du jour</h2>
-          {todaySessions.map((session, i) => {
-            const type = sportTypes.find(t => t.id === session.type) || sportTypes[sportTypes.length - 1];
-            return (
-              <motion.div
-                key={session.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-3"
-              >
-                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-xl">
-                  {type.emoji}
+      {/* Today sessions */}
+      <ScrollReveal delay={0.1}>
+        <h3 className="text-sm font-semibold text-text-primary mb-3">Séances du jour</h3>
+        {todaySessions.length === 0 ? (
+          <AnimatedCard className="p-6 text-center" index={1}>
+            <Dumbbell size={32} className="text-text-muted mx-auto mb-2" />
+            <p className="text-sm text-text-secondary">Aucune séance aujourd'hui</p>
+          </AnimatedCard>
+        ) : (
+          <div className="space-y-2">
+            {todaySessions.map((s, i) => (
+              <AnimatedCard key={s.id} className="p-3 flex items-center gap-3" index={i + 1}>
+                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-lg">
+                  {EXERCISES.find(e => e.name === s.name)?.emoji || '🏋️'}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm">{session.name}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock size={10} /> {session.duration_min} min
-                    </span>
-                    <span className="text-xs text-orange-500 font-semibold flex items-center gap-1">
-                      <Flame size={10} /> {session.caloriesBurned} kcal
-                    </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-text-primary">{s.name}</p>
+                  <div className="flex items-center gap-3 text-xs text-text-muted">
+                    <span className="flex items-center gap-1"><Clock size={12} /> {s.duration_min} min</span>
+                    <span className="flex items-center gap-1"><Flame size={12} /> {s.caloriesBurned} kcal</span>
                   </div>
-                  {session.notes && <p className="text-[10px] text-gray-400 mt-1 truncate">{session.notes}</p>}
                 </div>
-                <button
-                  onClick={() => handleDelete(session.id)}
-                  className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 active:scale-90 transition-all"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </motion.div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <Dumbbell size={28} className="text-gray-300" />
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => removeSportSession(s.id)}
+                  className="w-8 h-8 bg-error-50 rounded-lg flex items-center justify-center">
+                  <Trash2 size={14} className="text-error-300" />
+                </motion.button>
+              </AnimatedCard>
+            ))}
           </div>
-          <p className="text-gray-400 text-sm mb-1">Aucune séance aujourd'hui</p>
-          <p className="text-gray-300 text-xs">Appuyez sur + pour ajouter une activité</p>
-        </div>
-      )}
+        )}
+      </ScrollReveal>
 
-      {/* Quick Add Buttons */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Ajout rapide</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {sportTypes.slice(0, 6).map(type => (
-            <button
-              key={type.id}
-              onClick={() => { setSelectedType(type); setShowForm(true); }}
-              className="bg-white rounded-xl p-3 shadow-card flex items-center gap-2.5 hover:bg-surface-50 active:scale-[0.98] transition-all text-left"
-            >
-              <span className="text-lg">{type.emoji}</span>
-              <div>
-                <p className="text-xs font-semibold text-gray-700">{type.name}</p>
-                <p className="text-[10px] text-gray-400">~{type.calPerMin * 30} kcal/30min</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Add Form Modal */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end justify-center"
-            onClick={() => setShowForm(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-10"
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-gray-800 font-display">Nouvelle séance</h3>
-                <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <X size={16} className="text-gray-500" />
-                </button>
-              </div>
-
-              {/* Sport Type Grid */}
-              <p className="text-xs font-medium text-gray-500 mb-2">Type d'activité</p>
-              <div className="grid grid-cols-5 gap-2 mb-5">
-                {sportTypes.map(type => (
-                  <button
-                    key={type.id}
-                    onClick={() => setSelectedType(type)}
-                    className={`flex flex-col items-center p-2 rounded-xl transition-all ${
-                      selectedType.id === type.id ? 'bg-primary-50 ring-2 ring-primary-500' : 'bg-surface-50 hover:bg-surface-100'
-                    }`}
-                  >
-                    <span className="text-lg mb-0.5">{type.emoji}</span>
-                    <span className="text-[9px] text-gray-600 font-medium text-center leading-tight">{type.name}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Duration */}
-              <p className="text-xs font-medium text-gray-500 mb-2">Durée (minutes)</p>
-              <div className="flex gap-2 mb-4">
-                {['15', '30', '45', '60', '90'].map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setDuration(d)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                      duration === d ? 'bg-primary-500 text-white' : 'bg-surface-50 text-gray-600 hover:bg-surface-100'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="Durée personnalisée"
-                className="w-full bg-surface-50 rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-              />
-
-              {/* Estimated Calories */}
-              <div className="bg-orange-50 rounded-xl p-3 mb-4 flex items-center gap-3">
-                <Flame size={20} className="text-orange-500" />
-                <div>
-                  <p className="text-xs text-orange-600 font-medium">Calories estimées</p>
-                  <p className="text-lg font-bold text-orange-700">
-                    {Math.round((parseInt(duration) || 0) * selectedType.calPerMin)} kcal
-                  </p>
+      {/* Recent history */}
+      <ScrollReveal delay={0.2}>
+        <h3 className="text-sm font-semibold text-text-primary mb-3 mt-6">Historique récent</h3>
+        {sportSessions.filter(s => s.date !== today).slice(0, 5).length === 0 ? (
+          <p className="text-sm text-text-muted text-center py-4">Pas encore d'historique</p>
+        ) : (
+          <div className="space-y-2">
+            {sportSessions.filter(s => s.date !== today).slice(0, 5).map((s, i) => (
+              <AnimatedCard key={s.id} className="p-3 flex items-center gap-3" index={i}>
+                <div className="w-8 h-8 bg-surface-200 rounded-lg flex items-center justify-center text-sm">
+                  {EXERCISES.find(e => e.name === s.name)?.emoji || '🏋️'}
                 </div>
-              </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-text-primary">{s.name}</p>
+                  <p className="text-xs text-text-muted">{new Date(s.date).toLocaleDateString('fr-FR')} · {s.duration_min} min · {s.caloriesBurned} kcal</p>
+                </div>
+              </AnimatedCard>
+            ))}
+          </div>
+        )}
+      </ScrollReveal>
 
-              {/* Notes */}
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes (optionnel)"
-                className="w-full bg-surface-50 rounded-xl px-4 py-3 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-              />
+      {/* Add modal */}
+      <AnimatePresence>
+        {showAdd && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setShowAdd(false)}>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="bg-white rounded-t-3xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              
+              {saved ? (
+                <div className="flex flex-col items-center py-8">
+                  <SuccessCheckmark size={64} />
+                  <p className="text-lg font-semibold text-text-primary mt-4">Séance ajoutée !</p>
+                </div>
+              ) : (
+                <>
+                  <div className="w-10 h-1 bg-surface-300 rounded-full mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-text-primary mb-4">Nouvelle séance</h3>
+                  
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {EXERCISES.map(ex => (
+                      <motion.button key={ex.name} whileTap={{ scale: 0.95 }} onClick={() => setSelected(ex)}
+                        className={`p-3 rounded-xl text-center transition-all ${selected?.name === ex.name ? 'bg-primary-500 text-white shadow-float' : 'bg-surface-100 text-text-primary'}`}>
+                        <span className="text-xl block mb-1">{ex.emoji}</span>
+                        <span className="text-[10px] font-medium leading-tight block">{ex.name}</span>
+                      </motion.button>
+                    ))}
+                  </div>
 
-              <button
-                onClick={handleAdd}
-                className="w-full bg-primary-500 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-primary-600 active:scale-[0.98] transition-all shadow-float"
-              >
-                <Check size={20} />
-                Enregistrer la séance
-              </button>
+                  {selected && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                      <label className="text-sm font-medium text-text-secondary mb-2 block">Durée : {duration} min</label>
+                      <input type="range" min={5} max={120} step={5} value={duration} onChange={e => setDuration(+e.target.value)}
+                        className="w-full mb-2 accent-primary-500" />
+                      <div className="flex justify-between text-xs text-text-muted mb-4"><span>5 min</span><span>120 min</span></div>
+                      <div className="bg-primary-50 rounded-xl p-3 mb-4 text-center">
+                        <p className="text-xs text-text-secondary">Calories estimées</p>
+                        <p className="text-2xl font-bold text-primary-500">{Math.round(selected.calPerMin * duration)} kcal</p>
+                      </div>
+                      <AnimatedButton onClick={addSession} className="w-full py-3 text-sm flex items-center justify-center gap-2">
+                        <Trophy size={18} /> Enregistrer la séance
+                      </AnimatedButton>
+                    </motion.div>
+                  )}
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </AnimatedPage>
   );
 }

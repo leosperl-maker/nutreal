@@ -1,0 +1,12 @@
+{
+  "name": "Nutreal — Coach Nutrition IA",
+  "short_name": "Nutreal",
+  "description": "Votre coach nutrition IA pour les Antilles et DROM-TOM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFB",
+  "theme_color": "#2A6B8A",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
