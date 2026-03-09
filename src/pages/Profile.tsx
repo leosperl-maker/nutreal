@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, UNLOCKABLE_TITLES } from '../store/useStore';
 import { calculateAge } from '../lib/nutrition';
@@ -12,15 +12,13 @@ import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
 import ScrollReveal from '../components/ScrollReveal';
 import Icon3D from '../components/Icon3D';
+import ItemPreview from '../components/avatar/ItemPreview';
 import {
   LogOut, Scale, Save, Trophy, Calendar, Flame, Check,
-  ChevronDown, ChevronUp, Package, Pencil, Loader2,
+  ChevronDown, ChevronUp, Package, Pencil, UserCircle2,
   Utensils,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-
-// Lazy load Avatar3D to avoid loading Three.js until needed
-const Avatar3D = lazy(() => import('../components/avatar/Avatar3D'));
 
 /** Game-style inventory item card */
 function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number }) {
@@ -41,9 +39,9 @@ function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number
           boxShadow: unlocked && info.glow ? `0 4px 12px ${info.glow}` : 'none',
         }}
       >
-        {/* Icon */}
+        {/* Item visual */}
         <div className={`transition-all ${unlocked ? '' : 'opacity-25 grayscale'}`}>
-          <Icon3D name={item.emoji} size={36} />
+          <ItemPreview itemId={item.id} emoji={item.emoji} type={item.type} size={40} />
         </div>
 
         {/* Lock overlay */}
@@ -173,24 +171,45 @@ export default function Profile() {
         </motion.button>
       </div>
 
-      {/* ── HERO: 3D Avatar ── */}
+      {/* ── HERO: Avatar ── */}
       <div className="relative">
-        <Suspense fallback={
-          <div className="w-full flex items-center justify-center bg-gradient-to-b from-primary-100 to-white rounded-2xl" style={{ height: '55vh' }}>
-            <div className="text-center">
-              <Loader2 size={32} className="text-primary-400 animate-spin mx-auto mb-2" />
-              <p className="text-xs text-text-muted">Chargement 3D...</p>
+        {avatarUrl ? (
+          <div className="w-full rounded-2xl overflow-hidden" style={{ height: '55vh' }}>
+            <div className="absolute inset-0 bg-gradient-to-b from-primary-100 via-primary-50 to-white" />
+            <img src={avatarUrl} alt="Mon avatar" className="relative z-[1] w-full h-full object-contain" />
+          </div>
+        ) : (
+          <div className="w-full rounded-2xl overflow-hidden" style={{ height: '50vh' }}>
+            <div className="absolute inset-0 bg-gradient-to-b from-primary-200 via-primary-100 to-white" />
+            <div className="relative z-[1] flex flex-col items-center justify-center h-full">
+              {/* Avatar silhouette */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="relative"
+              >
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 shadow-2xl flex items-center justify-center">
+                  <UserCircle2 size={72} className="text-white/90" strokeWidth={1.2} />
+                </div>
+                <div className="absolute -inset-3 rounded-full border-2 border-primary-300/40 animate-pulse" />
+                <div className="absolute -inset-6 rounded-full border border-primary-200/25" />
+                {/* Level badge */}
+                <div className="absolute -bottom-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+                  {level}
+                </div>
+              </motion.div>
+              <p className="text-sm font-semibold text-primary-500 mt-5">Cree ton avatar 3D</p>
+              <p className="text-xs text-primary-400/70 mt-1">Personnalise ton personnage</p>
             </div>
           </div>
-        }>
-          <Avatar3D url={avatarUrl} height="55vh" />
-        </Suspense>
+        )}
 
-        {/* Modify avatar button */}
+        {/* Modify/Create avatar button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowRPMCreator(true)}
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-float"
+          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-float z-[2]"
         >
           <Pencil size={16} className="text-primary-500" />
           <span className="text-xs font-bold text-primary-600">

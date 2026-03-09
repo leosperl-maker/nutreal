@@ -8,15 +8,9 @@ interface RPMCreatorProps {
   onAvatarCreated: (url: string) => void;
 }
 
-// Ready Player Me subdomain — uses the default demo if not configured
-const RPM_SUBDOMAIN = 'demo';
-
 function getRPMUrl(): string {
-  const params = new URLSearchParams({
-    frameApi: '',
-    clearCache: '',
-  });
-  return `https://${RPM_SUBDOMAIN}.readyplayer.me/avatar?${params.toString()}`;
+  // Ready Player Me public avatar creator with frame API for event communication
+  return 'https://readyplayer.me/avatar?frameApi';
 }
 
 export default function RPMCreator({ open, onClose, onAvatarCreated }: RPMCreatorProps) {
