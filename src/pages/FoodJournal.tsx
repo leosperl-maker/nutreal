@@ -4,9 +4,15 @@ import { useStore } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import ScrollReveal from '../components/ScrollReveal';
+import Icon3D from '../components/Icon3D';
 import { ChevronLeft, ChevronRight, Trash2, BookOpen } from 'lucide-react';
 
-const MEAL_LABELS: Record<string, string> = { breakfast: '🌅 Petit-déjeuner', lunch: '☀️ Déjeuner', snack: '🍎 Collation', dinner: '🌙 Dîner' };
+const MEAL_LABELS: Record<string, { label: string; icon: string }> = {
+  breakfast: { label: 'Petit-déjeuner', icon: 'sunrise' },
+  lunch: { label: 'Déjeuner', icon: 'sun' },
+  snack: { label: 'Collation', icon: 'redApple' },
+  dinner: { label: 'Dîner', icon: 'crescentMoon' },
+};
 
 export default function FoodJournal() {
   const { meals, removeMeal } = useStore();
@@ -26,7 +32,7 @@ export default function FoodJournal() {
   };
 
   const grouped = (['breakfast', 'lunch', 'snack', 'dinner'] as const).map(type => ({
-    type, label: MEAL_LABELS[type], meals: dayMeals.filter(m => m.mealType === type),
+    type, ...MEAL_LABELS[type], meals: dayMeals.filter(m => m.mealType === type),
   }));
 
   return (
@@ -80,7 +86,7 @@ export default function FoodJournal() {
         <div className="space-y-4">
           {grouped.filter(g => g.meals.length > 0).map((g, gi) => (
             <ScrollReveal key={g.type} delay={gi * 0.05}>
-              <h3 className="text-xs font-semibold text-text-secondary mb-2">{g.label}</h3>
+              <h3 className="text-xs font-semibold text-text-secondary mb-2 flex items-center gap-1"><Icon3D name={g.icon} size={14} /> {g.label}</h3>
               <div className="space-y-2">
                 {g.meals.map((meal, mi) => (
                   <AnimatedCard key={meal.id} className="p-3" index={mi}>

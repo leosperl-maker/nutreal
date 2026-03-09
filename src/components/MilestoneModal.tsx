@@ -237,7 +237,7 @@ export default function MilestoneModal({ milestone, onClose, onCelebrate }: Mile
               onClick={handleClose}
               className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 rounded-2xl font-semibold text-sm hover:from-primary-600 hover:to-primary-700 active:scale-[0.98] transition-all shadow-float"
             >
-              Continuer mon parcours 🚀
+              Continuer mon parcours
             </motion.button>
           </motion.div>
         </motion.div>

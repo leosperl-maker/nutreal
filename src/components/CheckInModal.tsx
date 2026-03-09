@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import Icon3D from './Icon3D';
 
 interface CheckInModalProps {
   open: boolean;
@@ -9,11 +10,11 @@ interface CheckInModalProps {
 }
 
 const MOODS = [
-  { emoji: '😊', label: 'Bien' },
-  { emoji: '😐', label: 'Neutre' },
-  { emoji: '😔', label: 'Pas top' },
-  { emoji: '😢', label: 'Mal' },
-  { emoji: '🤩', label: 'Super !' },
+  { emoji: 'slightlySmiling', label: 'Bien' },
+  { emoji: 'neutralFace', label: 'Neutre' },
+  { emoji: 'pensiveFace', label: 'Pas top' },
+  { emoji: 'cryingFace', label: 'Mal' },
+  { emoji: 'starStruck', label: 'Super !' },
 ];
 
 export default function CheckInModal({ open, onClose }: CheckInModalProps) {
@@ -83,7 +84,7 @@ export default function CheckInModal({ open, onClose }: CheckInModalProps) {
               {MOODS.map(m => (
                 <button key={m.emoji} onClick={() => setMood(m.emoji)}
                   className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${mood === m.emoji ? 'bg-primary-50 scale-110' : 'bg-surface-50'}`}>
-                  <span className="text-2xl">{m.emoji}</span>
+                  <Icon3D name={m.emoji} size={28} />
                   <span className="text-[10px] text-text-muted">{m.label}</span>
                 </button>
               ))}
@@ -116,7 +117,7 @@ export default function CheckInModal({ open, onClose }: CheckInModalProps) {
                         {(['better', 'same', 'worse'] as const).map(s => (
                           <button key={s} onClick={() => toggleConditionStatus(condition, s)}
                             className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${current?.status === s ? (s === 'better' ? 'bg-green-500 text-white' : s === 'same' ? 'bg-yellow-400 text-yellow-900' : 'bg-red-500 text-white') : 'bg-white border border-surface-200 text-text-muted'}`}>
-                            {s === 'better' ? '📈 Mieux' : s === 'same' ? '➡️ Pareil' : '📉 Pire'}
+                            {s === 'better' ? <><Icon3D name="chartIncreasing" size={14} /> Mieux</> : s === 'same' ? <><Icon3D name="rightArrow" size={14} /> Pareil</> : <><Icon3D name="chartDecreasing" size={14} /> Pire</>}
                           </button>
                         ))}
                       </div>

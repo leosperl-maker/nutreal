@@ -7,6 +7,7 @@ import AnimatedCard from '../components/AnimatedCard';
 import SuccessCheckmark from '../components/SuccessCheckmark';
 import LockedSportModal from '../components/sport/LockedSportModal';
 import LevelBar from '../components/LevelBar';
+import Icon3D from '../components/Icon3D';
 import {
   Clock, Flame, Trash2, Trophy, Youtube,
   ArrowLeft, Check, Play, Pause, RotateCcw,
@@ -36,7 +37,7 @@ interface SportProgram {
 // Images Unsplash (free to use)
 const SPORT_PROGRAMS: Record<string, SportProgram> = {
   running: {
-    name: 'Course à pied', emoji: '🏃', calPerMin: 10, type: 'cardio',
+    name: 'Course à pied', emoji: 'personRunning', calPerMin: 10, type: 'cardio',
     gradient: 'from-orange-500 to-red-600',
     imageUrl: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80&auto=format',
     description: '30 min · Fractionné & endurance',
@@ -50,7 +51,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   hiit: {
-    name: 'HIIT', emoji: '⚡', calPerMin: 14, type: 'cardio',
+    name: 'HIIT', emoji: 'highVoltage', calPerMin: 14, type: 'cardio',
     gradient: 'from-yellow-400 to-orange-600',
     imageUrl: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=800&q=80&auto=format',
     description: '20 min · Haute intensité',
@@ -64,7 +65,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   strength: {
-    name: 'Musculation', emoji: '🏋️', calPerMin: 7, type: 'strength',
+    name: 'Musculation', emoji: 'personLiftingWeights', calPerMin: 7, type: 'strength',
     gradient: 'from-violet-600 to-purple-800',
     imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&q=80&auto=format',
     description: '45 min · Full body',
@@ -78,7 +79,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   yoga: {
-    name: 'Yoga', emoji: '🧘', calPerMin: 3, type: 'flexibility',
+    name: 'Yoga', emoji: 'personInLotus', calPerMin: 3, type: 'flexibility',
     gradient: 'from-emerald-500 to-teal-700',
     imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80&auto=format',
     description: '30 min · Flow & méditation',
@@ -92,7 +93,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   pilates: {
-    name: 'Pilates', emoji: '🌸', calPerMin: 4, type: 'flexibility',
+    name: 'Pilates', emoji: 'cherryBlossom', calPerMin: 4, type: 'flexibility',
     gradient: 'from-rose-400 to-pink-600',
     imageUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80&auto=format',
     description: '30 min · Core & posture',
@@ -106,7 +107,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   cycling: {
-    name: 'Vélo', emoji: '🚴', calPerMin: 8, type: 'cardio',
+    name: 'Vélo', emoji: 'personBiking', calPerMin: 8, type: 'cardio',
     gradient: 'from-amber-500 to-yellow-600',
     imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=80&auto=format',
     description: '30 min · Endurance & intervalles',
@@ -120,7 +121,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   swimming: {
-    name: 'Natation', emoji: '🏊', calPerMin: 9, type: 'cardio',
+    name: 'Natation', emoji: 'personSwimming', calPerMin: 9, type: 'cardio',
     gradient: 'from-cyan-500 to-blue-600',
     imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=80&auto=format',
     description: '30 min · Technique & cardio',
@@ -133,7 +134,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   abs: {
-    name: 'Abdominaux', emoji: '🔥', calPerMin: 6, type: 'strength',
+    name: 'Abdominaux', emoji: 'fire', calPerMin: 6, type: 'strength',
     gradient: 'from-red-500 to-orange-600',
     imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80&auto=format',
     description: '15 min · Core intense',
@@ -147,7 +148,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   pushups: {
-    name: 'Pompes', emoji: '💪', calPerMin: 8, type: 'strength',
+    name: 'Pompes', emoji: 'flexedBiceps', calPerMin: 8, type: 'strength',
     gradient: 'from-indigo-500 to-blue-700',
     imageUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80&auto=format',
     description: '20 min · Pectoraux & triceps',
@@ -161,7 +162,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   squats: {
-    name: 'Squats', emoji: '🦵', calPerMin: 7, type: 'strength',
+    name: 'Squats', emoji: 'leg', calPerMin: 7, type: 'strength',
     gradient: 'from-orange-600 to-amber-800',
     imageUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&q=80&auto=format',
     description: '20 min · Jambes & fessiers',
@@ -175,7 +176,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   walking: {
-    name: 'Marche rapide', emoji: '🚶', calPerMin: 5, type: 'cardio',
+    name: 'Marche rapide', emoji: 'personWalking', calPerMin: 5, type: 'cardio',
     gradient: 'from-green-500 to-teal-600',
     imageUrl: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=80&auto=format',
     description: '30 min · Brûle-graisse doux',
@@ -188,7 +189,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   jumprope: {
-    name: 'Corde à sauter', emoji: '⏭️', calPerMin: 12, type: 'cardio',
+    name: 'Corde à sauter', emoji: 'skippingRope', calPerMin: 12, type: 'cardio',
     gradient: 'from-pink-500 to-rose-600',
     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80&auto=format',
     description: '15 min · Cardio explosif',
@@ -201,7 +202,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   stretching: {
-    name: 'Stretching', emoji: '🤸', calPerMin: 2, type: 'flexibility',
+    name: 'Stretching', emoji: 'personCartwheeling', calPerMin: 2, type: 'flexibility',
     gradient: 'from-fuchsia-400 to-purple-500',
     imageUrl: 'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=800&q=80&auto=format',
     description: '20 min · Récupération & mobilité',
@@ -215,7 +216,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     ],
   },
   dance: {
-    name: 'Danse', emoji: '💃', calPerMin: 7, type: 'cardio',
+    name: 'Danse', emoji: 'womanDancing', calPerMin: 7, type: 'cardio',
     gradient: 'from-pink-500 to-violet-600',
     imageUrl: 'https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?w=800&q=80&auto=format',
     description: '30 min · Cardio fun',
@@ -292,7 +293,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
     });
     addXP(30); // Sport session XP
     setSaved(true);
-    showToast(`${sport.emoji} ${estimatedCal} kcal brûlées ! +30 XP`);
+    showToast(`${estimatedCal} kcal brûlées ! +30 XP`);
     timer.reset();
     setTimeout(() => { setSaved(false); onBack(); }, 2500);
   };
@@ -307,7 +308,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <SuccessCheckmark size={80} />
           <p className="text-xl font-bold text-text-primary mt-4">Séance terminée !</p>
-          <p className="text-sm text-text-secondary mt-1">{estimatedCal} kcal brûlées 🔥</p>
+          <p className="text-sm text-text-secondary mt-1">{estimatedCal} kcal brûlées <Icon3D name="fire" size={16} /></p>
         </motion.div>
       </AnimatedPage>
     );
@@ -326,7 +327,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <div className="flex items-center gap-2 mb-2">
               <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${sport.type === 'cardio' ? 'bg-red-500/80 text-white' : sport.type === 'strength' ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
-                {sport.type === 'cardio' ? '❤️ Cardio' : sport.type === 'strength' ? '💪 Force' : '🤸 Souplesse'}
+                {sport.type === 'cardio' ? <><Icon3D name="fire" size={12} /> Cardio</> : sport.type === 'strength' ? <><Icon3D name="flexedBiceps" size={12} /> Force</> : <><Icon3D name="personCartwheeling" size={12} /> Souplesse</>}
               </span>
               <span className="text-white/70 text-xs">{sport.calPerMin} kcal/min</span>
             </div>
@@ -478,7 +479,7 @@ export default function SportPage() {
     }
     if (restriction?.status === 'caution') {
       // Allow but show warning briefly
-      showToast(`⚠️ ${prog.name} : pratique avec prudence`);
+      showToast(`${prog.name} : pratique avec prudence`);
     }
     setSelectedKey(key);
   };
@@ -541,7 +542,7 @@ export default function SportPage() {
                 const prog = Object.values(SPORT_PROGRAMS).find(p => p.name === s.name);
                 return (
                   <div key={s.id} className="flex items-center gap-2">
-                    <span className="text-base">{prog?.emoji || '🏋️'}</span>
+                    <Icon3D name={prog?.emoji || 'personLiftingWeights'} size={20} />
                     <span className="text-white/90 text-xs flex-1">{s.name} · {s.duration_min} min</span>
                     <span className="text-white/70 text-xs">{s.caloriesBurned} kcal</span>
                     <motion.button whileTap={{ scale: 0.8 }} onClick={() => removeSportSession(s.id)}
@@ -601,7 +602,7 @@ export default function SportPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-amber-600">{prog.completedSessions} séances complétées</p>
                     <motion.button whileTap={{ scale: 0.9 }}
-                      onClick={() => { completeRehabSession(prog.id); addXP(50); showToast(`💪 Séance réhab terminée ! +50 XP`); }}
+                      onClick={() => { completeRehabSession(prog.id); addXP(50); showToast(`Séance réhab terminée ! +50 XP`); }}
                       className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-xs font-bold rounded-xl">
                       Compléter séance
                     </motion.button>
@@ -610,7 +611,7 @@ export default function SportPage() {
                   {prog.milestones.filter(m => m.week > prog.currentWeek).slice(0, 1).map(m => (
                     <div key={m.week} className="mt-2 pt-2 border-t border-amber-200/50">
                       <p className="text-[10px] text-amber-600">
-                        🎯 Prochain objectif (sem. {m.week}) : {m.description}
+                        <Icon3D name="bullseye" size={14} /> Prochain objectif (sem. {m.week}) : {m.description}
                       </p>
                     </div>
                   ))}
@@ -704,7 +705,7 @@ export default function SportPage() {
               const prog = Object.values(SPORT_PROGRAMS).find(p => p.name === s.name);
               return (
                 <AnimatedCard key={s.id} className="p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-surface-100 flex items-center justify-center text-lg">{prog?.emoji || '🏋️'}</div>
+                  <div className="w-10 h-10 rounded-xl bg-surface-100 flex items-center justify-center"><Icon3D name={prog?.emoji || 'personLiftingWeights'} size={24} /></div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-text-primary">{s.name}</p>
                     <p className="text-xs text-text-muted">

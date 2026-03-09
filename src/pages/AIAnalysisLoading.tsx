@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Check } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { analyzeHealthProfile, generateDailyMissions } from '../lib/gemini';
 import { DEFAULT_AVATAR_CONFIG } from '../components/avatar/avatarItems';
 import { useConfetti } from '../components/ConfettiExplosion';
+import Icon3D from '../components/Icon3D';
 
 const STEPS = [
-  { emoji: '🔬', label: 'Analyse de votre profil santé...', sublabel: 'Évaluation des conditions et restrictions' },
-  { emoji: '🏋️', label: 'Programme personnalisé...', sublabel: 'Adaptation sport et réhabilitation' },
-  { emoji: '🎯', label: 'Missions du jour...', sublabel: 'Objectifs sur-mesure pour vous' },
+  { icon: 'microscope', label: 'Analyse de votre profil santé...', sublabel: 'Évaluation des conditions et restrictions' },
+  { icon: 'personLiftingWeights', label: 'Programme personnalisé...', sublabel: 'Adaptation sport et réhabilitation' },
+  { icon: 'bullseye', label: 'Missions du jour...', sublabel: 'Objectifs sur-mesure pour vous' },
 ];
 
 export default function AIAnalysisLoading() {
@@ -166,11 +168,11 @@ export default function AIAnalysisLoading() {
                 i < currentStep ? 'bg-green-400/20' : i === currentStep ? 'bg-white/20' : 'bg-white/5'
               }`}>
                 {i < currentStep ? (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-green-300 text-xl">✓</motion.span>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><Check size={20} className="text-green-300" /></motion.div>
                 ) : i === currentStep ? (
-                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} className="text-xl">{s.emoji}</motion.span>
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}><Icon3D name={s.icon} size={20} /></motion.div>
                 ) : (
-                  <span className="text-xl opacity-50">{s.emoji}</span>
+                  <span className="opacity-50"><Icon3D name={s.icon} size={20} /></span>
                 )}
               </div>
               <div className="flex-1">

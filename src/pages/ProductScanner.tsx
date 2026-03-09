@@ -570,7 +570,7 @@ export default function ProductScanner() {
             {/* Alternatives */}
             {alternatives.length > 0 && (
               <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
-                <h3 className="font-semibold text-gray-800 text-sm mb-3">🔄 Alternatives plus saines</h3>
+                <h3 className="font-semibold text-gray-800 text-sm mb-3">Alternatives plus saines</h3>
                 <div className="space-y-3">
                   {alternatives.map((alt, i) => {
                     const altAdditives = (alt.additives_tags || []).map((a: string) => a.replace('en:', ''));

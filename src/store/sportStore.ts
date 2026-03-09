@@ -95,10 +95,10 @@ export const useSportStore = create<SportState>()(
           : 0;
         
         let avgFeeling = 'N/A';
-        if (avgScore <= 1.5) avgFeeling = '😊 Facile';
-        else if (avgScore <= 2.5) avgFeeling = '💪 Bien';
-        else if (avgScore <= 3.5) avgFeeling = '🔥 Intense';
-        else avgFeeling = '😤 Épuisant';
+        if (avgScore <= 1.5) avgFeeling = 'Facile';
+        else if (avgScore <= 2.5) avgFeeling = 'Bien';
+        else if (avgScore <= 3.5) avgFeeling = 'Intense';
+        else avgFeeling = 'Épuisant';
         
         return {
           workouts: thisWeek.length,

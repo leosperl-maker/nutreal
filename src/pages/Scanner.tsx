@@ -6,14 +6,15 @@ import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
 import SuccessCheckmark from '../components/SuccessCheckmark';
+import Icon3D from '../components/Icon3D';
 import { Camera, CameraOff, Barcode, Upload, Loader2, AlertCircle, Plus, X, Pencil, Trash2, Check, MessageSquare } from 'lucide-react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 
 const MEAL_TYPES = [
-  { value: 'breakfast', label: '🌅 Petit-déj' },
-  { value: 'lunch', label: '☀️ Déjeuner' },
-  { value: 'snack', label: '🍎 Collation' },
-  { value: 'dinner', label: '🌙 Dîner' },
+  { value: 'breakfast', label: 'Petit-déj', icon: 'sunrise' },
+  { value: 'lunch', label: 'Déjeuner', icon: 'sun' },
+  { value: 'snack', label: 'Collation', icon: 'redApple' },
+  { value: 'dinner', label: 'Dîner', icon: 'crescentMoon' },
 ];
 
 const DEMO_RESULTS = [
@@ -41,11 +42,11 @@ const NUTRISCORE_COLORS: Record<string, string> = {
 };
 
 const NUTRISCORE_TIPS: Record<string, string> = {
-  A: '🟢 Excellent Nutri-Score A — produit très sain.',
-  B: '🟡 Bon Nutri-Score B — bonne qualité nutritionnelle.',
-  C: '🟠 Nutri-Score C — qualité nutritionnelle moyenne.',
-  D: '🔴 Nutri-Score D — à consommer avec modération.',
-  E: '⛔ Nutri-Score E — qualité nutritionnelle faible.',
+  A: 'Excellent Nutri-Score A — produit très sain.',
+  B: 'Bon Nutri-Score B — bonne qualité nutritionnelle.',
+  C: 'Nutri-Score C — qualité nutritionnelle moyenne.',
+  D: 'Nutri-Score D — à consommer avec modération.',
+  E: 'Nutri-Score E — qualité nutritionnelle faible.',
 };
 
 async function fetchFromOpenFoodFacts(barcode: string): Promise<any> {
@@ -351,7 +352,7 @@ export default function Scanner() {
       totalFiber: result.totalFiber || result.foods.reduce((s: number, f: any) => s + f.fiber_g, 0),
       aiTip: result.tip, createdAt: new Date().toISOString(),
     });
-    setSaved(true); showToast('Repas enregistré ! 🎉');
+    setSaved(true); showToast('Repas enregistré !');
     setTimeout(() => { setSaved(false); setResult(null); setCorrecting(false); }, 2000);
   };
 
@@ -361,7 +362,7 @@ export default function Scanner() {
 
       {/* Mode toggle */}
       <div className="flex bg-surface-200 rounded-xl p-1 mb-6">
-        {[{ v: 'photo', l: '📸 Photo IA' }, { v: 'barcode', l: '🔍 Code-barres' }].map(m => (
+        {[{ v: 'photo', l: 'Photo IA' }, { v: 'barcode', l: 'Code-barres' }].map(m => (
           <button key={m.v}
             onClick={() => { setMode(m.v as any); setResult(null); setError(''); stopScan(); setCorrecting(false); }}
             className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${mode === m.v ? 'bg-white text-primary-500 shadow-card' : 'text-text-secondary'}`}>
@@ -375,7 +376,7 @@ export default function Scanner() {
         {MEAL_TYPES.map(mt => (
           <button key={mt.value} onClick={() => setMealType(mt.value)}
             className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${mealType === mt.value ? 'bg-primary-500 text-white' : 'bg-white text-text-primary border border-surface-300'}`}>
-            {mt.label}
+            <Icon3D name={mt.icon} size={14} /> {mt.label}
           </button>
         ))}
       </div>
@@ -448,7 +449,7 @@ export default function Scanner() {
 
               {result.tip && (
                 <div className="bg-primary-50 rounded-xl p-3 mb-4">
-                  <p className="text-xs text-primary-700">💡 {result.tip}</p>
+                  <p className="text-xs text-primary-700">{result.tip}</p>
                 </div>
               )}
               <AnimatedButton onClick={saveMeal} className="w-full py-3 text-sm flex items-center justify-center gap-2">
@@ -523,7 +524,7 @@ export default function Scanner() {
                       <Camera size={18} /> Démarrer le scanner
                     </AnimatedButton>
                   )}
-                  <p className="text-[11px] text-text-muted text-center">🌍 Propulsé par Open Food Facts</p>
+                  <p className="text-[11px] text-text-muted text-center">Propulsé par Open Food Facts</p>
                 </div>
               </AnimatedCard>
             )}

@@ -120,7 +120,7 @@ export default function AchievementUnlockPopup({ achievement, onClose }: Achieve
                   className="mt-5 w-full bg-primary-500 text-white font-semibold py-3 rounded-2xl text-sm"
                   whileTap={{ scale: 0.97 }}
                 >
-                  Super ! 🎉
+                  Super !
                 </motion.button>
               </div>
             </div>

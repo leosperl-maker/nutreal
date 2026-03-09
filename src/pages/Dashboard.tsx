@@ -15,17 +15,18 @@ import MissionCard from '../components/MissionCard';
 import CheckInModal from '../components/CheckInModal';
 import WeeklyReport from '../components/WeeklyReport';
 import { Droplets, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight, Target, ClipboardCheck, BarChart3 } from 'lucide-react';
+import Icon3D from '../components/Icon3D';
 
 const WATER_GOAL = 2000;
 const GLASS_ML = 250;
 const GLASSES_TOTAL = 8;
 
 const QUOTES = [
-  "Chaque repas est une opportunité de nourrir ton corps. 🌱",
-  "La constance bat l'intensité. Continue ! 💪",
-  "Ton corps est ton temple, prends-en soin. ✨",
-  "Un pas à la fois vers tes objectifs. 🎯",
-  "La nutrition est la base de tout progrès. 🍎",
+  "Chaque repas est une opportunité de nourrir ton corps.",
+  "La constance bat l'intensité. Continue !",
+  "Ton corps est ton temple, prends-en soin.",
+  "Un pas à la fois vers tes objectifs.",
+  "La nutrition est la base de tout progrès.",
 ];
 
 export default function Dashboard() {
@@ -73,7 +74,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary font-display">Bonjour, {profile.name} 👋</h1>
+          <h1 className="text-2xl font-bold text-text-primary font-display">Bonjour, {profile.name}</h1>
           <p className="text-sm text-text-secondary">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         {streak > 0 && (
@@ -281,8 +282,8 @@ export default function Dashboard() {
           <div className="space-y-2">
             {todayMeals.map((meal, i) => (
               <AnimatedCard key={meal.id} className="p-3 flex items-center gap-3" index={5 + i}>
-                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-lg">
-                  {meal.mealType === 'breakfast' ? '🌅' : meal.mealType === 'lunch' ? '☀️' : meal.mealType === 'snack' ? '🍎' : '🌙'}
+                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                  <Icon3D name={meal.mealType === 'breakfast' ? 'sunrise' : meal.mealType === 'lunch' ? 'sun' : meal.mealType === 'snack' ? 'redApple' : 'crescentMoon'} size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{meal.dishName}</p>

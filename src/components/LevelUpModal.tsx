@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, UNLOCKABLE_TITLES } from '../store/useStore';
 import { getNewItemsAtLevel } from './avatar/avatarItems';
 import { useConfetti } from './ConfettiExplosion';
+import Icon3D from './Icon3D';
 
 export default function LevelUpModal() {
   const { lastLevelUp, dismissLevelUp, selectedTitle, profile } = useStore();
@@ -95,7 +96,7 @@ export default function LevelUpModal() {
 
               {newTitle && (
                 <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl mb-2">
-                  <span className="text-xl">🏅</span>
+                  <Icon3D name="sportsMedal" size={24} />
                   <div className="text-left">
                     <p className="text-xs text-white/60">Nouveau titre</p>
                     <p className="text-sm font-bold text-white">{newTitle.name}</p>
@@ -105,7 +106,7 @@ export default function LevelUpModal() {
 
               {newItems.map(item => (
                 <div key={item.id} className="flex items-center gap-3 p-2 bg-white/10 rounded-xl mb-1.5 last:mb-0">
-                  <span className="text-xl">{item.emoji}</span>
+                  <Icon3D name={item.emoji} size={24} />
                   <div className="text-left">
                     <p className="text-xs text-white/60 capitalize">{item.type === 'hairstyle' ? 'Coiffure' : item.type === 'outfit' ? 'Tenue' : item.type === 'accessory' ? 'Accessoire' : 'Animal'}</p>
                     <p className="text-sm font-bold text-white">{item.name}</p>
@@ -115,7 +116,7 @@ export default function LevelUpModal() {
 
               {newLevel === 5 && (
                 <div className="flex items-center gap-3 p-2 bg-white/10 rounded-xl mt-2">
-                  <span className="text-xl">🛡️</span>
+                  <Icon3D name="shield" size={24} />
                   <div className="text-left">
                     <p className="text-xs text-white/60">Pouvoir spécial</p>
                     <p className="text-sm font-bold text-white">Protection de streak</p>
