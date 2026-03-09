@@ -24,7 +24,7 @@ interface SportProgram {
   type: 'cardio' | 'strength' | 'flexibility';
   gradient: string;
   imageUrl: string;
-  youtubeQuery: string;
+  youtubeVideoId: string;
   exercises: Exercise[];
   description: string;
 }
@@ -36,7 +36,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-orange-500 to-red-600',
     imageUrl: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80&auto=format',
     description: '30 min · Fractionné & endurance',
-    youtubeQuery: 'running cardio workout training plan',
+    youtubeVideoId: 'eL12C6lkFSs',
     exercises: [
       { name: 'Échauffement', duration: '5 min', detail: 'Marche rapide, montées de genoux, talons-fesses, rotation chevilles' },
       { name: 'Course légère', duration: '10 min', detail: '70% FC max, rythme conversationnel, respiration nasale' },
@@ -50,7 +50,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-yellow-400 to-orange-600',
     imageUrl: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?w=800&q=80&auto=format',
     description: '20 min · Haute intensité',
-    youtubeQuery: 'HIIT workout 20 minutes fat burning no equipment',
+    youtubeVideoId: 'ml6cT4AZdqI',
     exercises: [
       { name: 'Burpees', sets: '3 × 30s', detail: 'Planche → pompe → squat → saut + applaudissement' },
       { name: 'Mountain Climbers', sets: '3 × 30s', detail: 'Position planche, alterner genoux vers poitrine rapidement' },
@@ -64,7 +64,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-violet-600 to-purple-800',
     imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&q=80&auto=format',
     description: '45 min · Full body',
-    youtubeQuery: 'full body strength training workout gym',
+    youtubeVideoId: 'UBMk30rjy0o',
     exercises: [
       { name: 'Squat', sets: '4 × 12 reps', detail: 'Pieds largeur épaules, descendre cuisses parallèles, pousser dans les talons' },
       { name: 'Développé couché', sets: '4 × 10 reps', detail: 'Contrôler la descente (3s), pousser fort' },
@@ -78,7 +78,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-emerald-500 to-teal-700',
     imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80&auto=format',
     description: '30 min · Flow & méditation',
-    youtubeQuery: 'yoga morning flow beginner 30 minutes',
+    youtubeVideoId: 'v7AYKMP6rOE',
     exercises: [
       { name: 'Salutation au Soleil', sets: '5 cycles', detail: 'Enchaînement fluide, une respiration par mouvement' },
       { name: 'Guerrier I & II', sets: '2 séries', detail: 'Tenir 5 respirations chaque côté, ouvrir les hanches' },
@@ -92,7 +92,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-rose-400 to-pink-600',
     imageUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80&auto=format',
     description: '30 min · Core & posture',
-    youtubeQuery: 'pilates workout beginner full body core',
+    youtubeVideoId: 'K56Z12XNQ5c',
     exercises: [
       { name: 'The Hundred', sets: '1 × 100 pompes', detail: 'Allongé, jambes à 45°, pomper les bras 100x' },
       { name: 'Roll Up', sets: '3 × 10 reps', detail: 'Dérouler vertèbre par vertèbre, contrôle total' },
@@ -106,7 +106,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-amber-500 to-yellow-600',
     imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=80&auto=format',
     description: '30 min · Endurance & intervalles',
-    youtubeQuery: 'indoor cycling spinning workout cardio',
+    youtubeVideoId: 'Ho2OuG6yEpY',
     exercises: [
       { name: 'Échauffement', duration: '5 min', detail: 'Résistance faible, cadence 70-80 rpm' },
       { name: 'Endurance', duration: '15 min', detail: 'Résistance modérée, cadence 80-90 rpm' },
@@ -120,7 +120,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-cyan-500 to-blue-600',
     imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=80&auto=format',
     description: '30 min · Technique & cardio',
-    youtubeQuery: 'swimming workout technique pool cardio',
+    youtubeVideoId: 'gh5_v5VY2oo',
     exercises: [
       { name: 'Crawl', sets: '4 × 50m', detail: 'Bras alternés, rotation du corps, souffle rythmé' },
       { name: 'Dos crawlé', sets: '2 × 50m', detail: 'Regard plafond, bras alternés, battements réguliers' },
@@ -133,7 +133,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-red-500 to-orange-600',
     imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80&auto=format',
     description: '15 min · Core intense',
-    youtubeQuery: 'abs core workout 10 minutes beginner',
+    youtubeVideoId: '1919eTCoESo',
     exercises: [
       { name: 'Crunch classique', sets: '4 × 20 reps', detail: 'Dos au sol, lever les épaules, souffler en montant' },
       { name: 'Planche', sets: '4 × 45s', detail: 'Corps aligné tête-talon, abdos contractés' },
@@ -147,7 +147,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-indigo-500 to-blue-700',
     imageUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80&auto=format',
     description: '20 min · Pectoraux & triceps',
-    youtubeQuery: 'push ups workout chest pectoral triceps',
+    youtubeVideoId: 'IODxDxX7oi4',
     exercises: [
       { name: 'Pompes classiques', sets: '4 × 15 reps', detail: 'Corps aligné, descendre à 1 cm du sol, coudes 45°' },
       { name: 'Pompes larges', sets: '3 × 12 reps', detail: 'Mains écartées, cible les pectoraux extérieurs' },
@@ -161,7 +161,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-orange-600 to-amber-800',
     imageUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&q=80&auto=format',
     description: '20 min · Jambes & fessiers',
-    youtubeQuery: 'squat leg workout glutes beginner',
+    youtubeVideoId: 'UItWltVZZmE',
     exercises: [
       { name: 'Squat air', sets: '4 × 20 reps', detail: 'Descendre lentement (3s), genoux alignés pieds' },
       { name: 'Squat sauté', sets: '3 × 12 reps', detail: 'Explosion max vers le haut, atterrir souple' },
@@ -175,7 +175,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-green-500 to-teal-600',
     imageUrl: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=80&auto=format',
     description: '30 min · Brûle-graisse doux',
-    youtubeQuery: 'power walking workout 30 minutes fat burning',
+    youtubeVideoId: 'inpok4MKVLM',
     exercises: [
       { name: 'Démarrage', duration: '3 min', detail: 'Marche normale, rotation des bras' },
       { name: 'Marche tonique', duration: '20 min', detail: 'Bras en balancier, cadence ~120 pas/min' },
@@ -188,7 +188,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-pink-500 to-rose-600',
     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80&auto=format',
     description: '15 min · Cardio explosif',
-    youtubeQuery: 'jump rope workout cardio beginner fat loss',
+    youtubeVideoId: 'sHdHMvaT7VI',
     exercises: [
       { name: 'Saut basique', sets: '3 × 1 min', detail: 'Deux pieds, rebonds courts et légers' },
       { name: 'Saut alterné', sets: '3 × 1 min', detail: 'Alterner pied gauche / droit' },
@@ -201,7 +201,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-fuchsia-400 to-purple-500',
     imageUrl: 'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=800&q=80&auto=format',
     description: '20 min · Récupération & mobilité',
-    youtubeQuery: 'full body stretching flexibility routine beginner',
+    youtubeVideoId: 'g_tea8ZNk5A',
     exercises: [
       { name: 'Étirement cou', sets: '3 × 15s/côté', detail: 'Incliner doucement la tête vers chaque épaule' },
       { name: 'Ouverture pectoraux', duration: '30s/côté', detail: 'Bras en croix contre un mur, pivoter le buste' },
@@ -215,7 +215,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
     gradient: 'from-pink-500 to-violet-600',
     imageUrl: 'https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?w=800&q=80&auto=format',
     description: '30 min · Cardio fun',
-    youtubeQuery: 'dance cardio workout zumba fun beginner',
+    youtubeVideoId: 'ZWk19OVon2k',
     exercises: [
       { name: 'Échauffement', duration: '5 min', detail: 'Ondulations du corps, balancements' },
       { name: 'Chorégraphie de base', duration: '10 min', detail: 'Pas en rythme, rebonds, bras expressifs' },
@@ -293,7 +293,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
   };
 
   const openYoutube = () => {
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(sport.youtubeQuery)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://www.youtube.com/watch?v=${sport.youtubeVideoId}`, '_blank', 'noopener,noreferrer');
   };
 
   if (saved) {
