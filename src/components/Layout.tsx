@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Camera, Dumbbell, CalendarDays, User, Trophy } from 'lucide-react';
+import { Home, Camera, Dumbbell, CalendarDays, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Toast from './Toast';
 
@@ -8,7 +8,6 @@ const tabs = [
   { path: '/', icon: Home, label: 'Accueil' },
   { path: '/scanner', icon: Camera, label: 'Scanner' },
   { path: '/sport', icon: Dumbbell, label: 'Sport' },
-  { path: '/achievements', icon: Trophy, label: 'Succès' },
   { path: '/meal-plan', icon: CalendarDays, label: 'Plan repas' },
   { path: '/profile', icon: User, label: 'Profil' },
 ];
@@ -28,7 +27,7 @@ export default function Layout() {
             const Icon = tab.icon;
             return (
               <button key={tab.path} onClick={() => navigate(tab.path)}
-                className="relative flex flex-col items-center justify-center py-2 px-2 min-w-[48px] flex-1">
+                className="relative flex flex-col items-center justify-center py-2 px-3 min-w-[56px] flex-1">
                 {isActive && (
                   <motion.div layoutId="activeTab"
                     className="absolute -top-1 w-8 h-1 bg-primary-500 rounded-full"

@@ -9,7 +9,12 @@ import AnimatedProgressBar from '../components/AnimatedProgressBar';
 import CircularProgress from '../components/CircularProgress';
 import ScrollReveal from '../components/ScrollReveal';
 import { DashboardSkeleton } from '../components/ShimmerSkeleton';
-import { Droplets, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+import LevelBar from '../components/LevelBar';
+import LevelUpModal from '../components/LevelUpModal';
+import MissionCard from '../components/MissionCard';
+import CheckInModal from '../components/CheckInModal';
+import WeeklyReport from '../components/WeeklyReport';
+import { Droplets, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight, Target, ClipboardCheck, BarChart3 } from 'lucide-react';
 
 const WATER_GOAL = 2000;
 const GLASS_ML = 250;
@@ -25,8 +30,10 @@ const QUOTES = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile, meals, waterLogs, dailySteps, stepsGoal, sportSessions, streak, calculateStreak, addWater, getTodayCalories } = useStore();
+  const { profile, meals, waterLogs, dailySteps, stepsGoal, sportSessions, streak, calculateStreak, addWater, getTodayCalories, dailyMissions, addXP, showToast, checkIns } = useStore();
   const [loading, setLoading] = useState(true);
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false);
 
   useEffect(() => { calculateStreak(); setTimeout(() => setLoading(false), 600); }, []);
 
@@ -45,6 +52,14 @@ export default function Dashboard() {
   };
   const quote = QUOTES[new Date().getDate() % QUOTES.length];
   const todayMeals = meals.filter(m => m.date === today);
+
+  // Check-in due if no check-in in last 7 days
+  const lastCheckIn = checkIns[0]?.date;
+  const checkInDue = !lastCheckIn || (() => {
+    const diff = (new Date(today).getTime() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60 * 24);
+    return diff >= 7;
+  })();
+  const isMonday = new Date().getDay() === 1;
 
   const macros = [
     { label: 'Protéines', value: todayStats.protein, target: profile.macroTargets.protein_g, color: 'bg-primary-500', unit: 'g' },
@@ -70,13 +85,68 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Quote */}
+      {/* Level Bar */}
       <ScrollReveal>
+        <LevelBar compact className="mb-4" />
+      </ScrollReveal>
+
+      {/* Missions widget */}
+      {dailyMissions.length > 0 && dailyMissions.some(m => !m.isCompleted) && (
+        <ScrollReveal delay={0.03}>
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Target size={16} className="text-primary-500" />
+                <h3 className="text-sm font-bold text-text-primary">Missions</h3>
+              </div>
+              <span className="text-xs text-text-muted">
+                {dailyMissions.filter(m => m.isCompleted).length}/{dailyMissions.length}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {dailyMissions.filter(m => !m.isCompleted).slice(0, 3).map((m, i) => (
+                <MissionCard key={m.id} mission={m} index={i} />
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
+
+      {/* Quote */}
+      <ScrollReveal delay={0.05}>
         <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3">
           <Sparkles size={20} className="text-primary-400 flex-shrink-0" />
           <p className="text-sm text-text-secondary italic">{quote}</p>
         </div>
       </ScrollReveal>
+
+      {/* Check-in & Weekly Report banners */}
+      {(checkInDue || isMonday) && (
+        <ScrollReveal delay={0.06}>
+          <div className="flex gap-2 mb-4">
+            {checkInDue && (
+              <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowCheckIn(true)}
+                className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-3 flex items-center gap-3 shadow-float">
+                <ClipboardCheck size={18} className="text-white" />
+                <div className="text-left">
+                  <p className="text-xs font-bold text-white">Check-in</p>
+                  <p className="text-[10px] text-white/60">Comment allez-vous ?</p>
+                </div>
+              </motion.button>
+            )}
+            {isMonday && (
+              <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowWeeklyReport(true)}
+                className="flex-1 bg-gradient-to-r from-primary-500 to-primary-700 rounded-2xl p-3 flex items-center gap-3 shadow-float">
+                <BarChart3 size={18} className="text-white" />
+                <div className="text-left">
+                  <p className="text-xs font-bold text-white">Recap hebdo</p>
+                  <p className="text-[10px] text-white/60">Voir la semaine</p>
+                </div>
+              </motion.button>
+            )}
+          </div>
+        </ScrollReveal>
+      )}
 
       {/* Calorie Ring */}
       <ScrollReveal delay={0.05}>
@@ -241,6 +311,13 @@ export default function Dashboard() {
           </motion.button>
         </div>
       </ScrollReveal>
+
+      {/* Level Up Modal (global) */}
+      <LevelUpModal />
+
+      {/* Check-in & Weekly Report modals */}
+      <CheckInModal open={showCheckIn} onClose={() => setShowCheckIn(false)} />
+      <WeeklyReport open={showWeeklyReport} onClose={() => setShowWeeklyReport(false)} />
     </AnimatedPage>
   );
 }

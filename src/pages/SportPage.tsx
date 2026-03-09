@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
+import type { SportRestriction } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import SuccessCheckmark from '../components/SuccessCheckmark';
+import LockedSportModal from '../components/sport/LockedSportModal';
+import LevelBar from '../components/LevelBar';
 import {
   Clock, Flame, Trash2, Trophy, Youtube,
   ArrowLeft, Check, Play, Pause, RotateCcw,
   ChevronDown, ChevronUp, ChevronRight, Zap, Heart, Dumbbell, Wind,
+  Lock, AlertTriangle, Star,
 } from 'lucide-react';
 
 interface Exercise {
@@ -260,7 +264,7 @@ function useTimer() {
 
 // ─── Workout Detail Page ─────────────────────────────────────────────────────
 function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport: SportProgram; onBack: () => void }) {
-  const { addSportSession, showToast } = useStore();
+  const { addSportSession, addXP, showToast } = useStore();
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   const [manualDuration, setManualDuration] = useState(30);
   const [saved, setSaved] = useState(false);
@@ -286,8 +290,9 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
       name: sport.name, duration_min: effectiveDuration,
       caloriesBurned: estimatedCal, createdAt: new Date().toISOString(),
     });
+    addXP(30); // Sport session XP
     setSaved(true);
-    showToast(`${sport.emoji} ${estimatedCal} kcal brûlées !`);
+    showToast(`${sport.emoji} ${estimatedCal} kcal brûlées ! +30 XP`);
     timer.reset();
     setTimeout(() => { setSaved(false); onBack(); }, 2500);
   };
@@ -445,9 +450,16 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
 
 // ─── Main Sport Page ─────────────────────────────────────────────────────────
 export default function SportPage() {
-  const { sportSessions, removeSportSession } = useStore();
+  const { sportSessions, removeSportSession, aiAnalysis, completeRehabSession, addXP, showToast, level } = useStore();
   const [selectedKey, setSelectedKey] = useState<SportKey | null>(null);
   const [category, setCategory] = useState('all');
+  const [lockedModal, setLockedModal] = useState<{ restriction: SportRestriction; name: string } | null>(null);
+
+  // Get sport restriction for a sport key
+  const getRestriction = (key: string): SportRestriction | undefined => {
+    if (!aiAnalysis) return undefined;
+    return aiAnalysis.sportRestrictions.find(r => r.sportId === key);
+  };
 
   const today = new Date().toISOString().split('T')[0];
   const todaySessions = sportSessions.filter(s => s.date === today);
@@ -457,6 +469,19 @@ export default function SportPage() {
   const filteredPrograms = Object.entries(SPORT_PROGRAMS).filter(
     ([, prog]) => category === 'all' || prog.type === category
   );
+
+  const handleSportClick = (key: SportKey, prog: SportProgram) => {
+    const restriction = getRestriction(key);
+    if (restriction?.status === 'locked') {
+      setLockedModal({ restriction, name: prog.name });
+      return;
+    }
+    if (restriction?.status === 'caution') {
+      // Allow but show warning briefly
+      showToast(`⚠️ ${prog.name} : pratique avec prudence`);
+    }
+    setSelectedKey(key);
+  };
 
   if (selectedKey && SPORT_PROGRAMS[selectedKey]) {
     return (
@@ -468,15 +493,25 @@ export default function SportPage() {
     );
   }
 
-  // Featured workout (hero card)
-  const featured = filteredPrograms[0];
+  // Featured workout (hero card) - pick first unlocked one
+  const featured = filteredPrograms.find(([key]) => {
+    const r = getRestriction(key);
+    return !r || r.status !== 'locked';
+  }) || filteredPrograms[0];
+
+  const rehabPrograms = aiAnalysis?.rehabPrograms?.filter(p => !p.isCompleted) || [];
 
   return (
     <AnimatedPage className="pb-4 max-w-lg mx-auto">
       {/* Header */}
       <div className="px-4 pt-12 mb-4">
-        <h1 className="text-3xl font-black text-text-primary tracking-tight">Sport</h1>
-        <p className="text-sm text-text-muted mt-0.5">Trouvez votre workout du jour</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-text-primary tracking-tight">Sport</h1>
+            <p className="text-sm text-text-muted mt-0.5">Trouvez votre workout du jour</p>
+          </div>
+        </div>
+        <LevelBar compact className="mt-3" />
       </div>
 
       {/* Today's Stats */}
@@ -539,12 +574,59 @@ export default function SportPage() {
         </div>
       </div>
 
+      {/* Rehab Programs (gold cards) */}
+      {rehabPrograms.length > 0 && (
+        <div className="px-4 mb-5">
+          <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Star size={12} className="text-yellow-500" /> Programmes de réhabilitation
+          </h3>
+          <div className="space-y-3">
+            {rehabPrograms.map(prog => {
+              const progress = prog.totalWeeks > 0 ? (prog.currentWeek / prog.totalWeeks) : 0;
+              return (
+                <motion.div key={prog.id} whileTap={{ scale: 0.98 }}
+                  className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-bold text-amber-900">{prog.name}</p>
+                      <p className="text-xs text-amber-700/70">{prog.condition}</p>
+                    </div>
+                    <span className="text-xs font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+                      Sem. {prog.currentWeek}/{prog.totalWeeks}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-amber-200/50 rounded-full overflow-hidden mb-2">
+                    <div className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-amber-600">{prog.completedSessions} séances complétées</p>
+                    <motion.button whileTap={{ scale: 0.9 }}
+                      onClick={() => { completeRehabSession(prog.id); addXP(50); showToast(`💪 Séance réhab terminée ! +50 XP`); }}
+                      className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-xs font-bold rounded-xl">
+                      Compléter séance
+                    </motion.button>
+                  </div>
+                  {/* Current milestone */}
+                  {prog.milestones.filter(m => m.week > prog.currentWeek).slice(0, 1).map(m => (
+                    <div key={m.week} className="mt-2 pt-2 border-t border-amber-200/50">
+                      <p className="text-[10px] text-amber-600">
+                        🎯 Prochain objectif (sem. {m.week}) : {m.description}
+                      </p>
+                    </div>
+                  ))}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Featured Hero Card */}
       {featured && (
         <div className="px-4 mb-5">
           <motion.button
             whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedKey(featured[0] as SportKey)}
+            onClick={() => handleSportClick(featured[0] as SportKey, featured[1])}
             className="w-full relative h-52 rounded-3xl overflow-hidden shadow-xl">
             <img src={featured[1].imageUrl} alt={featured[1].name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -566,28 +648,50 @@ export default function SportPage() {
           {category === 'all' ? 'Tous les workouts' : CATEGORIES.find(c => c.key === category)?.label}
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          {filteredPrograms.slice(1).map(([key, prog], i) => (
-            <motion.button
-              key={key}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => setSelectedKey(key as SportKey)}
-              className="relative h-40 rounded-2xl overflow-hidden shadow-md">
-              <img src={prog.imageUrl} alt={prog.name} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="text-white font-bold text-sm">{prog.name}</p>
-                <p className="text-white/50 text-[10px] mt-0.5">{prog.description}</p>
-              </div>
-              <div className="absolute top-2 right-2">
-                <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full ${prog.type === 'cardio' ? 'bg-red-500/80 text-white' : prog.type === 'strength' ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
-                  {prog.calPerMin} kcal/min
-                </span>
-              </div>
-            </motion.button>
-          ))}
+          {filteredPrograms.slice(1).map(([key, prog], i) => {
+            const restriction = getRestriction(key);
+            const isLocked = restriction?.status === 'locked';
+            const isCaution = restriction?.status === 'caution';
+            return (
+              <motion.button
+                key={key}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => handleSportClick(key as SportKey, prog)}
+                className={`relative h-40 rounded-2xl overflow-hidden shadow-md ${isLocked ? 'grayscale' : ''}`}>
+                <img src={prog.imageUrl} alt={prog.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {isLocked && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="w-10 h-10 bg-red-500/80 rounded-full flex items-center justify-center">
+                      <Lock size={18} className="text-white" />
+                    </div>
+                  </div>
+                )}
+                {isCaution && (
+                  <div className="absolute top-2 left-2">
+                    <div className="bg-yellow-400 rounded-full px-2 py-0.5 flex items-center gap-1">
+                      <AlertTriangle size={10} className="text-yellow-900" />
+                      <span className="text-[9px] font-bold text-yellow-900">Prudence</span>
+                    </div>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white font-bold text-sm">{prog.name}</p>
+                  <p className="text-white/50 text-[10px] mt-0.5">{prog.description}</p>
+                </div>
+                {!isLocked && (
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full ${prog.type === 'cardio' ? 'bg-red-500/80 text-white' : prog.type === 'strength' ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
+                      {prog.calPerMin} kcal/min
+                    </span>
+                  </div>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
 
@@ -612,6 +716,15 @@ export default function SportPage() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Locked Sport Modal */}
+      {lockedModal && (
+        <LockedSportModal
+          restriction={lockedModal.restriction}
+          sportName={lockedModal.name}
+          onClose={() => setLockedModal(null)}
+        />
       )}
     </AnimatedPage>
   );

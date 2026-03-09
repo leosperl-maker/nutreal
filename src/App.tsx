@@ -5,6 +5,7 @@ import { useStore } from './store/useStore';
 import Layout from './components/Layout';
 import OfflineBanner from './components/OfflineBanner';
 import Onboarding from './pages/Onboarding';
+import AIAnalysisLoading from './pages/AIAnalysisLoading';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import SportPage from './pages/SportPage';
@@ -14,7 +15,6 @@ import FamilyPage from './pages/FamilyPage';
 import Profile from './pages/Profile';
 import FoodJournal from './pages/FoodJournal';
 import AuthPage from './pages/AuthPage';
-import Achievements from './pages/Achievements';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -29,13 +29,16 @@ function AnimatedRoutes() {
         {!isAuthenticated ? (
           <><Route path="/auth" element={<AuthPage />} /><Route path="*" element={<Navigate to="/auth" replace />} /></>
         ) : !onboardingComplete ? (
-          <><Route path="/onboarding" element={<Onboarding />} /><Route path="*" element={<Navigate to="/onboarding" replace />} /></>
+          <>
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/loading" element={<AIAnalysisLoading />} />
+            <Route path="*" element={<Navigate to="/onboarding" replace />} />
+          </>
         ) : (
           <><Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="scanner" element={<Scanner />} />
             <Route path="sport" element={<SportPage />} />
-            <Route path="achievements" element={<Achievements />} />
             <Route path="meal-plan" element={<MealPlanPage />} />
             <Route path="meal-plan/dish/:dayIndex/:slotIndex" element={<DishDetailPage />} />
             <Route path="family" element={<FamilyPage />} />
