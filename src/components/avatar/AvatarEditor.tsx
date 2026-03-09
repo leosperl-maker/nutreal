@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import Avatar from './Avatar';
+import Icon3D from '../Icon3D';
 import {
   HAIRSTYLES, OUTFITS, ACCESSORIES, PETS,
   SKIN_COLORS, HAIR_COLORS, EYE_COLORS, OUTFIT_COLORS,
@@ -17,12 +18,12 @@ interface AvatarEditorProps {
 type TabId = 'skin' | 'hair' | 'eyes' | 'outfit' | 'accessory' | 'pet';
 
 const TABS: { id: TabId; emoji: string; label: string }[] = [
-  { id: 'skin', emoji: '🎨', label: 'Peau' },
-  { id: 'hair', emoji: '💇', label: 'Cheveux' },
-  { id: 'eyes', emoji: '👁️', label: 'Yeux' },
-  { id: 'outfit', emoji: '👕', label: 'Tenue' },
-  { id: 'accessory', emoji: '⌚', label: 'Accessoires' },
-  { id: 'pet', emoji: '🐱', label: 'Animaux' },
+  { id: 'skin', emoji: 'artistPalette', label: 'Peau' },
+  { id: 'hair', emoji: 'personGettingHaircut', label: 'Cheveux' },
+  { id: 'eyes', emoji: 'eye', label: 'Yeux' },
+  { id: 'outfit', emoji: 'tShirt', label: 'Tenue' },
+  { id: 'accessory', emoji: 'watch', label: 'Accessoires' },
+  { id: 'pet', emoji: 'catFace', label: 'Animaux' },
 ];
 
 export default function AvatarEditor({ onClose }: AvatarEditorProps) {
@@ -179,7 +180,7 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-medium transition-all ${tab === t.id ? 'bg-primary-500 text-white' : 'bg-white text-text-secondary border border-surface-200'}`}>
-                {t.emoji} {t.label}
+                <Icon3D name={t.emoji} size={14} /> {t.label}
               </button>
             ))}
           </div>

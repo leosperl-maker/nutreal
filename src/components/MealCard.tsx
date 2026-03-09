@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Clock } from 'lucide-react';
+import Icon3D from './Icon3D';
 import type { Meal } from '../store/useStore';
 
 interface MealCardProps {
@@ -8,11 +9,11 @@ interface MealCardProps {
   compact?: boolean;
 }
 
-const mealTypeLabels: Record<string, string> = {
-  breakfast: '🌅 Petit-déjeuner',
-  lunch: '☀️ Déjeuner',
-  snack: '🍪 Goûter',
-  dinner: '🌙 Dîner',
+const mealTypeLabels: Record<string, { label: string; icon: string }> = {
+  breakfast: { label: 'Petit-déjeuner', icon: 'sunrise' },
+  lunch: { label: 'Déjeuner', icon: 'sun' },
+  snack: { label: 'Goûter', icon: 'redApple' },
+  dinner: { label: 'Dîner', icon: 'crescentMoon' },
 };
 
 export default function MealCard({ meal, onDelete, compact }: MealCardProps) {
@@ -31,15 +32,15 @@ export default function MealCard({ meal, onDelete, compact }: MealCardProps) {
         />
       ) : (
         <div className="w-14 h-14 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">🍽️</span>
+          <Icon3D name="forkAndKnife" size={28} />
         </div>
       )}
       
       <div className="flex-1 min-w-0">
         <h4 className="font-semibold text-gray-800 text-sm truncate">{meal.dishName}</h4>
         {!compact && (
-          <p className="text-xs text-gray-400 mt-0.5">
-            {mealTypeLabels[meal.mealType]}
+          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+            <Icon3D name={mealTypeLabels[meal.mealType]?.icon || 'forkAndKnife'} size={12} /> {mealTypeLabels[meal.mealType]?.label || meal.mealType}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1">

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Play, Clock, Flame, ChevronDown, ChevronUp, 
+import Icon3D from '../Icon3D';
+import {
+  Play, Clock, Flame, ChevronDown, ChevronUp,
   ExternalLink, RefreshCw, Dumbbell, Target, Zap
 } from 'lucide-react';
 import type { WorkoutPlan, WorkoutSession, Exercise } from '../../lib/workoutGenerator';
@@ -66,7 +67,7 @@ function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }
             
             {exercise.tips.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-1">💡 Conseils :</p>
+                <p className="text-xs font-semibold text-gray-500 mb-1">Conseils :</p>
                 {exercise.tips.map((tip, i) => (
                   <p key={i} className="text-xs text-gray-500 italic">• {tip}</p>
                 ))}
@@ -93,8 +94,8 @@ function SessionCard({ session, onStart }: { session: WorkoutSession; onStart: (
   const [expanded, setExpanded] = useState(false);
 
   const muscleEmojis: Record<string, string> = {
-    chest: '🫁', back: '🔙', shoulders: '💪', biceps: '💪', triceps: '💪',
-    legs: '🦵', glutes: '🍑', core: '🎯', full_body: '🏋️', cardio: '❤️',
+    chest: 'flexedBiceps', back: 'flexedBiceps', shoulders: 'flexedBiceps', biceps: 'flexedBiceps', triceps: 'flexedBiceps',
+    legs: 'leg', glutes: 'leg', core: 'bullseye', full_body: 'personLiftingWeights', cardio: 'fire',
   };
 
   return (
@@ -126,8 +127,8 @@ function SessionCard({ session, onStart }: { session: WorkoutSession; onStart: (
 
         <div className="flex gap-1 mb-3">
           {session.focusAreas.map(area => (
-            <span key={area} className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">
-              {muscleEmojis[area] || '💪'} {area === 'full_body' ? 'Full body' : area === 'cardio' ? 'Cardio' : area}
+            <span key={area} className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500 inline-flex items-center gap-1">
+              <Icon3D name={muscleEmojis[area] || 'flexedBiceps'} size={12} /> {area === 'full_body' ? 'Full body' : area === 'cardio' ? 'Cardio' : area}
             </span>
           ))}
         </div>

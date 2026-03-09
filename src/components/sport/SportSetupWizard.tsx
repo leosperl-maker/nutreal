@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronRight, ChevronLeft, Dumbbell, Target, Activity, 
+import Icon3D from '../Icon3D';
+import {
+  ChevronRight, ChevronLeft, Dumbbell, Target, Activity,
   AlertTriangle, Clock, Calendar, Zap, Heart, Flame, Sparkles
 } from 'lucide-react';
 import type { SportProfile, SportGoal, Difficulty, Equipment, Limitation, WorkoutType } from '../../lib/workoutGenerator';
@@ -19,35 +20,35 @@ const STEPS = [
 ];
 
 const GOALS: { value: SportGoal; label: string; emoji: string; desc: string }[] = [
-  { value: 'weight_loss', label: 'Perte de poids', emoji: '🔥', desc: 'Brûler des calories et affiner la silhouette' },
-  { value: 'muscle_gain', label: 'Prise de muscle', emoji: '💪', desc: 'Développer la masse musculaire' },
-  { value: 'endurance', label: 'Endurance', emoji: '🏃', desc: 'Améliorer le cardio et l\'endurance' },
-  { value: 'flexibility', label: 'Souplesse', emoji: '🧘', desc: 'Yoga, étirements et mobilité' },
-  { value: 'general_fitness', label: 'Forme générale', emoji: '⚡', desc: 'Un peu de tout, rester en forme' },
+  { value: 'weight_loss', label: 'Perte de poids', emoji: 'fire', desc: 'Brûler des calories et affiner la silhouette' },
+  { value: 'muscle_gain', label: 'Prise de muscle', emoji: 'flexedBiceps', desc: 'Développer la masse musculaire' },
+  { value: 'endurance', label: 'Endurance', emoji: 'personRunning', desc: 'Améliorer le cardio et l\'endurance' },
+  { value: 'flexibility', label: 'Souplesse', emoji: 'personInLotus', desc: 'Yoga, étirements et mobilité' },
+  { value: 'general_fitness', label: 'Forme générale', emoji: 'highVoltage', desc: 'Un peu de tout, rester en forme' },
 ];
 
 const LEVELS: { value: Difficulty; label: string; emoji: string; desc: string }[] = [
-  { value: 'beginner', label: 'Débutant', emoji: '🌱', desc: 'Je commence ou reprends le sport' },
-  { value: 'intermediate', label: 'Intermédiaire', emoji: '🌿', desc: 'Je m\'entraîne régulièrement depuis quelques mois' },
-  { value: 'advanced', label: 'Avancé', emoji: '🌳', desc: 'Je m\'entraîne depuis plus d\'un an' },
+  { value: 'beginner', label: 'Débutant', emoji: 'seedling', desc: 'Je commence ou reprends le sport' },
+  { value: 'intermediate', label: 'Intermédiaire', emoji: 'seedling', desc: 'Je m\'entraîne régulièrement depuis quelques mois' },
+  { value: 'advanced', label: 'Avancé', emoji: 'trophy', desc: 'Je m\'entraîne depuis plus d\'un an' },
 ];
 
 const LIMITATIONS_OPTIONS: { value: Limitation; label: string; emoji: string }[] = [
-  { value: 'none', label: 'Aucune limitation', emoji: '✅' },
-  { value: 'back_pain', label: 'Douleurs au dos', emoji: '🔙' },
-  { value: 'knee_problems', label: 'Problèmes de genoux', emoji: '🦵' },
-  { value: 'shoulder_injury', label: 'Blessure à l\'épaule', emoji: '💪' },
-  { value: 'wrist_pain', label: 'Douleurs aux poignets', emoji: '✋' },
-  { value: 'hip_problems', label: 'Problèmes de hanches', emoji: '🦴' },
+  { value: 'none', label: 'Aucune limitation', emoji: 'shield' },
+  { value: 'back_pain', label: 'Douleurs au dos', emoji: 'bone' },
+  { value: 'knee_problems', label: 'Problèmes de genoux', emoji: 'leg' },
+  { value: 'shoulder_injury', label: 'Blessure à l\'épaule', emoji: 'flexedBiceps' },
+  { value: 'wrist_pain', label: 'Douleurs aux poignets', emoji: 'flexedBiceps' },
+  { value: 'hip_problems', label: 'Problèmes de hanches', emoji: 'bone' },
 ];
 
 const EQUIPMENT_OPTIONS: { value: Equipment; label: string; emoji: string }[] = [
-  { value: 'none', label: 'Aucun (poids du corps)', emoji: '🏠' },
-  { value: 'dumbbells', label: 'Haltères', emoji: '🏋️' },
-  { value: 'resistance_bands', label: 'Élastiques', emoji: '🔗' },
-  { value: 'pull_up_bar', label: 'Barre de traction', emoji: '🪜' },
-  { value: 'bench', label: 'Banc de musculation', emoji: '🛋️' },
-  { value: 'barbell', label: 'Barre olympique', emoji: '🏋️‍♂️' },
+  { value: 'none', label: 'Aucun (poids du corps)', emoji: 'personCartwheeling' },
+  { value: 'dumbbells', label: 'Haltères', emoji: 'personLiftingWeights' },
+  { value: 'resistance_bands', label: 'Élastiques', emoji: 'flexedBiceps' },
+  { value: 'pull_up_bar', label: 'Barre de traction', emoji: 'personLiftingWeights' },
+  { value: 'bench', label: 'Banc de musculation', emoji: 'personLiftingWeights' },
+  { value: 'barbell', label: 'Barre olympique', emoji: 'personLiftingWeights' },
 ];
 
 export default function SportSetupWizard({ onComplete }: Props) {
@@ -127,7 +128,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{g.emoji}</span>
+                  <Icon3D name={g.emoji} size={28} />
                   <div>
                     <p className="font-semibold text-gray-800">{g.label}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{g.desc}</p>
@@ -152,7 +153,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{l.emoji}</span>
+                  <Icon3D name={l.emoji} size={28} />
                   <div>
                     <p className="font-semibold text-gray-800">{l.label}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{l.desc}</p>
@@ -178,7 +179,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{l.emoji}</span>
+                  <Icon3D name={l.emoji} size={22} />
                   <p className="font-medium text-gray-800">{l.label}</p>
                 </div>
               </button>
@@ -201,7 +202,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{e.emoji}</span>
+                  <Icon3D name={e.emoji} size={22} />
                   <p className="font-medium text-gray-800">{e.label}</p>
                 </div>
               </button>

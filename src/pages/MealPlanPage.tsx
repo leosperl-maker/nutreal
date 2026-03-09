@@ -6,13 +6,14 @@ import type { MealPlanDay, MealPlanOption } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import SuccessCheckmark from '../components/SuccessCheckmark';
+import Icon3D from '../components/Icon3D';
 import { ChefHat, ShoppingCart, Check, Sparkles, RefreshCw, UtensilsCrossed, Clock, ChevronRight } from 'lucide-react';
 
 const SLOT_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  breakfast: { label: 'Petit-déj', emoji: '🌅', color: 'from-amber-400 to-orange-500' },
-  lunch: { label: 'Déjeuner', emoji: '☀️', color: 'from-blue-400 to-cyan-500' },
-  snack: { label: 'Collation', emoji: '🍎', color: 'from-green-400 to-emerald-500' },
-  dinner: { label: 'Dîner', emoji: '🌙', color: 'from-indigo-400 to-purple-500' },
+  breakfast: { label: 'Petit-déj', emoji: 'sunrise', color: 'from-amber-400 to-orange-500' },
+  lunch: { label: 'Déjeuner', emoji: 'sun', color: 'from-blue-400 to-cyan-500' },
+  snack: { label: 'Collation', emoji: 'redApple', color: 'from-green-400 to-emerald-500' },
+  dinner: { label: 'Dîner', emoji: 'crescentMoon', color: 'from-indigo-400 to-purple-500' },
 };
 
 const DAY_SHORT: Record<string, string> = {
@@ -255,13 +256,13 @@ export default function MealPlanPage() {
         {/* Features */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { emoji: '🌍', title: 'Cuisine mondiale', desc: 'Japonais, italien, indien, mexicain...' },
-            { emoji: '🎯', title: 'Objectifs macros', desc: 'Adapté à vos besoins caloriques' },
-            { emoji: '📖', title: 'Recettes détaillées', desc: 'Instructions pas à pas' },
-            { emoji: '🛒', title: 'Liste de courses', desc: 'Générée automatiquement' },
+            { emoji: 'forkAndKnife', title: 'Cuisine mondiale', desc: 'Japonais, italien, indien, mexicain...' },
+            { emoji: 'bullseye', title: 'Objectifs macros', desc: 'Adapté à vos besoins caloriques' },
+            { emoji: 'openBook', title: 'Recettes détaillées', desc: 'Instructions pas à pas' },
+            { emoji: 'shoppingCart', title: 'Liste de courses', desc: 'Générée automatiquement' },
           ].map((f, i) => (
             <AnimatedCard key={i} className="p-3">
-              <span className="text-2xl">{f.emoji}</span>
+              <Icon3D name={f.emoji} size={28} />
               <p className="text-xs font-bold text-text-primary mt-2">{f.title}</p>
               <p className="text-[10px] text-text-muted mt-0.5">{f.desc}</p>
             </AnimatedCard>
@@ -411,7 +412,7 @@ export default function MealPlanPage() {
               <div key={si}>
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${slotInfo.color} flex items-center justify-center text-sm`}>
-                    {slotInfo.emoji}
+                    <Icon3D name={slotInfo.emoji} size={18} />
                   </div>
                   <h3 className="text-sm font-bold text-text-primary">{slotInfo.label}</h3>
                 </div>
@@ -444,7 +445,7 @@ export default function MealPlanPage() {
             <div key={si}>
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${slotInfo.color} flex items-center justify-center text-sm`}>
-                  {slotInfo.emoji}
+                  <Icon3D name={slotInfo.emoji} size={18} />
                 </div>
                 <h3 className="text-sm font-bold text-text-primary">{slotInfo.label}</h3>
               </div>

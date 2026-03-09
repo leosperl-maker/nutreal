@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Clock, Flame, Dumbbell, Star, ArrowRight } from 'lucide-react';
+import Icon3D from '../Icon3D';
 import confetti from 'canvas-confetti';
 
 interface Props {
@@ -44,10 +45,10 @@ export default function WorkoutComplete({ result, sessionName, onSelectFeeling }
   }, []);
 
   const feelings: { value: 'easy' | 'good' | 'hard' | 'exhausted'; emoji: string; label: string }[] = [
-    { value: 'easy', emoji: '😊', label: 'Facile' },
-    { value: 'good', emoji: '💪', label: 'Bien' },
-    { value: 'hard', emoji: '🔥', label: 'Intense' },
-    { value: 'exhausted', emoji: '😤', label: 'Épuisant' },
+    { value: 'easy', emoji: 'slightlySmiling', label: 'Facile' },
+    { value: 'good', emoji: 'flexedBiceps', label: 'Bien' },
+    { value: 'hard', emoji: 'fire', label: 'Intense' },
+    { value: 'exhausted', emoji: 'highVoltage', label: 'Épuisant' },
   ];
 
   const completionRate = Math.round((result.exercisesCompleted / result.totalExercises) * 100);
@@ -74,7 +75,7 @@ export default function WorkoutComplete({ result, sessionName, onSelectFeeling }
         transition={{ delay: 0.5 }}
         className="text-3xl font-bold text-white font-display mb-2"
       >
-        Bravo ! 🎉
+        Bravo !
       </motion.h1>
 
       <motion.p
@@ -125,7 +126,7 @@ export default function WorkoutComplete({ result, sessionName, onSelectFeeling }
               onClick={() => onSelectFeeling(f.value)}
               className="bg-white/10 hover:bg-white/20 rounded-xl p-3 text-center transition-all active:scale-95"
             >
-              <span className="text-2xl block mb-1">{f.emoji}</span>
+              <span className="block mb-1"><Icon3D name={f.emoji} size={28} /></span>
               <span className="text-white/70 text-xs">{f.label}</span>
             </button>
           ))}

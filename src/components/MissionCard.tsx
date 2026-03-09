@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { AIMission } from '../store/useStore';
+import Icon3D from './Icon3D';
 
 interface MissionCardProps {
   mission: AIMission;
@@ -46,7 +47,7 @@ export default function MissionCard({ mission, index = 0 }: MissionCardProps) {
             <Check size={20} className="text-white" />
           </motion.div>
         ) : (
-          <span className="text-xl">{mission.emoji}</span>
+          <Icon3D name={mission.emoji} size={24} />
         )}
       </motion.button>
 

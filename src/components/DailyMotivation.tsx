@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Quote } from 'lucide-react';
 import { getDailyMotivation, type MotivationContext } from '../lib/motivation';
+import Icon3D from './Icon3D';
 
 interface DailyMotivationProps {
   context: MotivationContext;
@@ -41,7 +42,7 @@ export default function DailyMotivation({ context }: DailyMotivationProps) {
           <span className={`text-[10px] font-bold uppercase tracking-wider ${
             quote.type === 'progress' ? 'text-green-700' : 'text-amber-700'
           }`}>
-            {quote.type === 'progress' ? '💪 Ton progrès' : '✨ Citation du jour'}
+            {quote.type === 'progress' ? <><Icon3D name="flexedBiceps" size={14} /> Ton progrès</> : <><Icon3D name="sparkles" size={14} /> Citation du jour</>}
           </span>
         </div>
 

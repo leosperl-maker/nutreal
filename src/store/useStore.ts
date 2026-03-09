@@ -105,6 +105,7 @@ export interface AvatarConfig {
   accessory: string | null;
   pet: string | null;
   unlockedItems: string[];
+  avatarUrl: string | null; // Ready Player Me GLB URL
 }
 
 export interface CheckIn {
@@ -144,15 +145,15 @@ export function totalXpForLevel(targetLevel: number): number {
 
 function categorizeIngredient(ingredient: string): string {
   const ing = ingredient.toLowerCase();
-  if (['eau','jus','thé','café','boisson','lait d\'amande'].some(b => ing.includes(b))) return '🥤 Boissons';
-  if (['poulet','boeuf','bœuf','porc','saumon','thon','morue','crevette','poisson','dinde','veau','tofu','lentille','pois chiche','haricot','lambi','chatrou','langouste','boudin','saucisse'].some(p => ing.includes(p))) return '🥩 Protéines';
-  if (ing.includes('œuf') || ing.includes('oeuf')) return '🥚 Œufs';
-  if (['lait','yaourt','fromage','crème','beurre','mozzarella','parmesan'].some(d => ing.includes(d))) return '🧀 Produits laitiers';
-  if (['riz','pâte','pain','quinoa','avoine','farine','semoule','pomme de terre','patate','igname','manioc','banane plantain','fruit à pain'].some(s => ing.includes(s))) return '🌾 Féculents';
-  if (['huile','amande','noix','graine','chia','cacahuète','olive','sésame'].some(f => ing.includes(f))) return '🥜 Matières grasses';
-  if (['tomate','carotte','courgette','poivron','oignon','ail','épinard','brocoli','concombre','chou','pomme','banane','mangue','citron','avocat','orange','ananas','christophine','giraumon','gingembre','persil','basilic','thym'].some(p => ing.includes(p))) return '🥬 Fruits & Légumes';
-  if (['sauce','vinaigre','moutarde','miel','sucre','sel','poivre','épice','colombo','curry','bouillon','lait de coco','chocolat'].some(p => ing.includes(p))) return '🫙 Épicerie';
-  return '🛒 Autres';
+  if (['eau','jus','thé','café','boisson','lait d\'amande'].some(b => ing.includes(b))) return 'Boissons';
+  if (['poulet','boeuf','bœuf','porc','saumon','thon','morue','crevette','poisson','dinde','veau','tofu','lentille','pois chiche','haricot','lambi','chatrou','langouste','boudin','saucisse'].some(p => ing.includes(p))) return 'Protéines';
+  if (ing.includes('œuf') || ing.includes('oeuf')) return 'Oeufs';
+  if (['lait','yaourt','fromage','crème','beurre','mozzarella','parmesan'].some(d => ing.includes(d))) return 'Produits laitiers';
+  if (['riz','pâte','pain','quinoa','avoine','farine','semoule','pomme de terre','patate','igname','manioc','banane plantain','fruit à pain'].some(s => ing.includes(s))) return 'Féculents';
+  if (['huile','amande','noix','graine','chia','cacahuète','olive','sésame'].some(f => ing.includes(f))) return 'Matières grasses';
+  if (['tomate','carotte','courgette','poivron','oignon','ail','épinard','brocoli','concombre','chou','pomme','banane','mangue','citron','avocat','orange','ananas','christophine','giraumon','gingembre','persil','basilic','thym'].some(p => ing.includes(p))) return 'Fruits & Légumes';
+  if (['sauce','vinaigre','moutarde','miel','sucre','sel','poivre','épice','colombo','curry','bouillon','lait de coco','chocolat'].some(p => ing.includes(p))) return 'Épicerie';
+  return 'Autres';
 }
 
 function getRealisticQty(ing: string, cat: string): { quantity: string; unit: string } {
@@ -162,9 +163,9 @@ function getRealisticQty(ing: string, cat: string): { quantity: string; unit: st
   if (['épice','sel','poivre','colombo','curry','curcuma'].some(s => i.includes(s))) return { quantity: '5', unit: 'g' };
   if (['persil','basilic','thym','menthe','ciboulette'].some(s => i.includes(s))) return { quantity: '10', unit: 'g' };
   if (i.includes('lait de coco')) return { quantity: '200', unit: 'ml' };
-  if (cat === '🥩 Protéines') return { quantity: '150', unit: 'g' };
-  if (cat === '🌾 Féculents') return { quantity: '80', unit: 'g' };
-  if (cat === '🥬 Fruits & Légumes') return { quantity: '200', unit: 'g' };
+  if (cat === 'Protéines') return { quantity: '150', unit: 'g' };
+  if (cat === 'Féculents') return { quantity: '80', unit: 'g' };
+  if (cat === 'Fruits & Légumes') return { quantity: '200', unit: 'g' };
   return { quantity: '100', unit: 'g' };
 }
 
@@ -226,6 +227,7 @@ interface AppState {
   dismissLevelUp: () => void;
   setAvatarConfig: (config: AvatarConfig) => void;
   updateAvatarConfig: (updates: Partial<AvatarConfig>) => void;
+  setAvatarUrl: (url: string) => void;
   unlockAvatarItem: (itemId: string) => void;
   setSelectedTitle: (title: string) => void;
   setDailyMissions: (missions: AIMission[], date: string) => void;
@@ -357,6 +359,11 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   updateAvatarConfig: (updates) => set((s) => {
     if (!s.avatarConfig) return s;
     return { avatarConfig: { ...s.avatarConfig, ...updates } };
+  }),
+
+  setAvatarUrl: (url) => set((s) => {
+    const config = s.avatarConfig || { skinColor: '', hairColor: '', hairStyle: '', eyeColor: '', outfit: '', outfitColor: '', accessory: null, pet: null, unlockedItems: [], avatarUrl: null };
+    return { avatarConfig: { ...config, avatarUrl: url } };
   }),
 
   unlockAvatarItem: (itemId) => set((s) => {

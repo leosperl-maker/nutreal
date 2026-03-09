@@ -6,6 +6,7 @@ import type { DetailedHealthIssue } from '../store/useStore';
 import { calculateNutritionPlan, LOCATION_OPTIONS, FOOD_PREFERENCE_OPTIONS, GROCERY_FREQUENCY_OPTIONS, getCurrencyForLocation } from '../lib/nutrition';
 import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home, Sparkles, Pill, Plus, Trash2, FileText } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
+import Icon3D from '../components/Icon3D';
 
 type HealthDetail = 'musculaire' | 'osseux' | 'articulaire' | 'cerebral';
 
@@ -148,7 +149,7 @@ export default function Onboarding() {
             <div>
               <label className="text-sm font-medium text-text-secondary mb-2 block">Sexe</label>
               <div className="grid grid-cols-2 gap-3">
-                {[{ v: 'M', l: '👨 Homme' }, { v: 'F', l: '👩 Femme' }].map(o => (
+                {[{ v: 'M', l: 'Homme' }, { v: 'F', l: 'Femme' }].map(o => (
                   <button key={o.v} onClick={() => update('sex', o.v)}
                     className={`py-3 rounded-xl font-medium text-sm transition-all ${form.sex === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white text-text-primary border border-surface-300'}`}>
                     {o.l}
@@ -196,14 +197,14 @@ export default function Onboarding() {
       case 'Activité':
         return (
           <div className="space-y-2">
-            {[{ v: 'sedentary', l: '🪑 Sédentaire', d: 'Bureau, peu de mouvement' },
-              { v: 'light', l: '🚶 Légèrement actif', d: '1-2 séances/semaine' },
-              { v: 'moderate', l: '🏃 Modérément actif', d: '3-5 séances/semaine' },
-              { v: 'active', l: '💪 Actif', d: '6-7 séances/semaine' },
-              { v: 'very_active', l: '🔥 Très actif', d: 'Athlète, travail physique' }].map(o => (
+            {[{ v: 'sedentary', l: 'Sédentaire', icon: null, d: 'Bureau, peu de mouvement' },
+              { v: 'light', l: 'Légèrement actif', icon: 'personWalking', d: '1-2 séances/semaine' },
+              { v: 'moderate', l: 'Modérément actif', icon: 'personRunning', d: '3-5 séances/semaine' },
+              { v: 'active', l: 'Actif', icon: 'flexedBiceps', d: '6-7 séances/semaine' },
+              { v: 'very_active', l: 'Très actif', icon: 'fire', d: 'Athlète, travail physique' }].map(o => (
               <button key={o.v} onClick={() => update('activityLevel', o.v)}
                 className={`w-full p-4 rounded-xl text-left transition-all ${form.activityLevel === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                <div className="font-medium text-sm">{o.l}</div>
+                <div className="font-medium text-sm flex items-center gap-1.5">{o.icon && <Icon3D name={o.icon} size={16} />}{o.l}</div>
                 <div className={`text-xs mt-0.5 ${form.activityLevel === o.v ? 'text-white/70' : 'text-text-muted'}`}>{o.d}</div>
               </button>
             ))}
@@ -219,8 +220,8 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-2">
                   {locs.map(loc => (
                     <button key={loc.value} onClick={() => update('location', loc.value)}
-                      className={`p-3 rounded-xl text-left text-sm transition-all ${form.location === loc.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                      {loc.emoji} {loc.label}
+                      className={`p-3 rounded-xl text-left text-sm transition-all flex items-center gap-1.5 ${form.location === loc.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                      <Icon3D name={loc.emoji} size={16} /> {loc.label}
                     </button>
                   ))}
                 </div>
@@ -242,8 +243,8 @@ export default function Onboarding() {
               <div className="space-y-2">
                 {GROCERY_FREQUENCY_OPTIONS.map(o => (
                   <button key={o.value} onClick={() => update('groceryFrequency', o.value)}
-                    className={`w-full p-3 rounded-xl text-left text-sm transition-all ${form.groceryFrequency === o.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                    {o.emoji} {o.label} — <span className={form.groceryFrequency === o.value ? 'text-white/70' : 'text-text-muted'}>{o.desc}</span>
+                    className={`w-full p-3 rounded-xl text-left text-sm transition-all flex items-center gap-1.5 ${form.groceryFrequency === o.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <Icon3D name={o.emoji} size={16} /> {o.label} — <span className={form.groceryFrequency === o.value ? 'text-white/70' : 'text-text-muted'}>{o.desc}</span>
                   </button>
                 ))}
               </div>
@@ -257,15 +258,15 @@ export default function Onboarding() {
             <label className="text-sm font-medium text-text-secondary mb-2 block">Combien de temps souhaitez-vous cuisiner ?</label>
             <div className="space-y-2">
               {[
-                { v: '15 min', l: '⚡ 15 minutes', d: 'Repas express et rapides' },
-                { v: '30 min', l: '🍳 30 minutes', d: 'La plupart des recettes classiques' },
-                { v: '45 min', l: '👨‍🍳 45 minutes', d: 'Plats mijotés et élaborés' },
-                { v: '1h+', l: '🎯 1 heure ou plus', d: 'Cuisine gastronomique' },
-                { v: 'no_limit', l: '♾️ Pas de limite', d: 'J\'aime prendre mon temps' },
+                { v: '15 min', l: '15 minutes', icon: 'highVoltage', d: 'Repas express et rapides' },
+                { v: '30 min', l: '30 minutes', icon: null, d: 'La plupart des recettes classiques' },
+                { v: '45 min', l: '45 minutes', icon: null, d: 'Plats mijotés et élaborés' },
+                { v: '1h+', l: '1 heure ou plus', icon: 'bullseye', d: 'Cuisine gastronomique' },
+                { v: 'no_limit', l: 'Pas de limite', icon: null, d: 'J\'aime prendre mon temps' },
               ].map(o => (
                 <button key={o.v} onClick={() => update('cookingTime', o.v)}
                   className={`w-full p-4 rounded-xl text-left transition-all ${form.cookingTime === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                  <div className="font-medium text-sm">{o.l}</div>
+                  <div className="font-medium text-sm flex items-center gap-1.5">{o.icon && <Icon3D name={o.icon} size={16} />}{o.l}</div>
                   <div className={`text-xs mt-0.5 ${form.cookingTime === o.v ? 'text-white/70' : 'text-text-muted'}`}>{o.d}</div>
                 </button>
               ))}
@@ -298,12 +299,12 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => update('familyMode', true)}
                     className={`p-4 rounded-xl text-left transition-all ${form.familyMode ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                    <div className="font-medium text-sm">👨‍👩‍👧‍👦 Oui, mode famille</div>
+                    <div className="font-medium text-sm">Oui, mode famille</div>
                     <div className={`text-xs mt-1 ${form.familyMode ? 'text-white/70' : 'text-text-muted'}`}>Portions adaptées pour tous</div>
                   </button>
                   <button onClick={() => update('familyMode', false)}
                     className={`p-4 rounded-xl text-left transition-all ${!form.familyMode ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                    <div className="font-medium text-sm">🧑 Non, juste pour moi</div>
+                    <div className="font-medium text-sm">Non, juste pour moi</div>
                     <div className={`text-xs mt-1 ${!form.familyMode ? 'text-white/70' : 'text-text-muted'}`}>Repas individuels uniquement</div>
                   </button>
                 </div>
@@ -365,7 +366,7 @@ export default function Onboarding() {
                 </div>
                 <button onClick={() => { if (!form.medicalConditions.includes('Aucune')) { setForm(f => ({ ...f, medicalConditions: ['Aucune'] })); } }}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${form.medicalConditions.includes('Aucune') ? 'bg-green-500 text-white' : 'bg-white border border-surface-300 text-text-primary'}`}>
-                  ✅ Aucune condition
+                  Aucune condition
                 </button>
               </div>
             </div>
@@ -378,16 +379,16 @@ export default function Onboarding() {
             <p className="text-sm text-text-secondary mb-2">Ces modules sont optionnels et vous permettent un suivi personnalisé.</p>
             <div className="space-y-3">
               {[
-                { id: 'muscle_joint', emoji: '🏋️', title: 'Santé musculaire & articulaire', desc: 'Suivez vos douleurs et adaptez vos exercices', show: true },
-                { id: 'cycle', emoji: '🌸', title: 'Suivi du cycle menstruel', desc: 'Adaptez votre alimentation à votre cycle', show: form.sex === 'F' },
-                { id: 'medications', emoji: '💊', title: 'Rappels médicaments', desc: 'Ne manquez plus aucune prise', show: true },
+                { id: 'muscle_joint', emoji: 'personLiftingWeights', title: 'Santé musculaire & articulaire', desc: 'Suivez vos douleurs et adaptez vos exercices', show: true },
+                { id: 'cycle', emoji: 'cherryBlossom', title: 'Suivi du cycle menstruel', desc: 'Adaptez votre alimentation à votre cycle', show: form.sex === 'F' },
+                { id: 'medications', emoji: 'pill', title: 'Rappels médicaments', desc: 'Ne manquez plus aucune prise', show: true },
               ].filter(m => m.show).map(mod => {
                 const selected = form.healthModules.includes(mod.id);
                 return (
                   <motion.button key={mod.id} whileTap={{ scale: 0.97 }}
                     onClick={() => toggleArr('healthModules', mod.id)}
                     className={`w-full p-4 rounded-2xl text-left transition-all flex items-start gap-3 ${selected ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
-                    <span className="text-2xl mt-0.5">{mod.emoji}</span>
+                    <span className="mt-0.5"><Icon3D name={mod.emoji} size={28} /></span>
                     <div className="flex-1">
                       <div className="font-semibold text-sm flex items-center gap-2">
                         {mod.title}
@@ -410,13 +411,13 @@ export default function Onboarding() {
           <div className="space-y-4">
             <p className="text-sm text-text-secondary mb-2">Sélectionnez ce qui vous concerne pour adapter vos recommandations.</p>
             {([
-              { cat: 'osseux' as HealthDetail, emoji: '🦴', label: 'Osseux', items: ['Ostéoporose', 'Fracture récente', 'Hernie discale', 'Scoliose'] },
-              { cat: 'musculaire' as HealthDetail, emoji: '💪', label: 'Musculaire', items: ['Douleurs dos', 'Tendinite', 'Crampes fréquentes', 'Fonte musculaire', 'Fibromyalgie'] },
-              { cat: 'articulaire' as HealthDetail, emoji: '🦿', label: 'Articulaire', items: ['Arthrose', 'Douleur genou', 'Douleur épaule', 'Douleur hanche', 'Douleur cheville', 'Polyarthrite'] },
-              { cat: 'cerebral' as HealthDetail, emoji: '🧠', label: 'Cérébral & nerveux', items: ['Migraines', 'Trouble du sommeil', 'Anxiété / stress', 'Vertiges', 'Épilepsie'] },
+              { cat: 'osseux' as HealthDetail, emoji: 'bone', label: 'Osseux', items: ['Ostéoporose', 'Fracture récente', 'Hernie discale', 'Scoliose'] },
+              { cat: 'musculaire' as HealthDetail, emoji: 'flexedBiceps', label: 'Musculaire', items: ['Douleurs dos', 'Tendinite', 'Crampes fréquentes', 'Fonte musculaire', 'Fibromyalgie'] },
+              { cat: 'articulaire' as HealthDetail, emoji: 'mechanicalLeg', label: 'Articulaire', items: ['Arthrose', 'Douleur genou', 'Douleur épaule', 'Douleur hanche', 'Douleur cheville', 'Polyarthrite'] },
+              { cat: 'cerebral' as HealthDetail, emoji: 'brain', label: 'Cérébral & nerveux', items: ['Migraines', 'Trouble du sommeil', 'Anxiété / stress', 'Vertiges', 'Épilepsie'] },
             ]).map(group => (
               <div key={group.cat}>
-                <p className="text-xs font-semibold text-text-muted mb-1.5">{group.emoji} {group.label}</p>
+                <p className="text-xs font-semibold text-text-muted mb-1.5 flex items-center gap-1"><Icon3D name={group.emoji} size={16} /> {group.label}</p>
                 <div className="flex flex-wrap gap-2">
                   {group.items.map(item => (
                     <button key={item} onClick={() => toggleHealthDetail(group.cat, item)}
@@ -595,8 +596,8 @@ export default function Onboarding() {
             <div className="flex flex-wrap gap-2">
               {FOOD_PREFERENCE_OPTIONS.map(f => (
                 <button key={f.value} onClick={() => toggleArr('foodPreferences', f.value)}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${form.foodPreferences.includes(f.value) ? 'bg-primary-500 text-white' : 'bg-white border border-surface-300 text-text-primary'}`}>
-                  {f.emoji} {f.label}
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${form.foodPreferences.includes(f.value) ? 'bg-primary-500 text-white' : 'bg-white border border-surface-300 text-text-primary'}`}>
+                  <Icon3D name={f.emoji} size={16} /> {f.label}
                 </button>
               ))}
             </div>

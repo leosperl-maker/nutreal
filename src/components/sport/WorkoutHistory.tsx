@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import Icon3D from '../Icon3D';
 import { Clock, Flame, Dumbbell, TrendingUp, Calendar } from 'lucide-react';
 import type { CompletedWorkout } from '../../lib/workoutGenerator';
 
@@ -15,10 +16,10 @@ interface Props {
 }
 
 const feelingEmojis: Record<string, string> = {
-  easy: '😊',
-  good: '💪',
-  hard: '🔥',
-  exhausted: '😤',
+  easy: 'slightlySmiling',
+  good: 'flexedBiceps',
+  hard: 'fire',
+  exhausted: 'highVoltage',
 };
 
 export default function WorkoutHistory({ workouts, weeklyStats, streak }: Props) {
@@ -52,7 +53,7 @@ export default function WorkoutHistory({ workouts, weeklyStats, streak }: Props)
         </div>
         {streak > 0 && (
           <div className="mt-3 flex items-center justify-center gap-2 bg-white rounded-xl py-2">
-            <span className="text-orange-500">🔥</span>
+            <Icon3D name="fire" size={16} />
             <span className="text-sm font-semibold text-gray-700">{streak} jours consécutifs</span>
           </div>
         )}
@@ -66,7 +67,7 @@ export default function WorkoutHistory({ workouts, weeklyStats, streak }: Props)
         </h3>
         {recentWorkouts.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center shadow-card">
-            <span className="text-4xl block mb-3">🏋️</span>
+            <span className="block mb-3"><Icon3D name="personLiftingWeights" size={40} /></span>
             <p className="text-gray-400 text-sm">Aucun entraînement terminé</p>
             <p className="text-gray-300 text-xs mt-1">Lancez votre première séance !</p>
           </div>
@@ -80,8 +81,8 @@ export default function WorkoutHistory({ workouts, weeklyStats, streak }: Props)
                 transition={{ delay: index * 0.05 }}
                 className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center text-lg">
-                  {feelingEmojis[workout.feeling] || '💪'}
+                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                  <Icon3D name={feelingEmojis[workout.feeling] || 'flexedBiceps'} size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 text-sm truncate">{workout.sessionName}</p>

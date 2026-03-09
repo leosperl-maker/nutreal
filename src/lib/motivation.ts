@@ -78,20 +78,20 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Weight loss progress
   if (ctx.weightLost > 0) {
     messages.push({
-      text: `Tu as déjà perdu ${ctx.weightLost.toFixed(1)} kg, ${ctx.name} ! Continue comme ça, tu es sur la bonne voie ! 💪`,
+      text: `Tu as déjà perdu ${ctx.weightLost.toFixed(1)} kg, ${ctx.name} ! Continue comme ça, tu es sur la bonne voie !`,
       type: 'progress',
     });
 
     if (ctx.weightLost >= 1 && ctx.weightLost < 5) {
       messages.push({
-        text: `${ctx.weightLost.toFixed(1)} kg de perdus ! Les premiers kilos sont les plus importants, ils prouvent que tu peux le faire ! 🌟`,
+        text: `${ctx.weightLost.toFixed(1)} kg de perdus ! Les premiers kilos sont les plus importants, ils prouvent que tu peux le faire !`,
         type: 'progress',
       });
     }
 
     if (ctx.weightLost >= 5) {
       messages.push({
-        text: `Incroyable, ${ctx.name} ! ${ctx.weightLost.toFixed(1)} kg de perdus ! Tu es une vraie source d'inspiration ! 🏆`,
+        text: `Incroyable, ${ctx.name} ! ${ctx.weightLost.toFixed(1)} kg de perdus ! Tu es une vraie source d'inspiration !`,
         type: 'progress',
       });
     }
@@ -102,17 +102,17 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
     
     if (percentLost >= 25 && percentLost < 50) {
       messages.push({
-        text: `Tu as déjà parcouru un quart du chemin ! ${Math.round(percentLost)}% de ton objectif atteint ! 🎯`,
+        text: `Tu as déjà parcouru un quart du chemin ! ${Math.round(percentLost)}% de ton objectif atteint !`,
         type: 'progress',
       });
     } else if (percentLost >= 50 && percentLost < 75) {
       messages.push({
-        text: `La moitié du chemin est faite ! ${Math.round(percentLost)}% de ton objectif, tu es incroyable ! 🔥`,
+        text: `La moitié du chemin est faite ! ${Math.round(percentLost)}% de ton objectif, tu es incroyable !`,
         type: 'progress',
       });
     } else if (percentLost >= 75) {
       messages.push({
-        text: `${Math.round(percentLost)}% de ton objectif atteint ! La ligne d'arrivée est en vue ! 🏁`,
+        text: `${Math.round(percentLost)}% de ton objectif atteint ! La ligne d'arrivée est en vue !`,
         type: 'progress',
       });
     }
@@ -121,12 +121,12 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Weight to go
   if (ctx.weightToGo > 0 && ctx.weightToGo <= 5) {
     messages.push({
-      text: `Plus que ${ctx.weightToGo.toFixed(1)} kg avant ton objectif ! Tu y es presque, ${ctx.name} ! 🎉`,
+      text: `Plus que ${ctx.weightToGo.toFixed(1)} kg avant ton objectif ! Tu y es presque, ${ctx.name} !`,
       type: 'progress',
     });
   } else if (ctx.weightToGo > 5 && ctx.weightToGo <= 10) {
     messages.push({
-      text: `Encore ${ctx.weightToGo.toFixed(1)} kg et tu atteins ton objectif. Chaque jour te rapproche ! 🚀`,
+      text: `Encore ${ctx.weightToGo.toFixed(1)} kg et tu atteins ton objectif. Chaque jour te rapproche !`,
       type: 'progress',
     });
   }
@@ -134,22 +134,22 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Streak messages
   if (ctx.streak >= 3 && ctx.streak < 7) {
     messages.push({
-      text: `${ctx.streak} jours consécutifs de suivi ! Tu construis une habitude solide ! 🔥`,
+      text: `${ctx.streak} jours consécutifs de suivi ! Tu construis une habitude solide !`,
       type: 'progress',
     });
   } else if (ctx.streak >= 7 && ctx.streak < 14) {
     messages.push({
-      text: `${ctx.streak} jours de suite ! Une semaine complète de discipline, bravo ${ctx.name} ! 💎`,
+      text: `${ctx.streak} jours de suite ! Une semaine complète de discipline, bravo ${ctx.name} !`,
       type: 'progress',
     });
   } else if (ctx.streak >= 14 && ctx.streak < 30) {
     messages.push({
-      text: `${ctx.streak} jours consécutifs ! Tu es en train de transformer ta vie ! 🌟`,
+      text: `${ctx.streak} jours consécutifs ! Tu es en train de transformer ta vie !`,
       type: 'progress',
     });
   } else if (ctx.streak >= 30) {
     messages.push({
-      text: `${ctx.streak} jours de suite ! Un mois de constance, tu es un champion ! 👑`,
+      text: `${ctx.streak} jours de suite ! Un mois de constance, tu es un champion !`,
       type: 'progress',
     });
   }
@@ -157,17 +157,17 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Total meals tracked
   if (ctx.totalMeals >= 10 && ctx.totalMeals < 50) {
     messages.push({
-      text: `${ctx.totalMeals} repas enregistrés ! Tu prends le contrôle de ton alimentation ! 📊`,
+      text: `${ctx.totalMeals} repas enregistrés ! Tu prends le contrôle de ton alimentation !`,
       type: 'progress',
     });
   } else if (ctx.totalMeals >= 50 && ctx.totalMeals < 100) {
     messages.push({
-      text: `${ctx.totalMeals} repas suivis ! Tu es devenu un expert de ton alimentation ! 🧠`,
+      text: `${ctx.totalMeals} repas suivis ! Tu es devenu un expert de ton alimentation !`,
       type: 'progress',
     });
   } else if (ctx.totalMeals >= 100) {
     messages.push({
-      text: `Plus de ${ctx.totalMeals} repas enregistrés ! La nutrition n'a plus de secrets pour toi ! 🏅`,
+      text: `Plus de ${ctx.totalMeals} repas enregistrés ! La nutrition n'a plus de secrets pour toi !`,
       type: 'progress',
     });
   }
@@ -175,7 +175,7 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Estimated time to goal
   if (ctx.estimatedWeeksToGoal > 0 && ctx.estimatedWeeksToGoal <= 4) {
     messages.push({
-      text: `Plus que ~${ctx.estimatedWeeksToGoal} semaines pour atteindre ton objectif ! Le sprint final ! 🏃`,
+      text: `Plus que ~${ctx.estimatedWeeksToGoal} semaines pour atteindre ton objectif ! Le sprint final !`,
       type: 'progress',
     });
   }
@@ -183,11 +183,11 @@ function getPersonalizedMessages(ctx: MotivationContext): MotivationalQuote[] {
   // Starting fresh (no progress yet)
   if (ctx.weightLost <= 0 && ctx.streak <= 1 && ctx.totalMeals < 5) {
     messages.push({
-      text: `Bienvenue ${ctx.name} ! Chaque grand voyage commence par un premier pas. Tu as fait le tien ! 🌱`,
+      text: `Bienvenue ${ctx.name} ! Chaque grand voyage commence par un premier pas. Tu as fait le tien !`,
       type: 'progress',
     });
     messages.push({
-      text: `${ctx.name}, aujourd'hui est le premier jour de ta transformation. Tu vas y arriver ! 💪`,
+      text: `${ctx.name}, aujourd'hui est le premier jour de ta transformation. Tu vas y arriver !`,
       type: 'progress',
     });
   }
@@ -236,27 +236,27 @@ export function getMilestones(weightLost: number, celebratedMilestones: number[]
     let message: string;
 
     if (kg <= 2) {
-      emoji = '🌱';
+      emoji = 'seedling';
       title = `${kg} kg de perdus !`;
       message = `Les premiers kilos sont les plus importants. Tu as prouvé que tu peux le faire !`;
     } else if (kg <= 5) {
-      emoji = '⭐';
+      emoji = 'glowingStar';
       title = `${kg} kg de perdus !`;
       message = `Bravo ! Tu commences à voir de vrais résultats. Continue sur cette lancée !`;
     } else if (kg <= 10) {
-      emoji = '🔥';
+      emoji = 'fire';
       title = `${kg} kg de perdus !`;
       message = `Incroyable ! ${kg} kg c'est énorme. Ton corps te remercie !`;
     } else if (kg <= 20) {
-      emoji = '🏆';
+      emoji = 'trophy';
       title = `${kg} kg de perdus !`;
       message = `Tu es une machine ! ${kg} kg de transformation, c'est inspirant !`;
     } else if (kg <= 30) {
-      emoji = '👑';
+      emoji = 'crown';
       title = `${kg} kg de perdus !`;
       message = `Légendaire ! ${kg} kg de perdus, tu as complètement changé ta vie !`;
     } else {
-      emoji = '💎';
+      emoji = 'sparkles';
       title = `${kg} kg de perdus !`;
       message = `Extraordinaire ! ${kg} kg, tu es un exemple pour tous. Rien ne peut t'arrêter !`;
     }

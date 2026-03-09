@@ -165,11 +165,11 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
   };
 
   const phaseLabels: Record<Phase, string> = {
-    warmup: '🔥 Échauffement',
-    exercise: '💪 Exercice',
-    rest: '😮‍💨 Repos',
-    cooldown: '🧘 Retour au calme',
-    complete: '🎉 Terminé !',
+    warmup: 'Échauffement',
+    exercise: 'Exercice',
+    rest: 'Repos',
+    cooldown: 'Retour au calme',
+    complete: 'Terminé !',
   };
 
   if (phase === 'complete') return null;
@@ -220,7 +220,7 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
               exit={{ opacity: 0, scale: 0.8 }}
               className="text-center"
             >
-              <p className="text-blue-400 text-sm font-medium mb-4">😮‍💨 Repos</p>
+              <p className="text-blue-400 text-sm font-medium mb-4">Repos</p>
               <div className="w-40 h-40 rounded-full border-4 border-blue-400 flex items-center justify-center mb-6">
                 <span className="text-5xl font-bold text-white">{restTimer}</span>
               </div>

@@ -4,6 +4,7 @@ import { useStore, FamilyMember } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
+import Icon3D from '../components/Icon3D';
 import { Users, UserPlus, Copy, Check, Trash2, Crown, Heart, Baby, User, Trophy } from 'lucide-react';
 
 const ROLE_LABELS: Record<FamilyMember['role'], string> = {
@@ -15,11 +16,11 @@ const ROLE_LABELS: Record<FamilyMember['role'], string> = {
 };
 
 const ROLE_EMOJIS: Record<FamilyMember['role'], string> = {
-  chef: '👨‍🍳',
-  conjoint: '❤️',
-  enfant: '👶',
-  frere_soeur: '🧑‍🤝‍🧑',
-  autre: '👤',
+  chef: 'forkAndKnife',
+  conjoint: 'cherryBlossom',
+  enfant: 'seedling',
+  frere_soeur: 'bustInSilhouette',
+  autre: 'bustInSilhouette',
 };
 
 const ACTIVITY_OPTIONS = [
@@ -327,7 +328,7 @@ export default function FamilyPage() {
                   <AnimatedCard key={member.id} index={i + 1} className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-surface-100 rounded-xl flex items-center justify-center text-xl relative">
-                        {ROLE_EMOJIS[member.role]}
+                        <Icon3D name={ROLE_EMOJIS[member.role]} size={24} />
                         {isChef && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning-300 rounded-full flex items-center justify-center shadow-sm">
                             <Crown size={10} className="text-white" />
@@ -379,11 +380,11 @@ export default function FamilyPage() {
                   <p className="text-xs text-text-muted mb-3">Qui est le plus régulier cette semaine ?</p>
                   <div className="space-y-2">
                     {family.members.map((member, idx) => {
-                      const medals = ['🥇', '🥈', '🥉'];
+                      const medals = ['firstPlace', 'secondPlace', 'thirdPlace'];
                       return (
                         <div key={member.id} className={`flex items-center gap-3 p-2 rounded-xl ${idx === 0 ? 'bg-warning-50' : 'bg-surface-50'}`}>
-                          <span className="text-lg w-7 text-center">{medals[idx] || `${idx + 1}.`}</span>
-                          <span className="text-xl">{ROLE_EMOJIS[member.role]}</span>
+                          <span className="w-7 text-center">{medals[idx] ? <Icon3D name={medals[idx]} size={20} /> : `${idx + 1}.`}</span>
+                          <Icon3D name={ROLE_EMOJIS[member.role]} size={20} />
                           <span className="text-sm font-medium text-text-primary flex-1">{member.name}</span>
                           <div className="text-right">
                             <p className="text-xs font-bold text-primary-500">{member.dailyCalorieBudget} kcal</p>

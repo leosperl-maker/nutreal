@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Flame, Droplets, Dumbbell, Utensils, TrendingUp, Target } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import Icon3D from './Icon3D';
 
 interface WeeklyReportProps {
   open: boolean;
@@ -28,12 +29,12 @@ export default function WeeklyReport({ open, onClose }: WeeklyReportProps) {
   const completedMissions = dailyMissions.filter(m => m.isCompleted).length;
 
   const stats = [
-    { icon: Utensils, label: 'Repas enregistrés', value: weekMeals.length, emoji: '🍽️', color: 'from-blue-400 to-blue-600' },
-    { icon: Flame, label: 'Calories consommées', value: `${Math.round(weekCalories).toLocaleString()} kcal`, emoji: '🔥', color: 'from-orange-400 to-red-500' },
-    { icon: Dumbbell, label: 'Séances sport', value: weekSport.length, emoji: '💪', color: 'from-green-400 to-emerald-600' },
-    { icon: Dumbbell, label: 'Calories brûlées', value: `${weekBurned} kcal`, emoji: '⚡', color: 'from-yellow-400 to-amber-500' },
-    { icon: Droplets, label: 'Eau bue', value: `${(weekWaterTotal / 1000).toFixed(1)}L`, emoji: '💧', color: 'from-cyan-400 to-blue-500' },
-    { icon: Target, label: 'Missions complétées', value: completedMissions, emoji: '🎯', color: 'from-purple-400 to-violet-600' },
+    { icon: Utensils, label: 'Repas enregistrés', value: weekMeals.length, emoji: 'forkAndKnife', color: 'from-blue-400 to-blue-600' },
+    { icon: Flame, label: 'Calories consommées', value: `${Math.round(weekCalories).toLocaleString()} kcal`, emoji: 'fire', color: 'from-orange-400 to-red-500' },
+    { icon: Dumbbell, label: 'Séances sport', value: weekSport.length, emoji: 'flexedBiceps', color: 'from-green-400 to-emerald-600' },
+    { icon: Dumbbell, label: 'Calories brûlées', value: `${weekBurned} kcal`, emoji: 'highVoltage', color: 'from-yellow-400 to-amber-500' },
+    { icon: Droplets, label: 'Eau bue', value: `${(weekWaterTotal / 1000).toFixed(1)}L`, emoji: 'droplet', color: 'from-cyan-400 to-blue-500' },
+    { icon: Target, label: 'Missions complétées', value: completedMissions, emoji: 'bullseye', color: 'from-purple-400 to-violet-600' },
   ];
 
   return (
@@ -70,7 +71,7 @@ export default function WeeklyReport({ open, onClose }: WeeklyReportProps) {
                 transition={{ delay: 0.3 + i * 0.15 }}
                 className={`bg-gradient-to-r ${stat.color} rounded-2xl p-4 flex items-center gap-4`}
               >
-                <span className="text-3xl">{stat.emoji}</span>
+                <Icon3D name={stat.emoji} size={32} />
                 <div>
                   <p className="text-white/70 text-xs">{stat.label}</p>
                   <p className="text-white text-2xl font-black">{stat.value}</p>
@@ -94,7 +95,7 @@ export default function WeeklyReport({ open, onClose }: WeeklyReportProps) {
               </div>
               {streak > 0 && (
                 <div className="border-l border-white/20 pl-4">
-                  <p className="text-white text-3xl font-black">{streak}🔥</p>
+                  <p className="text-white text-3xl font-black flex items-center gap-1">{streak}<Icon3D name="fire" size={28} /></p>
                   <p className="text-white/50 text-xs">jours de streak</p>
                 </div>
               )}
