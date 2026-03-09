@@ -64,7 +64,7 @@ function getRealisticQty(ing: string, cat: string): { quantity: string; unit: st
 
 interface AppState {
   isAuthenticated: boolean; userId: string | null; onboardingComplete: boolean;
-  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; } | null;
+  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; healthModules: string[]; healthDetails: { musculaire: string[]; osseux: string[]; articulaire: string[]; cerebral: string[] }; cycleData: { lastPeriodDate: string; cycleLength: number; periodLength: number } | null; medications: { name: string; frequency: string; time: string }[]; } | null;
   meals: Meal[]; waterLogs: WaterLog[]; weightLogs: WeightLog[]; dailySteps: number; stepsGoal: number;
   mealPlan: MealPlan | null; productScans: ProductScan[]; sportSessions: SportSession[];
   family: Family | null;
