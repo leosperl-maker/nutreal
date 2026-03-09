@@ -105,9 +105,33 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function getThreeDistinct<T>(pool: T[], dayIndex: number): T[] {
-  const s = shuffle(pool);
-  return [s[dayIndex % s.length], s[(dayIndex + Math.floor(s.length / 3)) % s.length], s[(dayIndex + Math.floor(s.length * 2 / 3)) % s.length]];
+/** Tire 3 items distincts du pool, en evitant les repetitions avec les jours precedents */
+function getThreeDistinct<T extends { name: string }>(pool: T[], dayIndex: number, usedNames: Set<string>): T[] {
+  // Prioritize items not used in previous days
+  const fresh = pool.filter(p => !usedNames.has(p.name));
+  const source = fresh.length >= 3 ? fresh : pool;
+  const s = shuffle(source);
+  const picked: T[] = [];
+  const pickedNames = new Set<string>();
+  for (const item of s) {
+    if (picked.length >= 3) break;
+    if (!pickedNames.has(item.name)) {
+      picked.push(item);
+      pickedNames.add(item.name);
+    }
+  }
+  // Fallback if pool too small
+  while (picked.length < 3 && picked.length < pool.length) {
+    const item = pool[picked.length % pool.length];
+    if (!pickedNames.has(item.name)) {
+      picked.push(item);
+      pickedNames.add(item.name);
+    } else {
+      picked.push(pool[(dayIndex * 3 + picked.length) % pool.length]);
+      break;
+    }
+  }
+  return picked;
 }
 
 function getMealPrice(name: string, ingredients: string[]): number {
@@ -155,19 +179,41 @@ function getImageForDish(name: string, type: string): string {
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 function generateLocalVariedPlan(startDate: Date, numDays: number): MealPlanDay[] {
+  // Track used dishes per slot type to maximize diversity across days
+  const usedBreakfast = new Set<string>();
+  const usedLunch = new Set<string>();
+  const usedSnack = new Set<string>();
+  const usedDinner = new Set<string>();
+
   return Array.from({ length: numDays }, (_, i) => {
     const d = new Date(startDate);
     d.setDate(startDate.getDate() + i);
     const dayName = DAYS_FR[d.getDay() === 0 ? 6 : d.getDay() - 1];
     const toOptions = (items: PoolItem[]): MealPlanOption[] =>
       items.map(opt => ({ ...opt, price: getMealPrice(opt.name, opt.ingredients) }));
+
+    const bk = getThreeDistinct(BREAKFAST_POOL, i, usedBreakfast);
+    bk.forEach(b => usedBreakfast.add(b.name));
+    const lu = getThreeDistinct(LUNCH_POOL, i, usedLunch);
+    lu.forEach(l => usedLunch.add(l.name));
+    const sn = getThreeDistinct(SNACK_POOL, i, usedSnack);
+    sn.forEach(s => usedSnack.add(s.name));
+    const di = getThreeDistinct(DINNER_POOL, i, usedDinner);
+    di.forEach(d => usedDinner.add(d.name));
+
+    // Reset tracking when pool is exhausted (for longer plans)
+    if (usedBreakfast.size >= BREAKFAST_POOL.length - 2) usedBreakfast.clear();
+    if (usedLunch.size >= LUNCH_POOL.length - 2) usedLunch.clear();
+    if (usedSnack.size >= SNACK_POOL.length - 2) usedSnack.clear();
+    if (usedDinner.size >= DINNER_POOL.length - 2) usedDinner.clear();
+
     return {
       date: d.toISOString().split('T')[0], dayName,
       slots: [
-        { type: 'breakfast' as const, options: toOptions(getThreeDistinct(BREAKFAST_POOL, i)), selectedIndex: null },
-        { type: 'lunch' as const,     options: toOptions(getThreeDistinct(LUNCH_POOL, i)),     selectedIndex: null },
-        { type: 'snack' as const,     options: toOptions(getThreeDistinct(SNACK_POOL, i)),     selectedIndex: null },
-        { type: 'dinner' as const,    options: toOptions(getThreeDistinct(DINNER_POOL, i)),    selectedIndex: null },
+        { type: 'breakfast' as const, options: toOptions(bk), selectedIndex: null },
+        { type: 'lunch' as const,     options: toOptions(lu), selectedIndex: null },
+        { type: 'snack' as const,     options: toOptions(sn), selectedIndex: null },
+        { type: 'dinner' as const,    options: toOptions(di), selectedIndex: null },
       ],
     };
   });

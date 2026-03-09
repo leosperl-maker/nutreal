@@ -2,7 +2,8 @@ import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, UNLOCKABLE_TITLES } from '../store/useStore';
 import { calculateAge } from '../lib/nutrition';
-import { getUnlockedItems, ALL_ITEMS } from '../components/avatar/avatarItems';
+import { getUnlockedItems, ALL_ITEMS, getItemRarity, RARITY_MAP } from '../components/avatar/avatarItems';
+import type { AvatarItem } from '../components/avatar/avatarItems';
 import RPMCreator from '../components/avatar/RPMCreator';
 import LevelBar from '../components/LevelBar';
 import MissionCard from '../components/MissionCard';
@@ -20,6 +21,64 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 
 // Lazy load Avatar3D to avoid loading Three.js until needed
 const Avatar3D = lazy(() => import('../components/avatar/Avatar3D'));
+
+/** Game-style inventory item card */
+function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number }) {
+  const unlocked = !item.isPremium && item.requiredLevel <= playerLevel;
+  const rarity = getItemRarity(item);
+  const info = RARITY_MAP[rarity];
+
+  return (
+    <div className="relative group" title={unlocked ? `${item.name} (${info.name})` : `Niv. ${item.requiredLevel} requis`}>
+      {/* Card */}
+      <div
+        className="relative rounded-xl overflow-hidden aspect-square flex flex-col items-center justify-center"
+        style={{
+          background: unlocked
+            ? `linear-gradient(135deg, ${info.bgFrom}20, ${info.bgTo}30)`
+            : '#F3F4F6',
+          border: `2px solid ${unlocked ? info.border : '#E5E7EB'}`,
+          boxShadow: unlocked && info.glow ? `0 4px 12px ${info.glow}` : 'none',
+        }}
+      >
+        {/* Icon */}
+        <div className={`transition-all ${unlocked ? '' : 'opacity-25 grayscale'}`}>
+          <Icon3D name={item.emoji} size={36} />
+        </div>
+
+        {/* Lock overlay */}
+        {!unlocked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-xl">
+            <div className="bg-black/60 rounded-full w-6 h-6 flex items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                <rect x="3" y="11" width="18" height="12" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" fill="none" stroke="white" strokeWidth="2" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Rarity indicator bar */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-1"
+          style={{ background: unlocked ? `linear-gradient(90deg, ${info.bgFrom}, ${info.bgTo})` : '#D1D5DB' }}
+        />
+      </div>
+
+      {/* Item name */}
+      <p className={`text-[9px] font-medium text-center mt-1 truncate px-0.5 ${unlocked ? 'text-text-primary' : 'text-text-muted'}`}>
+        {item.name}
+      </p>
+
+      {/* Level badge */}
+      {!unlocked && (
+        <div className="absolute -top-1 -right-1 bg-text-primary text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow">
+          {item.requiredLevel}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Profile() {
   const {
@@ -292,14 +351,14 @@ export default function Profile() {
           </AnimatedCard>
         </ScrollReveal>
 
-        {/* Item collection */}
+        {/* Item collection — Game-style inventory */}
         <ScrollReveal delay={0.3}>
           <AnimatedCard className="p-4 mb-4" index={6}>
             <button onClick={() => setShowCollection(!showCollection)}
               className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Package size={18} className="text-primary-500" />
-                <h3 className="text-sm font-bold text-text-primary">Collection</h3>
+                <h3 className="text-sm font-bold text-text-primary">Inventaire</h3>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
@@ -312,26 +371,19 @@ export default function Profile() {
               {showCollection && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden">
-                  <div className="space-y-3 mt-3">
+                  <div className="space-y-4 mt-4">
                     {(['hairstyle', 'outfit', 'accessory', 'pet'] as const).map(type => {
-                      const typeItems = ALL_ITEMS.filter(i => i.type === type && !i.isPremium);
-                      const unlocked = typeItems.filter(i => i.requiredLevel <= level);
-                      const iconName = type === 'hairstyle' ? 'personGettingHaircut' : type === 'outfit' ? 'tShirt' : type === 'accessory' ? 'watch' : 'catFace';
-                      const labelText = type === 'hairstyle' ? 'Coiffures' : type === 'outfit' ? 'Tenues' : type === 'accessory' ? 'Accessoires' : 'Animaux';
+                      const typeItems = ALL_ITEMS.filter(i => i.type === type);
+                      const unlocked = typeItems.filter(i => i.requiredLevel <= level && !i.isPremium);
+                      const labelText = type === 'hairstyle' ? 'Coiffures' : type === 'outfit' ? 'Tenues' : type === 'accessory' ? 'Accessoires' : 'Compagnons';
                       return (
                         <div key={type}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-medium text-text-secondary flex items-center gap-1"><Icon3D name={iconName} size={14} /> {labelText}</p>
-                            <p className="text-[10px] text-text-muted">{unlocked.length}/{typeItems.length}</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-text-primary uppercase tracking-wider">{labelText}</p>
+                            <p className="text-[10px] text-text-muted font-medium">{unlocked.length}/{typeItems.filter(i => !i.isPremium).length}</p>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {typeItems.map(item => (
-                              <div key={item.id}
-                                className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.requiredLevel <= level ? 'bg-primary-50' : 'bg-surface-100 opacity-30'}`}
-                                title={item.requiredLevel <= level ? item.name : `Niveau ${item.requiredLevel} requis`}>
-                                <Icon3D name={item.emoji} size={18} />
-                              </div>
-                            ))}
+                          <div className="grid grid-cols-4 gap-2">
+                            {typeItems.map(item => <ItemCard key={item.id} item={item} playerLevel={level} />)}
                           </div>
                         </div>
                       );

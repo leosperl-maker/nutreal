@@ -26,10 +26,10 @@ export interface GeminiAnalysisResult {
   tip: string;
 }
 
-// ─── Proxy URL ────────────────────────────────────────────────────────────────
-// En dev (Vite proxy), /api/gemini est redirigé vers http://localhost:3001
-// En production (Railway), /api/gemini est servi par le même serveur Express
+// ─── API URLs ─────────────────────────────────────────────────────────────────
 const PROXY_URL = '/api/gemini';
+const GEMINI_DIRECT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const DIRECT_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 /** Construire le body de requête Gemini */
 function makeRequestBody(parts: object[], config?: object) {
@@ -45,27 +45,51 @@ function makeRequestBody(parts: object[], config?: object) {
   };
 }
 
-/** Appel générique au proxy Gemini */
+/** Extraire le texte d'une réponse Gemini (gère thinking mode) */
+function extractText(data: any): string {
+  const parts = data?.candidates?.[0]?.content?.parts;
+  if (!parts || parts.length === 0) throw new Error('Reponse Gemini vide');
+  const text = parts.filter((p: any) => p.text && !p.thought).pop()?.text
+    || parts.filter((p: any) => p.text).pop()?.text;
+  if (!text) throw new Error('Reponse Gemini vide');
+  return text;
+}
+
+/** Appel générique : essaie le proxy, fallback en direct si echec */
 async function callGemini(body: object, model = 'gemini-2.5-flash'): Promise<string> {
-  const res = await fetch(`${PROXY_URL}?model=${model}`, {
+  // 1) Essayer via le proxy Express
+  try {
+    const res = await fetch(`${PROXY_URL}?model=${model}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return extractText(data);
+    }
+    console.warn('[Nutreal] Proxy echoue, statut:', res.status);
+  } catch (proxyErr) {
+    console.warn('[Nutreal] Proxy injoignable:', proxyErr);
+  }
+
+  // 2) Fallback : appel direct a l'API Gemini
+  if (!DIRECT_API_KEY) {
+    throw new Error('Le serveur Gemini est indisponible et aucune cle API locale n\'est configuree.');
+  }
+  console.log('[Nutreal] Fallback API directe Gemini');
+  const url = `${GEMINI_DIRECT_BASE}/${model}:generateContent?key=${DIRECT_API_KEY}`;
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(`Gemini proxy erreur ${res.status}: ${JSON.stringify(err)}`);
+    throw new Error(`Gemini erreur ${res.status}: ${JSON.stringify(err)}`);
   }
-
   const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!parts || parts.length === 0) throw new Error('Réponse Gemini vide');
-  // gemini-2.5-flash peut renvoyer des parts thinking + réponse : on prend la dernière non-thinking
-  const text = parts.filter((p: any) => p.text && !p.thought).pop()?.text
-    || parts.filter((p: any) => p.text).pop()?.text;
-  if (!text) throw new Error('Réponse Gemini vide');
-  return text;
+  return extractText(data);
 }
 
 /** Nettoyer les éventuels backticks de markdown dans la réponse JSON */

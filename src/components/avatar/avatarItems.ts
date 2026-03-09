@@ -117,6 +117,35 @@ export const OUTFIT_COLORS = [
 // ── All wearable items combined ──
 export const ALL_ITEMS: AvatarItem[] = [...HAIRSTYLES, ...OUTFITS, ...ACCESSORIES, ...PETS];
 
+// ── Rarity system ──
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export interface RarityInfo {
+  name: string;
+  nameShort: string;
+  bgFrom: string;
+  bgTo: string;
+  border: string;
+  glow: string;
+  textColor: string;
+}
+
+export const RARITY_MAP: Record<Rarity, RarityInfo> = {
+  common:    { name: 'Commun',      nameShort: 'C',  bgFrom: '#9CA3AF', bgTo: '#D1D5DB', border: '#9CA3AF', glow: '',                    textColor: '#6B7280' },
+  uncommon:  { name: 'Peu commun',  nameShort: 'PC', bgFrom: '#22C55E', bgTo: '#86EFAC', border: '#22C55E', glow: 'rgba(34,197,94,0.25)', textColor: '#16A34A' },
+  rare:      { name: 'Rare',        nameShort: 'R',  bgFrom: '#3B82F6', bgTo: '#93C5FD', border: '#3B82F6', glow: 'rgba(59,130,246,0.25)', textColor: '#2563EB' },
+  epic:      { name: 'Epique',      nameShort: 'E',  bgFrom: '#8B5CF6', bgTo: '#C4B5FD', border: '#8B5CF6', glow: 'rgba(139,92,246,0.3)',  textColor: '#7C3AED' },
+  legendary: { name: 'Legendaire',  nameShort: 'L',  bgFrom: '#F59E0B', bgTo: '#FDE68A', border: '#F59E0B', glow: 'rgba(245,158,11,0.35)', textColor: '#D97706' },
+};
+
+export function getItemRarity(item: AvatarItem): Rarity {
+  if (item.isPremium || item.requiredLevel >= 15) return 'legendary';
+  if (item.requiredLevel >= 8) return 'epic';
+  if (item.requiredLevel >= 4) return 'rare';
+  if (item.requiredLevel >= 2) return 'uncommon';
+  return 'common';
+}
+
 // ── Helper: get items unlocked at a given level ──
 export function getUnlockedItems(level: number): AvatarItem[] {
   return ALL_ITEMS.filter(item => item.requiredLevel <= level && !item.isPremium);
