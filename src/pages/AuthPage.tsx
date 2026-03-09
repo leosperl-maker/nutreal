@@ -5,6 +5,17 @@ import { supabase } from '../lib/supabase';
 import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
 
+function LogoIcon() {
+  const [failed, setFailed] = React.useState(false);
+  if (!failed) {
+    return (
+      <img src="/logo-icon.png" alt="Nutreal" className="w-full h-full object-contain p-2"
+        onError={() => setFailed(true)} />
+    );
+  }
+  return <span className="text-4xl font-black text-white font-display">N</span>;
+}
+
 export default function AuthPage() {
   const { setAuth } = useStore();
   const [isLogin, setIsLogin] = useState(true);
@@ -39,8 +50,8 @@ export default function AuthPage() {
         transition={{ duration: 0.4, ease: 'easeOut' }} className="w-full max-w-sm">
         <div className="text-center mb-8">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-            className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow">
-            <span className="text-4xl font-black text-white font-display">N</span>
+            className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow overflow-hidden">
+            <LogoIcon />
           </motion.div>
           <h1 className="text-3xl font-black text-white font-display">Nutreal</h1>
           <p className="text-white/70 text-sm mt-1">Votre coach nutrition IA</p>

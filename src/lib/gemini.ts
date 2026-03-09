@@ -196,6 +196,7 @@ Retourne UNIQUEMENT ce tableau JSON valide (sans backticks, sans commentaires):
   }
 }
 
+
 // ─── Génération de recette ────────────────────────────────────────────────────
 
 export interface RecipeResult {
@@ -236,11 +237,6 @@ Retourne UNIQUEMENT un objet JSON valide (sans backticks, sans commentaires) :
 
 // ─── Utilitaires ──────────────────────────────────────────────────────────────
 
-/**
- * Vérifie si le serveur proxy Gemini est disponible et configuré.
- * En production Railway, retourne toujours true (le serveur existe).
- * En dev local, vérifie le health endpoint.
- */
 export async function isGeminiConfigured(): Promise<boolean> {
   try {
     const res = await fetch('/api/gemini/health');
@@ -252,9 +248,6 @@ export async function isGeminiConfigured(): Promise<boolean> {
   }
 }
 
-/** Version synchrone pour compatibilité — suppose que le serveur est disponible */
 export function isGeminiConfiguredSync(): boolean {
-  // En production Railway, le serveur proxy est toujours présent
-  // Le vrai check async se fait via isGeminiConfigured()
   return true;
 }

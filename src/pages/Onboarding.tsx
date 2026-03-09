@@ -4,11 +4,13 @@ import { useStore } from '../store/useStore';
 import { calculateNutritionPlan, LOCATION_OPTIONS, FOOD_PREFERENCE_OPTIONS, GROCERY_FREQUENCY_OPTIONS, getCurrencyForLocation } from '../lib/nutrition';
 import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
+import { useConfetti } from '../components/ConfettiExplosion';
 
 const STEPS = ['Profil', 'Mensurations', 'Objectif', 'Activité', 'Localisation', 'Budget', 'Préférences', 'Aliments'];
 
 export default function Onboarding() {
   const { setProfile, setOnboardingComplete } = useStore();
+  const { fireConfetti } = useConfetti();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: '', sex: 'M' as 'M' | 'F', birthDate: '1990-01-01', heightCm: 175, weightCurrentKg: 80, weightGoalKg: 75, activityLevel: 'moderate', medicalConditions: [] as string[], dietPreferences: [] as string[], location: 'guadeloupe', groceryBudget: 100, groceryCurrency: '€', foodPreferences: [] as string[], groceryFrequency: 'weekly' });
 
@@ -27,6 +29,12 @@ export default function Onboarding() {
   const finish = () => {
     const plan = calculateNutritionPlan(form as any);
     setProfile({ ...form, dailyCalorieBudget: plan.dailyCalorieBudget, macroTargets: plan.macroTargets, tdee: plan.tdee, estimatedGoalDate: plan.estimatedGoalDate });
+    // 🎉 Confetti on onboarding completion
+    fireConfetti({ origin: { x: 0.5, y: 0.7 }, particleCount: 160, spread: 90 });
+    setTimeout(() => {
+      fireConfetti({ angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, particleCount: 50 });
+      fireConfetti({ angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, particleCount: 50 });
+    }, 200);
     setOnboardingComplete(true);
   };
 

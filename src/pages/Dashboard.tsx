@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
-import { getWaterTarget } from '../lib/nutrition';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedCounter from '../components/AnimatedCounter';
@@ -10,7 +9,11 @@ import AnimatedProgressBar from '../components/AnimatedProgressBar';
 import CircularProgress from '../components/CircularProgress';
 import ScrollReveal from '../components/ScrollReveal';
 import { DashboardSkeleton } from '../components/ShimmerSkeleton';
-import { Droplets, Plus, Minus, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+import { Droplets, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+
+const WATER_GOAL = 2000;
+const GLASS_ML = 250;
+const GLASSES_TOTAL = 8;
 
 const QUOTES = [
   "Chaque repas est une opportunité de nourrir ton corps. 🌱",
@@ -34,8 +37,12 @@ export default function Dashboard() {
   const todaySport = sportSessions.filter(s => s.date === today);
   const burned = todaySport.reduce((s, ss) => s + ss.caloriesBurned, 0);
   const remaining = profile.dailyCalorieBudget + burned - todayStats.consumed;
-  const waterToday = waterLogs.find(w => w.date === today)?.amount || 0;
-  const waterTarget = getWaterTarget(profile.weightCurrentKg);
+  const waterToday = Math.max(0, waterLogs.find(w => w.date === today)?.amount || 0);
+  const glassesConsumed = Math.min(GLASSES_TOTAL, Math.floor(waterToday / GLASS_ML));
+  const handleGlassTap = (i: number) => {
+    const target = i < glassesConsumed ? i * GLASS_ML : (i + 1) * GLASS_ML;
+    addWater(today, target - waterToday);
+  };
   const quote = QUOTES[new Date().getDate() % QUOTES.length];
   const todayMeals = meals.filter(m => m.date === today);
 
@@ -120,28 +127,47 @@ export default function Dashboard() {
       {/* Water */}
       <ScrollReveal delay={0.15}>
         <AnimatedCard className="p-4 mb-4" index={2}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Droplets size={20} className="text-blue-500" />
+              <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                <Droplets size={20} className="text-primary-500" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Hydratation</h3>
-                <p className="text-xs text-text-secondary">{waterToday} / {waterTarget} ml</p>
+                <p className="text-xs text-text-secondary">
+                  {glassesConsumed}/{GLASSES_TOTAL} verres · {Math.min(waterToday, WATER_GOAL)}/{WATER_GOAL} ml
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => addWater(today, -250)}
-                className="w-8 h-8 bg-surface-200 rounded-lg flex items-center justify-center">
-                <Minus size={14} className="text-text-secondary" />
-              </motion.button>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => addWater(today, 250)}
-                className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                <Plus size={14} className="text-white" />
-              </motion.button>
-            </div>
+            <p className="text-lg font-bold text-primary-500">
+              {Math.round((waterToday / WATER_GOAL) * 100)}%
+            </p>
           </div>
-          <AnimatedProgressBar percentage={waterTarget > 0 ? (waterToday / waterTarget) * 100 : 0} color="bg-blue-500" className="mt-3" />
+          <AnimatedProgressBar percentage={Math.min((waterToday / WATER_GOAL) * 100, 100)} color="bg-primary-500" className="mb-4" />
+          {/* 8 verres cliquables */}
+          <div className="flex justify-between px-1">
+            {Array.from({ length: GLASSES_TOTAL }).map((_, i) => (
+              <motion.button
+                key={i}
+                onClick={() => handleGlassTap(i)}
+                whileTap={{ scale: 0.8 }}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 + i * 0.06, duration: 0.2 }}
+                className="flex flex-col items-center gap-1"
+                aria-label={`Verre ${i + 1}`}
+              >
+                <Droplets
+                  size={28}
+                  className={i < glassesConsumed ? 'text-primary-500' : 'text-surface-300'}
+                  strokeWidth={i < glassesConsumed ? 2.5 : 1.5}
+                />
+                <span className={`text-[9px] font-medium ${i < glassesConsumed ? 'text-primary-500' : 'text-text-muted'}`}>
+                  {(i + 1) * GLASS_ML / 1000 >= 1 ? `${(i + 1) * GLASS_ML / 1000}L` : `${(i + 1) * GLASS_ML}ml`}
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </AnimatedCard>
       </ScrollReveal>
 
