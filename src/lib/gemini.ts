@@ -77,3 +77,72 @@ export async function analyzeWithGemini(imageFile: File): Promise<GeminiAnalysis
 }
 
 export function isGeminiConfigured(): boolean { return getApiKey() !== null; }
+
+export interface MealPlanDayRaw {
+  dayName: string;
+  slots: {
+    type: 'breakfast' | 'lunch' | 'snack' | 'dinner';
+    options: {
+      name: string;
+      ingredients: string[];
+      calories: number;
+      protein_g: number;
+      fat_g: number;
+      carbs_g: number;
+      fiber_g: number;
+    }[];
+  }[];
+}
+
+export async function generateMealPlanWithGemini(profile: {
+  location: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  preferences: string[];
+  dietPreferences: string[];
+}): Promise<MealPlanDayRaw[] | null> {
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+
+  const loc = profile.location || 'guadeloupe';
+  const prefs = profile.preferences.length > 0 ? profile.preferences.join(', ') : 'cuisine créole antillaise';
+  const diet = profile.dietPreferences.length > 0 ? ` Restrictions: ${profile.dietPreferences.join(', ')}.` : '';
+
+  const prompt = `Tu es un nutritionniste expert spécialisé en cuisine antillaise et caribéenne (région: ${loc}).
+Génère un plan repas hebdomadaire VARIÉ pour 7 jours. Chaque jour a 4 types de repas (breakfast, lunch, snack, dinner), chacun avec exactement 3 options différentes.
+Budget calorique: ${profile.calories} kcal/j. Objectifs: Protéines ${profile.protein}g, Glucides ${profile.carbs}g, Lipides ${profile.fat}g.
+Préférences: ${prefs}.${diet}
+RÈGLES IMPORTANTES:
+- Aucun plat ne doit se répéter dans le même type de repas sur la semaine
+- Privilégie les ingrédients locaux caribéens et antillais
+- Petit-déjeuners variés: céréales, fruits tropicaux, œufs, pain créole, smoothies, yaourts
+- Collations légères: fruits, yaourt, noix, smoothie
+- Déjeuners/dîners: plats créoles variés (Colombo, court-bouillon, fricassée, rougail, carry, dombrés, féroce...)
+Retourne UNIQUEMENT ce tableau JSON valide (sans backticks, sans commentaires):
+[{"dayName":"Lundi","slots":[{"type":"breakfast","options":[{"name":"Nom","ingredients":["ing1","ing2","ing3"],"calories":300,"protein_g":12,"fat_g":8,"carbs_g":45,"fiber_g":3},{"name":"Nom2","ingredients":["ing1","ing2"],"calories":280,"protein_g":10,"fat_g":7,"carbs_g":42,"fiber_g":2},{"name":"Nom3","ingredients":["ing1","ing2"],"calories":320,"protein_g":14,"fat_g":9,"carbs_g":48,"fiber_g":4}]},{"type":"lunch","options":[...]},{"type":"snack","options":[...]},{"type":"dinner","options":[...]}]},{"dayName":"Mardi",...},{"dayName":"Mercredi",...},{"dayName":"Jeudi",...},{"dayName":"Vendredi",...},{"dayName":"Samedi",...},{"dayName":"Dimanche",...}]`;
+
+  try {
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, topP: 0.9, topK: 40, maxOutputTokens: 8192 },
+      }),
+    });
+    if (!response.ok) throw new Error(`Gemini API error ${response.status}`);
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('No response');
+    let clean = text.trim();
+    if (clean.startsWith('```')) clean = clean.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?\s*```$/, '').trim();
+    const result: MealPlanDayRaw[] = JSON.parse(clean);
+    if (!Array.isArray(result) || result.length !== 7) throw new Error('Invalid plan structure');
+    return result;
+  } catch (error) {
+    console.error('[Nutreal] Erreur génération plan repas Gemini:', error);
+    return null;
+  }
+}

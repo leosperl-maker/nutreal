@@ -11,7 +11,7 @@ export interface RecipeStep { step: number; instruction: string; }
 export interface RecipeIngredient { name: string; quantity: string; unit: string; }
 export interface Recipe { mealName: string; mealType: string; servings: number; prepTime: string; cookTime: string; ingredients: RecipeIngredient[]; steps: RecipeStep[]; imageUrl: string; }
 export interface GroceryItem { name: string; quantity: string; unit: string; category: string; checked: boolean; }
-export interface MealPlanOption { name: string; ingredients: string[]; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; imageUrl: string; recipe?: Recipe; }
+export interface MealPlanOption { name: string; ingredients: string[]; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; imageUrl: string; price?: number; recipe?: Recipe; }
 export interface MealPlanSlot { type: 'breakfast' | 'lunch' | 'snack' | 'dinner'; options: MealPlanOption[]; selectedIndex: number | null; }
 export interface MealPlanDay { date: string; dayName: string; slots: MealPlanSlot[]; }
 export interface MealPlan { weekStart: string; days: MealPlanDay[]; calorieBudget: number; validated: boolean; recipes: Recipe[]; groceryList: GroceryItem[]; }
@@ -80,7 +80,7 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   }),
   addMeal: (m) => set((s) => ({ meals: [...s.meals, m] })),
   removeMeal: (id) => set((s) => ({ meals: s.meals.filter(m => m.id !== id) })),
-  addWater: (d, a) => set((s) => { const e = s.waterLogs.find(w => w.date === d); if (e) return { waterLogs: s.waterLogs.map(w => w.date === d ? { ...w, amount: w.amount + a } : w) }; return { waterLogs: [...s.waterLogs, { date: d, amount: a }] }; }),
+  addWater: (d, a) => set((s) => { const e = s.waterLogs.find(w => w.date === d); if (e) return { waterLogs: s.waterLogs.map(w => w.date === d ? { ...w, amount: Math.max(0, w.amount + a) } : w) }; return { waterLogs: [...s.waterLogs, { date: d, amount: Math.max(0, a) }] }; }),
   addWeightLog: (d, w) => set((s) => { const e = s.weightLogs.find(l => l.date === d); if (e) return { weightLogs: s.weightLogs.map(l => l.date === d ? { ...l, weight: w } : l) }; return { weightLogs: [...s.weightLogs, { date: d, weight: w }] }; }),
   setDailySteps: (s) => set({ dailySteps: s }),
   setMealPlan: (p) => set({ mealPlan: p }),
