@@ -4,7 +4,7 @@ import { useStore, FamilyMember } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
-import { Users, UserPlus, Copy, Check, Trash2, Crown, Heart, Baby, User } from 'lucide-react';
+import { Users, UserPlus, Copy, Check, Trash2, Crown, Heart, Baby, User, Trophy } from 'lucide-react';
 
 const ROLE_LABELS: Record<FamilyMember['role'], string> = {
   chef: 'Chef de famille',
@@ -367,6 +367,34 @@ export default function FamilyPage() {
                 );
               })}
             </div>
+
+            {/* Family Leaderboard */}
+            {family.members.length > 1 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy size={16} className="text-warning-300" />
+                  <h3 className="text-sm font-bold text-text-primary">Classement familial</h3>
+                </div>
+                <AnimatedCard index={family.members.length + 2} className="p-4">
+                  <p className="text-xs text-text-muted mb-3">Qui est le plus régulier cette semaine ?</p>
+                  <div className="space-y-2">
+                    {family.members.map((member, idx) => {
+                      const medals = ['🥇', '🥈', '🥉'];
+                      return (
+                        <div key={member.id} className={`flex items-center gap-3 p-2 rounded-xl ${idx === 0 ? 'bg-warning-50' : 'bg-surface-50'}`}>
+                          <span className="text-lg w-7 text-center">{medals[idx] || `${idx + 1}.`}</span>
+                          <span className="text-xl">{ROLE_EMOJIS[member.role]}</span>
+                          <span className="text-sm font-medium text-text-primary flex-1">{member.name}</span>
+                          <div className="text-right">
+                            <p className="text-xs font-bold text-primary-500">{member.dailyCalorieBudget} kcal</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </AnimatedCard>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
+import type { DetailedHealthIssue } from '../store/useStore';
 import { calculateNutritionPlan, LOCATION_OPTIONS, FOOD_PREFERENCE_OPTIONS, GROCERY_FREQUENCY_OPTIONS, getCurrencyForLocation } from '../lib/nutrition';
-import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home, Sparkles, Pill, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home, Sparkles, Pill, Plus, Trash2, FileText } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
-import { useConfetti } from '../components/ConfettiExplosion';
 
 type HealthDetail = 'musculaire' | 'osseux' | 'articulaire' | 'cerebral';
 
@@ -12,13 +13,14 @@ const ICON_MAP: Record<string, any> = {
   'Profil': User, 'Mensurations': Ruler, 'Objectif': Target, 'Activité': Activity,
   'Localisation': MapPin, 'Budget': ShoppingCart, 'Cuisine': Clock, 'Foyer': Home,
   'Santé': Heart, 'Aller plus loin': Sparkles,
-  'Corps & articulations': Activity, 'Cycle menstruel': Heart, 'Médicaments': Pill,
+  'Corps & articulations': Activity, 'Détails conditions': FileText,
+  'Cycle menstruel': Heart, 'Médicaments': Pill,
   'Aliments': Utensils,
 };
 
 export default function Onboarding() {
-  const { setProfile, setOnboardingComplete } = useStore();
-  const { fireConfetti } = useConfetti();
+  const { setProfile, setDetailedHealthIssues } = useStore();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     name: '', sex: 'M' as 'M' | 'F', birthDate: '1990-01-01', heightCm: 175,
@@ -31,12 +33,16 @@ export default function Onboarding() {
     healthDetails: { musculaire: [] as string[], osseux: [] as string[], articulaire: [] as string[], cerebral: [] as string[] },
     cycleData: null as { lastPeriodDate: string; cycleLength: number; periodLength: number } | null,
     medications: [] as { name: string; frequency: string; time: string }[],
+    detailedIssues: [] as DetailedHealthIssue[],
   });
 
   // Dynamic steps based on selected health modules
   const steps = useMemo(() => {
     const base = ['Profil', 'Mensurations', 'Objectif', 'Activité', 'Localisation', 'Budget', 'Cuisine', 'Foyer', 'Santé', 'Aller plus loin'];
-    if (form.healthModules.includes('muscle_joint')) base.push('Corps & articulations');
+    if (form.healthModules.includes('muscle_joint')) {
+      base.push('Corps & articulations');
+      base.push('Détails conditions');
+    }
     if (form.healthModules.includes('cycle')) base.push('Cycle menstruel');
     if (form.healthModules.includes('medications')) base.push('Médicaments');
     base.push('Aliments');
@@ -79,6 +85,31 @@ export default function Onboarding() {
     setForm(f => ({ ...f, medications: f.medications.filter((_, i) => i !== idx) }));
   };
 
+  // Detailed health issues helpers
+  const getAllSelectedConditions = (): string[] => {
+    const conditions: string[] = [];
+    for (const cat of Object.keys(form.healthDetails) as HealthDetail[]) {
+      conditions.push(...form.healthDetails[cat]);
+    }
+    return conditions;
+  };
+
+  const updateDetailedIssue = (condition: string, field: keyof DetailedHealthIssue, value: any) => {
+    setForm(f => {
+      const existing = f.detailedIssues.find(i => i.condition === condition);
+      if (existing) {
+        return { ...f, detailedIssues: f.detailedIssues.map(i => i.condition === condition ? { ...i, [field]: value } : i) };
+      }
+      const newIssue: DetailedHealthIssue = { condition, location: '', duration: '', doctorConsulted: false, treatments: [], freeText: '' };
+      (newIssue as any)[field] = value;
+      return { ...f, detailedIssues: [...f.detailedIssues, newIssue] };
+    });
+  };
+
+  const getIssueField = (condition: string): DetailedHealthIssue => {
+    return form.detailedIssues.find(i => i.condition === condition) || { condition, location: '', duration: '', doctorConsulted: false, treatments: [], freeText: '' };
+  };
+
   const finish = () => {
     const plan = calculateNutritionPlan(form as any);
     setProfile({
@@ -88,12 +119,11 @@ export default function Onboarding() {
       tdee: plan.tdee,
       estimatedGoalDate: plan.estimatedGoalDate,
     });
-    fireConfetti({ origin: { x: 0.5, y: 0.7 }, particleCount: 160, spread: 90 });
-    setTimeout(() => {
-      fireConfetti({ angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, particleCount: 50 });
-      fireConfetti({ angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, particleCount: 50 });
-    }, 200);
-    setOnboardingComplete(true);
+    if (form.detailedIssues.length > 0) {
+      setDetailedHealthIssues(form.detailedIssues);
+    }
+    // Navigate to AI analysis loading screen
+    navigate('/loading');
   };
 
   const grouped = LOCATION_OPTIONS.reduce((acc, loc) => {
@@ -399,6 +429,86 @@ export default function Onboarding() {
             ))}
           </div>
         );
+
+      case 'Détails conditions': {
+        const conditions = getAllSelectedConditions();
+        if (conditions.length === 0) {
+          return (
+            <div className="text-center py-8">
+              <p className="text-sm text-text-muted">Aucune condition sélectionnée.</p>
+              <p className="text-xs text-text-muted mt-2">Vous pouvez passer cette étape.</p>
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-text-secondary">Plus vous êtes précis, mieux l'IA pourra vous accompagner.</p>
+            {conditions.map(condition => {
+              const issue = getIssueField(condition);
+              return (
+                <div key={condition} className="bg-white rounded-2xl border border-surface-200 p-4 space-y-3">
+                  <h4 className="text-sm font-bold text-text-primary">{condition}</h4>
+
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Localisation précise</label>
+                    <input value={issue.location} onChange={e => updateDetailedIssue(condition, 'location', e.target.value)}
+                      placeholder="Ex: bas du dos, genou droit..."
+                      className="w-full px-3 py-2 bg-surface-50 rounded-xl border border-surface-300 text-sm focus:ring-2 focus:ring-primary-400 focus:outline-none text-text-primary" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Depuis combien de temps ?</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['< 1 mois', '1-6 mois', '6-12 mois', '1-3 ans', '3+ ans'].map(d => (
+                        <button key={d} onClick={() => updateDetailedIssue(condition, 'duration', d)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${issue.duration === d ? 'bg-primary-500 text-white' : 'bg-surface-50 border border-surface-300 text-text-primary'}`}>
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Médecin consulté ?</label>
+                    <div className="flex gap-2">
+                      {[{ v: true, l: 'Oui' }, { v: false, l: 'Non' }].map(o => (
+                        <button key={String(o.v)} onClick={() => updateDetailedIssue(condition, 'doctorConsulted', o.v)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${issue.doctorConsulted === o.v ? 'bg-primary-500 text-white' : 'bg-surface-50 border border-surface-300 text-text-primary'}`}>
+                          {o.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Traitements essayés</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Kinésithérapie', 'Médicaments', 'Chirurgie', 'Ostéopathie', 'Repos', 'Autre'].map(t => (
+                        <button key={t} onClick={() => {
+                          const current = issue.treatments;
+                          const updated = current.includes(t) ? current.filter(x => x !== t) : [...current, t];
+                          updateDetailedIssue(condition, 'treatments', updated);
+                        }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${issue.treatments.includes(t) ? 'bg-primary-500 text-white' : 'bg-surface-50 border border-surface-300 text-text-primary'}`}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Autre chose à préciser ?</label>
+                    <textarea value={issue.freeText || ''} onChange={e => updateDetailedIssue(condition, 'freeText', e.target.value)}
+                      placeholder="Décrivez votre situation..."
+                      rows={2}
+                      className="w-full px-3 py-2 bg-surface-50 rounded-xl border border-surface-300 text-sm focus:ring-2 focus:ring-primary-400 focus:outline-none text-text-primary resize-none" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
 
       case 'Cycle menstruel':
         return (

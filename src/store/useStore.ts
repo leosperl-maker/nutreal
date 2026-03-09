@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { MacroTargets } from '../lib/nutrition';
 import { calculateNutritionPlan } from '../lib/nutrition';
 
+// ── Existing interfaces ──
 export interface FoodItem { name: string; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; quantity_g: number; }
 export interface Meal { id: string; date: string; mealType: 'breakfast' | 'lunch' | 'snack' | 'dinner'; dishName: string; photoUrl?: string; foods: FoodItem[]; totalCalories: number; totalProtein: number; totalFat: number; totalCarbs: number; totalFiber: number; aiTip?: string; createdAt: string; }
 export interface WeightLog { date: string; weight: number; }
@@ -36,6 +37,111 @@ export interface Family {
   chefId: string;
 }
 
+// ── Gamification interfaces ──
+
+export interface DetailedHealthIssue {
+  condition: string;
+  location: string;
+  duration: string;
+  doctorConsulted: boolean;
+  treatments: string[];
+  freeText?: string;
+}
+
+export interface SportRestriction {
+  sportId: string;
+  status: 'locked' | 'caution' | 'unlocked';
+  reason: string;
+  unlockCondition?: string;
+  estimatedWeeks?: number;
+}
+
+export interface RehabExercise {
+  name: string;
+  description: string;
+  duration: string;
+  reps?: string;
+}
+
+export interface RehabProgram {
+  id: string;
+  name: string;
+  condition: string;
+  totalWeeks: number;
+  currentWeek: number;
+  exercises: RehabExercise[];
+  milestones: { week: number; description: string; unlockedSports?: string[] }[];
+  completedSessions: number;
+  isCompleted: boolean;
+}
+
+export interface AIMission {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  xpReward: number;
+  type: 'water' | 'food' | 'sport' | 'wellness' | 'walking' | 'custom';
+  isCompleted: boolean;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+export interface AIHealthAnalysis {
+  sportRestrictions: SportRestriction[];
+  rehabPrograms: RehabProgram[];
+  healthInsights: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  recommendations: string[];
+  analyzedAt: string;
+}
+
+export interface AvatarConfig {
+  skinColor: string;
+  hairColor: string;
+  hairStyle: string;
+  eyeColor: string;
+  outfit: string;
+  outfitColor: string;
+  accessory: string | null;
+  pet: string | null;
+  unlockedItems: string[];
+}
+
+export interface CheckIn {
+  date: string;
+  mood: string;
+  painLevel: number;
+  notes: string;
+  conditionEvolution: { condition: string; status: 'better' | 'same' | 'worse' }[];
+}
+
+// ── Titles unlockable by level ──
+export const UNLOCKABLE_TITLES: { id: string; name: string; requiredLevel: number; special?: string }[] = [
+  { id: 'title_1', name: 'Débutant motivé', requiredLevel: 1 },
+  { id: 'title_3', name: 'Guerrier du matin', requiredLevel: 3 },
+  { id: 'title_5', name: 'Maître de l\'hydratation', requiredLevel: 5 },
+  { id: 'title_7', name: 'Athlète en devenir', requiredLevel: 7 },
+  { id: 'title_10_m', name: 'Iron Man', requiredLevel: 10 },
+  { id: 'title_10_f', name: 'Wonder Woman', requiredLevel: 10 },
+  { id: 'title_15', name: 'Légende Nutreal', requiredLevel: 15 },
+  { id: 'title_streak_30', name: 'Flamme éternelle', requiredLevel: 0, special: '30_day_streak' },
+  { id: 'title_meals_100', name: 'Chef étoilé', requiredLevel: 0, special: '100_meals_logged' },
+  { id: 'title_rehab', name: 'Phoenix', requiredLevel: 0, special: 'rehab_complete' },
+];
+
+// ── XP formulas ──
+export function xpForNextLevel(level: number): number {
+  return level * 200 + 100;
+}
+
+export function totalXpForLevel(targetLevel: number): number {
+  let total = 0;
+  for (let l = 1; l < targetLevel; l++) total += xpForNextLevel(l);
+  return total;
+}
+
+// ── Grocery helpers ──
+
 function categorizeIngredient(ingredient: string): string {
   const ing = ingredient.toLowerCase();
   if (['eau','jus','thé','café','boisson','lait d\'amande'].some(b => ing.includes(b))) return '🥤 Boissons';
@@ -62,32 +168,100 @@ function getRealisticQty(ing: string, cat: string): { quantity: string; unit: st
   return { quantity: '100', unit: 'g' };
 }
 
+// ── Store interface ──
+
 interface AppState {
+  // Auth & onboarding
   isAuthenticated: boolean; userId: string | null; onboardingComplete: boolean;
   profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; healthModules: string[]; healthDetails: { musculaire: string[]; osseux: string[]; articulaire: string[]; cerebral: string[] }; cycleData: { lastPeriodDate: string; cycleLength: number; periodLength: number } | null; medications: { name: string; frequency: string; time: string }[]; } | null;
+
+  // Tracking data
   meals: Meal[]; waterLogs: WaterLog[]; weightLogs: WeightLog[]; dailySteps: number; stepsGoal: number;
   mealPlan: MealPlan | null; productScans: ProductScan[]; sportSessions: SportSession[];
   family: Family | null;
   streak: number; toastMessage: string | null;
-  setAuth: (a: boolean, u: string | null) => void; setOnboardingComplete: (c: boolean) => void;
-  setProfile: (p: AppState['profile']) => void; updateProfile: (u: Partial<NonNullable<AppState['profile']>>) => void;
-  recalculateNutrition: () => void; addMeal: (m: Meal) => void; removeMeal: (id: string) => void;
-  addWater: (d: string, a: number) => void; addWeightLog: (d: string, w: number) => void;
-  setDailySteps: (s: number) => void; setMealPlan: (p: MealPlan) => void;
-  selectMealOption: (d: number, s: number, o: number) => void; validateMealPlan: () => void;
-  toggleGroceryItem: (i: number) => void; addProductScan: (s: ProductScan) => void;
+
+  // ── Gamification state ──
+  xp: number;
+  level: number;
+  lastLevelUp: number | null; // set when level up happens, cleared by dismissLevelUp
+  avatarConfig: AvatarConfig | null;
+  selectedTitle: string;
+  dailyMissions: AIMission[];
+  missionsDate: string | null; // date when missions were last generated
+  aiAnalysis: AIHealthAnalysis | null;
+  aiAnalysisLoading: boolean;
+  detailedHealthIssues: DetailedHealthIssue[];
+  checkIns: CheckIn[];
+  streakProtectionAvailable: boolean;
+  streakProtectionUsedDate: string | null;
+
+  // ── Existing actions ──
+  setAuth: (a: boolean, u: string | null) => void;
+  setOnboardingComplete: (c: boolean) => void;
+  setProfile: (p: AppState['profile']) => void;
+  updateProfile: (u: Partial<NonNullable<AppState['profile']>>) => void;
+  recalculateNutrition: () => void;
+  addMeal: (m: Meal) => void; removeMeal: (id: string) => void;
+  addWater: (d: string, a: number) => void;
+  addWeightLog: (d: string, w: number) => void;
+  setDailySteps: (s: number) => void;
+  setMealPlan: (p: MealPlan) => void;
+  selectMealOption: (d: number, s: number, o: number) => void;
+  validateMealPlan: () => void;
+  toggleGroceryItem: (i: number) => void;
+  addProductScan: (s: ProductScan) => void;
   addSportSession: (s: SportSession) => void; removeSportSession: (id: string) => void;
-  setFamily: (f: Family | null) => void; addFamilyMember: (m: FamilyMember) => void; removeFamilyMember: (id: string) => void; updateFamilyMember: (id: string, u: Partial<FamilyMember>) => void;
-  calculateStreak: () => void; getMealsForDate: (d: string) => Meal[]; getWaterForDate: (d: string) => number;
+  setFamily: (f: Family | null) => void;
+  addFamilyMember: (m: FamilyMember) => void; removeFamilyMember: (id: string) => void; updateFamilyMember: (id: string, u: Partial<FamilyMember>) => void;
+  calculateStreak: () => void;
+  getMealsForDate: (d: string) => Meal[];
+  getWaterForDate: (d: string) => number;
   getTodayCalories: () => { consumed: number; protein: number; fat: number; carbs: number; fiber: number };
-  getSportForDate: (d: string) => SportSession[]; showToast: (m: string) => void; clearToast: () => void;
+  getSportForDate: (d: string) => SportSession[];
+  showToast: (m: string) => void; clearToast: () => void;
+
+  // ── Gamification actions ──
+  addXP: (amount: number) => void;
+  dismissLevelUp: () => void;
+  setAvatarConfig: (config: AvatarConfig) => void;
+  updateAvatarConfig: (updates: Partial<AvatarConfig>) => void;
+  unlockAvatarItem: (itemId: string) => void;
+  setSelectedTitle: (title: string) => void;
+  setDailyMissions: (missions: AIMission[], date: string) => void;
+  completeMission: (missionId: string) => void;
+  setAIAnalysis: (analysis: AIHealthAnalysis | null) => void;
+  setAIAnalysisLoading: (loading: boolean) => void;
+  setDetailedHealthIssues: (issues: DetailedHealthIssue[]) => void;
+  addCheckIn: (checkIn: CheckIn) => void;
+  useStreakProtection: () => void;
+  completeRehabSession: (programId: string) => void;
+  getXpForNextLevel: () => number;
+  getXpProgress: () => number; // 0-1 progress toward next level
 }
 
 export const useStore = create<AppState>()(persist((set, get) => ({
+  // ── Defaults ──
   isAuthenticated: false, userId: null, onboardingComplete: false, profile: null,
   meals: [], waterLogs: [], weightLogs: [], dailySteps: 0, stepsGoal: 10000,
   mealPlan: null, productScans: [], sportSessions: [], family: null, streak: 0, toastMessage: null,
 
+  // Gamification defaults
+  xp: 0,
+  level: 1,
+  lastLevelUp: null,
+  avatarConfig: null,
+  selectedTitle: 'Débutant motivé',
+  dailyMissions: [],
+  missionsDate: null,
+  aiAnalysis: null,
+  aiAnalysisLoading: false,
+  detailedHealthIssues: [],
+  checkIns: [],
+  streakProtectionAvailable: false,
+  streakProtectionUsedDate: null,
+
+  // ── Existing actions ──
   setAuth: (a, u) => set({ isAuthenticated: a, userId: u }),
   setOnboardingComplete: (c) => set({ onboardingComplete: c }),
   setProfile: (p) => set({ profile: p }),
@@ -150,4 +324,146 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   getSportForDate: (d) => get().sportSessions.filter(s => s.date === d),
   showToast: (m) => { set({ toastMessage: m }); setTimeout(() => set({ toastMessage: null }), 3000); },
   clearToast: () => set({ toastMessage: null }),
+
+  // ── Gamification actions ──
+
+  addXP: (amount) => set((s) => {
+    let newXp = s.xp + amount;
+    let newLevel = s.level;
+    let leveledUp: number | null = null;
+    let newStreakProtection = s.streakProtectionAvailable;
+
+    // Check for level ups (can level up multiple times at once)
+    while (newXp >= xpForNextLevel(newLevel)) {
+      newXp -= xpForNextLevel(newLevel);
+      newLevel++;
+      leveledUp = newLevel;
+      // Unlock streak protection at level 5
+      if (newLevel === 5) newStreakProtection = true;
+    }
+
+    return {
+      xp: newXp,
+      level: newLevel,
+      lastLevelUp: leveledUp,
+      streakProtectionAvailable: newStreakProtection,
+    };
+  }),
+
+  dismissLevelUp: () => set({ lastLevelUp: null }),
+
+  setAvatarConfig: (config) => set({ avatarConfig: config }),
+
+  updateAvatarConfig: (updates) => set((s) => {
+    if (!s.avatarConfig) return s;
+    return { avatarConfig: { ...s.avatarConfig, ...updates } };
+  }),
+
+  unlockAvatarItem: (itemId) => set((s) => {
+    if (!s.avatarConfig) return s;
+    if (s.avatarConfig.unlockedItems.includes(itemId)) return s;
+    return { avatarConfig: { ...s.avatarConfig, unlockedItems: [...s.avatarConfig.unlockedItems, itemId] } };
+  }),
+
+  setSelectedTitle: (title) => set({ selectedTitle: title }),
+
+  setDailyMissions: (missions, date) => set({ dailyMissions: missions, missionsDate: date }),
+
+  completeMission: (missionId) => set((s) => {
+    const mission = s.dailyMissions.find(m => m.id === missionId);
+    if (!mission || mission.isCompleted) return s;
+    const updatedMissions = s.dailyMissions.map(m =>
+      m.id === missionId ? { ...m, isCompleted: true } : m
+    );
+
+    // Add XP from the mission
+    let newXp = s.xp + mission.xpReward;
+    let newLevel = s.level;
+    let leveledUp: number | null = null;
+    let newStreakProtection = s.streakProtectionAvailable;
+    while (newXp >= xpForNextLevel(newLevel)) {
+      newXp -= xpForNextLevel(newLevel);
+      newLevel++;
+      leveledUp = newLevel;
+      if (newLevel === 5) newStreakProtection = true;
+    }
+
+    return {
+      dailyMissions: updatedMissions,
+      xp: newXp,
+      level: newLevel,
+      lastLevelUp: leveledUp,
+      streakProtectionAvailable: newStreakProtection,
+    };
+  }),
+
+  setAIAnalysis: (analysis) => set({ aiAnalysis: analysis }),
+  setAIAnalysisLoading: (loading) => set({ aiAnalysisLoading: loading }),
+
+  setDetailedHealthIssues: (issues) => set({ detailedHealthIssues: issues }),
+
+  addCheckIn: (checkIn) => set((s) => ({
+    checkIns: [checkIn, ...s.checkIns].slice(0, 52), // Keep ~1 year of weekly check-ins
+  })),
+
+  useStreakProtection: () => set((s) => {
+    if (!s.streakProtectionAvailable) return s;
+    return {
+      streakProtectionAvailable: false,
+      streakProtectionUsedDate: new Date().toISOString().split('T')[0],
+    };
+  }),
+
+  completeRehabSession: (programId) => set((s) => {
+    if (!s.aiAnalysis) return s;
+    const programs = s.aiAnalysis.rehabPrograms.map(p => {
+      if (p.id !== programId || p.isCompleted) return p;
+      const newCompleted = p.completedSessions + 1;
+      // Advance week every 3 sessions
+      const newWeek = Math.min(p.totalWeeks, Math.floor(newCompleted / 3) + 1);
+      const isComplete = newWeek >= p.totalWeeks && newCompleted >= p.totalWeeks * 3;
+
+      // Check milestones for sport unlocks
+      const updatedRestrictions = [...s.aiAnalysis!.sportRestrictions];
+      const milestone = p.milestones.find(ms => ms.week === newWeek);
+      if (milestone?.unlockedSports) {
+        for (const sportId of milestone.unlockedSports) {
+          const idx = updatedRestrictions.findIndex(r => r.sportId === sportId);
+          if (idx >= 0) updatedRestrictions[idx] = { ...updatedRestrictions[idx], status: 'caution' };
+        }
+      }
+
+      // If program is complete, unlock all associated sports
+      if (isComplete && p.milestones.length > 0) {
+        for (const ms of p.milestones) {
+          if (ms.unlockedSports) {
+            for (const sportId of ms.unlockedSports) {
+              const idx = updatedRestrictions.findIndex(r => r.sportId === sportId);
+              if (idx >= 0) updatedRestrictions[idx] = { ...updatedRestrictions[idx], status: 'unlocked' };
+            }
+          }
+        }
+      }
+
+      // Update restrictions in aiAnalysis
+      if (milestone?.unlockedSports || isComplete) {
+        // We'll handle this in the outer set
+      }
+
+      return { ...p, completedSessions: newCompleted, currentWeek: newWeek, isCompleted: isComplete };
+    });
+
+    return {
+      aiAnalysis: { ...s.aiAnalysis, rehabPrograms: programs },
+    };
+  }),
+
+  getXpForNextLevel: () => xpForNextLevel(get().level),
+
+  getXpProgress: () => {
+    const { xp, level } = get();
+    const needed = xpForNextLevel(level);
+    return needed > 0 ? xp / needed : 0;
+  },
+
 }), { name: 'nutreal-storage' }));

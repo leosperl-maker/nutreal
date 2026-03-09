@@ -251,3 +251,148 @@ export async function isGeminiConfigured(): Promise<boolean> {
 export function isGeminiConfiguredSync(): boolean {
   return true;
 }
+
+// ─── Analyse profil santé IA ─────────────────────────────────────────────────
+
+export interface HealthAnalysisResult {
+  sportRestrictions: {
+    sportId: string;
+    status: 'locked' | 'caution' | 'unlocked';
+    reason: string;
+    unlockCondition?: string;
+    estimatedWeeks?: number;
+  }[];
+  rehabPrograms: {
+    id: string;
+    name: string;
+    condition: string;
+    totalWeeks: number;
+    exercises: { name: string; description: string; duration: string; reps?: string }[];
+    milestones: { week: number; description: string; unlockedSports?: string[] }[];
+  }[];
+  healthInsights: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  recommendations: string[];
+}
+
+export async function analyzeHealthProfile(profile: {
+  name: string;
+  sex: string;
+  age: number;
+  weightKg: number;
+  heightCm: number;
+  activityLevel: string;
+  medicalConditions: string[];
+  healthDetails: { musculaire: string[]; osseux: string[]; articulaire: string[]; cerebral: string[] };
+  detailedIssues: { condition: string; location: string; duration: string; doctorConsulted: boolean; treatments: string[]; freeText?: string }[];
+  medications: { name: string; frequency: string; time: string }[];
+}): Promise<HealthAnalysisResult | null> {
+  try {
+    const sportsList = [
+      'yoga', 'pilates', 'stretching', 'marche', 'course', 'velo', 'natation',
+      'musculation', 'hiit', 'boxe', 'danse', 'escalade', 'crossfit', 'tennis',
+      'football', 'basketball'
+    ];
+
+    const prompt = `Tu es un médecin du sport et kinésithérapeute expert. Analyse ce profil de santé et donne des recommandations précises.
+
+PROFIL :
+- ${profile.name}, ${profile.sex === 'M' ? 'Homme' : 'Femme'}, ${profile.age} ans
+- Poids: ${profile.weightKg}kg, Taille: ${profile.heightCm}cm
+- Niveau d'activité: ${profile.activityLevel}
+- Conditions médicales: ${profile.medicalConditions.length > 0 ? profile.medicalConditions.join(', ') : 'Aucune'}
+${profile.healthDetails.musculaire.length > 0 ? `- Problèmes musculaires: ${profile.healthDetails.musculaire.join(', ')}` : ''}
+${profile.healthDetails.osseux.length > 0 ? `- Problèmes osseux: ${profile.healthDetails.osseux.join(', ')}` : ''}
+${profile.healthDetails.articulaire.length > 0 ? `- Problèmes articulaires: ${profile.healthDetails.articulaire.join(', ')}` : ''}
+${profile.healthDetails.cerebral.length > 0 ? `- Problèmes cérébraux/neurologiques: ${profile.healthDetails.cerebral.join(', ')}` : ''}
+${profile.detailedIssues.length > 0 ? `- Détails conditions:\n${profile.detailedIssues.map(i => `  * ${i.condition} (${i.location}, depuis ${i.duration}, médecin: ${i.doctorConsulted ? 'oui' : 'non'}, traitements: ${i.treatments.join(', ') || 'aucun'}${i.freeText ? `, notes: ${i.freeText}` : ''})`).join('\n')}` : ''}
+${profile.medications.length > 0 ? `- Médicaments: ${profile.medications.map(m => `${m.name} (${m.frequency}, ${m.time})`).join(', ')}` : ''}
+
+SPORTS À ÉVALUER: ${sportsList.join(', ')}
+
+RÈGLES:
+- Si AUCUNE condition médicale: tous les sports sont "unlocked" avec une raison encourageante
+- Si débutant sans expérience: commencer léger (marche, stretching, yoga) et les sports intenses en "caution"
+- Si problème musculaire/articulaire: verrouiller les sports à impact, proposer un programme de réhabilitation progressif
+- Si problème cardiaque: verrouiller HIIT, boxe, crossfit; autoriser marche, yoga, natation avec prudence
+- Les programmes de réhab doivent être progressifs sur 4-12 semaines avec des milestones clairs qui débloquent des sports
+- Chaque milestone doit indiquer quels sports sont débloqués en récompense
+
+Retourne UNIQUEMENT un JSON valide (sans backticks) :
+{"sportRestrictions":[{"sportId":"yoga","status":"unlocked","reason":"Excellent pour la souplesse","unlockCondition":"","estimatedWeeks":0}],"rehabPrograms":[{"id":"rehab_1","name":"Renforcement dos","condition":"Douleurs lombaires","totalWeeks":8,"exercises":[{"name":"Gainage","description":"Planche sur les avant-bras","duration":"30s","reps":"3 séries"}],"milestones":[{"week":2,"description":"Marche rapide autorisée","unlockedSports":["marche"]},{"week":6,"description":"Natation autorisée","unlockedSports":["natation"]}]}],"healthInsights":["Insight 1","Insight 2"],"riskLevel":"low","recommendations":["Recommandation 1"]}`;
+
+    const body = makeRequestBody([{ text: prompt }], {
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+    });
+
+    const text = await callGemini(body);
+    const result: HealthAnalysisResult = JSON.parse(stripMarkdown(text));
+    return result;
+  } catch (error) {
+    console.error('[Nutreal] Erreur analyse profil santé:', error);
+    return null;
+  }
+}
+
+// ─── Missions quotidiennes IA ────────────────────────────────────────────────
+
+export interface DailyMissionRaw {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  xpReward: number;
+  type: 'water' | 'food' | 'sport' | 'wellness' | 'walking' | 'custom';
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+export async function generateDailyMissions(profile: {
+  name: string;
+  sex: string;
+  age: number;
+  level: number;
+  activityLevel: string;
+  medicalConditions: string[];
+  weightGoalKg: number;
+  weightCurrentKg: number;
+  streak: number;
+  sportRestrictions?: { sportId: string; status: string }[];
+}): Promise<DailyMissionRaw[] | null> {
+  try {
+    const prompt = `Tu es un coach santé IA personnalisé. Génère 3-5 missions quotidiennes UNIQUES pour cet utilisateur.
+
+PROFIL:
+- ${profile.name}, ${profile.sex === 'M' ? 'Homme' : 'Femme'}, ${profile.age} ans
+- Niveau dans l'app: ${profile.level}
+- Activité: ${profile.activityLevel}
+- Objectif poids: ${profile.weightGoalKg}kg (actuel: ${profile.weightCurrentKg}kg)
+- Streak actuel: ${profile.streak} jours
+- Conditions: ${profile.medicalConditions.length > 0 ? profile.medicalConditions.join(', ') : 'Aucune'}
+${profile.sportRestrictions ? `- Sports restreints: ${profile.sportRestrictions.filter(s => s.status !== 'unlocked').map(s => `${s.sportId} (${s.status})`).join(', ') || 'Aucun'}` : ''}
+
+RÈGLES:
+- Missions adaptées au niveau (débutant = facile, niveau élevé = plus exigeant)
+- Ne JAMAIS proposer un sport verrouillé
+- Varier les types: hydratation, alimentation, sport, bien-être, marche
+- XP: easy=15-25, medium=30-50, hard=60-100
+- Missions réalistes et motivantes
+- Les emojis doivent correspondre au type de mission
+
+Retourne UNIQUEMENT un tableau JSON valide (sans backticks) :
+[{"id":"mission_1","title":"Boire 8 verres d'eau","description":"Hydrate-toi tout au long de la journée","emoji":"💧","xpReward":20,"type":"water","difficulty":"easy"}]`;
+
+    const body = makeRequestBody([{ text: prompt }], {
+      temperature: 0.8,
+      maxOutputTokens: 2048,
+    });
+
+    const text = await callGemini(body);
+    const result: DailyMissionRaw[] = JSON.parse(stripMarkdown(text));
+    if (!Array.isArray(result)) throw new Error('Format missions invalide');
+    return result;
+  } catch (error) {
+    console.error('[Nutreal] Erreur génération missions:', error);
+    return null;
+  }
+}
