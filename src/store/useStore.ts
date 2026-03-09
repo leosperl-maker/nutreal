@@ -11,12 +11,30 @@ export interface RecipeStep { step: number; instruction: string; }
 export interface RecipeIngredient { name: string; quantity: string; unit: string; }
 export interface Recipe { mealName: string; mealType: string; servings: number; prepTime: string; cookTime: string; ingredients: RecipeIngredient[]; steps: RecipeStep[]; imageUrl: string; }
 export interface GroceryItem { name: string; quantity: string; unit: string; category: string; checked: boolean; }
-export interface MealPlanOption { name: string; ingredients: string[]; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; imageUrl: string; price?: number; recipe?: Recipe; }
+export interface MealPlanOption { name: string; ingredients: string[]; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; imageUrl: string; prepTime?: string; price?: number; recipe?: Recipe; benefitsNote?: string; }
 export interface MealPlanSlot { type: 'breakfast' | 'lunch' | 'snack' | 'dinner'; options: MealPlanOption[]; selectedIndex: number | null; }
 export interface MealPlanDay { date: string; dayName: string; slots: MealPlanSlot[]; }
-export interface MealPlan { weekStart: string; days: MealPlanDay[]; calorieBudget: number; validated: boolean; recipes: Recipe[]; groceryList: GroceryItem[]; }
+export interface MealPlan { weekStart: string; days: MealPlanDay[]; calorieBudget: number; validated: boolean; recipes: Recipe[]; groceryList: GroceryItem[]; duration: number; }
 export interface ProductScan { barcode: string; productName: string; brand: string; score: number; nutriscoreGrade: string; imageUrl: string; scannedAt: string; }
 export interface SportSession { id: string; date: string; type: string; name: string; duration_min: number; caloriesBurned: number; notes?: string; createdAt: string; }
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  role: 'chef' | 'conjoint' | 'enfant' | 'frere_soeur' | 'autre';
+  sex: 'M' | 'F';
+  birthDate: string;
+  weightKg: number;
+  heightCm: number;
+  activityLevel: string;
+  dailyCalorieBudget: number;
+}
+export interface Family {
+  id: string;
+  inviteCode: string;
+  members: FamilyMember[];
+  chefId: string;
+}
 
 function categorizeIngredient(ingredient: string): string {
   const ing = ingredient.toLowerCase();
@@ -46,9 +64,10 @@ function getRealisticQty(ing: string, cat: string): { quantity: string; unit: st
 
 interface AppState {
   isAuthenticated: boolean; userId: string | null; onboardingComplete: boolean;
-  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; } | null;
+  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; } | null;
   meals: Meal[]; waterLogs: WaterLog[]; weightLogs: WeightLog[]; dailySteps: number; stepsGoal: number;
   mealPlan: MealPlan | null; productScans: ProductScan[]; sportSessions: SportSession[];
+  family: Family | null;
   streak: number; toastMessage: string | null;
   setAuth: (a: boolean, u: string | null) => void; setOnboardingComplete: (c: boolean) => void;
   setProfile: (p: AppState['profile']) => void; updateProfile: (u: Partial<NonNullable<AppState['profile']>>) => void;
@@ -58,6 +77,7 @@ interface AppState {
   selectMealOption: (d: number, s: number, o: number) => void; validateMealPlan: () => void;
   toggleGroceryItem: (i: number) => void; addProductScan: (s: ProductScan) => void;
   addSportSession: (s: SportSession) => void; removeSportSession: (id: string) => void;
+  setFamily: (f: Family | null) => void; addFamilyMember: (m: FamilyMember) => void; removeFamilyMember: (id: string) => void; updateFamilyMember: (id: string, u: Partial<FamilyMember>) => void;
   calculateStreak: () => void; getMealsForDate: (d: string) => Meal[]; getWaterForDate: (d: string) => number;
   getTodayCalories: () => { consumed: number; protein: number; fat: number; carbs: number; fiber: number };
   getSportForDate: (d: string) => SportSession[]; showToast: (m: string) => void; clearToast: () => void;
@@ -66,7 +86,7 @@ interface AppState {
 export const useStore = create<AppState>()(persist((set, get) => ({
   isAuthenticated: false, userId: null, onboardingComplete: false, profile: null,
   meals: [], waterLogs: [], weightLogs: [], dailySteps: 0, stepsGoal: 10000,
-  mealPlan: null, productScans: [], sportSessions: [], streak: 0, toastMessage: null,
+  mealPlan: null, productScans: [], sportSessions: [], family: null, streak: 0, toastMessage: null,
 
   setAuth: (a, u) => set({ isAuthenticated: a, userId: u }),
   setOnboardingComplete: (c) => set({ onboardingComplete: c }),
@@ -94,7 +114,9 @@ export const useStore = create<AppState>()(persist((set, get) => ({
     if (!s.mealPlan) return s;
     const np = { ...s.mealPlan, validated: true }; const recipes: Recipe[] = [];
     const iMap = new Map<string, { quantity: number; unit: string; category: string }>();
-    const mult = s.profile?.groceryFrequency === 'monthly' ? 4 : s.profile?.groceryFrequency === 'biweekly' ? 2 : 1;
+    const freqMult = s.profile?.groceryFrequency === 'monthly' ? 4 : s.profile?.groceryFrequency === 'biweekly' ? 2 : 1;
+    const householdMult = (s.profile?.familyMode && s.profile?.householdSize > 1) ? s.profile.householdSize : 1;
+    const mult = freqMult * householdMult;
     for (const day of np.days) for (const slot of day.slots) {
       if (slot.selectedIndex !== null) {
         const opt = slot.options[slot.selectedIndex];
@@ -117,6 +139,10 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   addProductScan: (scan) => set((s) => ({ productScans: [scan, ...s.productScans].slice(0, 50) })),
   addSportSession: (session) => set((s) => ({ sportSessions: [session, ...s.sportSessions] })),
   removeSportSession: (id) => set((s) => ({ sportSessions: s.sportSessions.filter(ss => ss.id !== id) })),
+  setFamily: (f) => set({ family: f }),
+  addFamilyMember: (m) => set((s) => s.family ? { family: { ...s.family, members: [...s.family.members, m] } } : s),
+  removeFamilyMember: (id) => set((s) => s.family ? { family: { ...s.family, members: s.family.members.filter(m => m.id !== id) } } : s),
+  updateFamilyMember: (id, u) => set((s) => s.family ? { family: { ...s.family, members: s.family.members.map(m => m.id === id ? { ...m, ...u } : m) } } : s),
   calculateStreak: () => { const { meals } = get(); const today = new Date(); let streak = 0; for (let i = 0; i < 365; i++) { const d = new Date(today); d.setDate(d.getDate() - i); if (meals.some(m => m.date === d.toISOString().split('T')[0])) streak++; else if (i > 0) break; } set({ streak }); },
   getMealsForDate: (d) => get().meals.filter(m => m.date === d),
   getWaterForDate: (d) => get().waterLogs.find(w => w.date === d)?.amount || 0,

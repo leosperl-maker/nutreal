@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { calculateNutritionPlan, LOCATION_OPTIONS, FOOD_PREFERENCE_OPTIONS, GROCERY_FREQUENCY_OPTIONS, getCurrencyForLocation } from '../lib/nutrition';
-import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
 import { useConfetti } from '../components/ConfettiExplosion';
 
-const STEPS = ['Profil', 'Mensurations', 'Objectif', 'Activité', 'Localisation', 'Budget', 'Préférences', 'Aliments'];
+const STEPS = ['Profil', 'Mensurations', 'Objectif', 'Activité', 'Localisation', 'Budget', 'Cuisine', 'Foyer', 'Préférences', 'Aliments'];
 
 export default function Onboarding() {
   const { setProfile, setOnboardingComplete } = useStore();
   const { fireConfetti } = useConfetti();
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ name: '', sex: 'M' as 'M' | 'F', birthDate: '1990-01-01', heightCm: 175, weightCurrentKg: 80, weightGoalKg: 75, activityLevel: 'moderate', medicalConditions: [] as string[], dietPreferences: [] as string[], location: 'guadeloupe', groceryBudget: 100, groceryCurrency: '€', foodPreferences: [] as string[], groceryFrequency: 'weekly' });
+  const [form, setForm] = useState({ name: '', sex: 'M' as 'M' | 'F', birthDate: '1990-01-01', heightCm: 175, weightCurrentKg: 80, weightGoalKg: 75, activityLevel: 'moderate', medicalConditions: [] as string[], dietPreferences: [] as string[], location: 'guadeloupe', groceryBudget: 100, groceryCurrency: '€', foodPreferences: [] as string[], groceryFrequency: 'weekly', cookingTime: '30 min', householdSize: 1, familyMode: false });
 
   const update = (k: string, v: any) => {
     setForm(f => {
@@ -38,7 +38,7 @@ export default function Onboarding() {
     setOnboardingComplete(true);
   };
 
-  const icons = [User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils];
+  const icons = [User, Ruler, Target, Activity, MapPin, ShoppingCart, Clock, Home, Heart, Utensils];
   const Icon = icons[step];
 
   const grouped = LOCATION_OPTIONS.reduce((acc, loc) => {
@@ -180,6 +180,65 @@ export default function Onboarding() {
 
             {step === 6 && (
               <div className="space-y-4">
+                <label className="text-sm font-medium text-text-secondary mb-2 block">Combien de temps souhaitez-vous cuisiner ?</label>
+                <div className="space-y-2">
+                  {[
+                    { v: '15 min', l: '⚡ 15 minutes', d: 'Repas express et rapides' },
+                    { v: '30 min', l: '🍳 30 minutes', d: 'La plupart des recettes classiques' },
+                    { v: '45 min', l: '👨‍🍳 45 minutes', d: 'Plats mijotés et élaborés' },
+                    { v: '1h+', l: '🎯 1 heure ou plus', d: 'Cuisine gastronomique' },
+                    { v: 'no_limit', l: '♾️ Pas de limite', d: 'J\'aime prendre mon temps' },
+                  ].map(o => (
+                    <button key={o.v} onClick={() => update('cookingTime', o.v)}
+                      className={`w-full p-4 rounded-xl text-left transition-all ${form.cookingTime === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                      <div className="font-medium text-sm">{o.l}</div>
+                      <div className={`text-xs mt-0.5 ${form.cookingTime === o.v ? 'text-white/70' : 'text-text-muted'}`}>{o.d}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 7 && (
+              <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium text-text-secondary mb-2 block">Combien de personnes mangent avec vous ?</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button key={n} onClick={() => update('householdSize', n)}
+                        className={`py-4 rounded-xl font-bold text-lg transition-all ${form.householdSize === n ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300 text-text-primary'}`}>
+                        {n === 5 ? '5+' : n}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">
+                    {form.householdSize === 1 ? 'Vous mangez seul(e)' : `${form.householdSize} personnes au foyer`}
+                  </p>
+                </div>
+                {form.householdSize > 1 && (
+                  <div>
+                    <label className="text-sm font-medium text-text-secondary mb-2 block">
+                      Souhaitez-vous que tout le monde profite de vos repas ?
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => update('familyMode', true)}
+                        className={`p-4 rounded-xl text-left transition-all ${form.familyMode ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                        <div className="font-medium text-sm">👨‍👩‍👧‍👦 Oui, mode famille</div>
+                        <div className={`text-xs mt-1 ${form.familyMode ? 'text-white/70' : 'text-text-muted'}`}>Portions adaptées pour tous</div>
+                      </button>
+                      <button onClick={() => update('familyMode', false)}
+                        className={`p-4 rounded-xl text-left transition-all ${!form.familyMode ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                        <div className="font-medium text-sm">🧑 Non, juste pour moi</div>
+                        <div className={`text-xs mt-1 ${!form.familyMode ? 'text-white/70' : 'text-text-muted'}`}>Repas individuels uniquement</div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 8 && (
+              <div className="space-y-4">
                 <label className="text-sm font-medium text-text-secondary block">Régime alimentaire</label>
                 <div className="flex flex-wrap gap-2">
                   {['Omnivore', 'Végétarien', 'Végan', 'Pescétarien', 'Sans gluten', 'Sans lactose', 'Halal', 'Casher', 'Keto', 'Paléo'].map(d => (
@@ -201,7 +260,7 @@ export default function Onboarding() {
               </div>
             )}
 
-            {step === 7 && (
+            {step === 9 && (
               <div>
                 <p className="text-sm text-text-secondary mb-3">Sélectionnez vos aliments préférés</p>
                 <div className="flex flex-wrap gap-2">

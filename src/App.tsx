@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import SportPage from './pages/SportPage';
 import MealPlanPage from './pages/MealPlanPage';
+import DishDetailPage from './pages/DishDetailPage';
+import FamilyPage from './pages/FamilyPage';
 import Profile from './pages/Profile';
 import FoodJournal from './pages/FoodJournal';
 import AuthPage from './pages/AuthPage';
@@ -35,6 +37,8 @@ function AnimatedRoutes() {
             <Route path="sport" element={<SportPage />} />
             <Route path="achievements" element={<Achievements />} />
             <Route path="meal-plan" element={<MealPlanPage />} />
+            <Route path="meal-plan/dish/:dayIndex/:slotIndex" element={<DishDetailPage />} />
+            <Route path="family" element={<FamilyPage />} />
             <Route path="profile" element={<Profile />} />
             <Route path="journal" element={<FoodJournal />} />
           </Route>
