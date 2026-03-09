@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore, UNLOCKABLE_TITLES } from '../store/useStore';
 import { calculateAge } from '../lib/nutrition';
-import { getUnlockedItems, ALL_ITEMS, getItemRarity, RARITY_MAP } from '../components/avatar/avatarItems';
+import { getUnlockedItems, ALL_ITEMS, getItemRarity, RARITY_MAP, DEFAULT_AVATAR_CONFIG, isItemUnlocked } from '../components/avatar/avatarItems';
 import type { AvatarItem } from '../components/avatar/avatarItems';
-import RPMCreator from '../components/avatar/RPMCreator';
+import AvatarEditor from '../components/avatar/AvatarEditor';
+import ShopModal from '../components/ShopModal';
 import LevelBar from '../components/LevelBar';
 import MissionCard from '../components/MissionCard';
 import AnimatedPage from '../components/AnimatedPage';
@@ -15,20 +16,21 @@ import Icon3D from '../components/Icon3D';
 import ItemPreview from '../components/avatar/ItemPreview';
 import {
   LogOut, Scale, Save, Trophy, Calendar, Flame, Check,
-  ChevronDown, ChevronUp, Package, Pencil, UserCircle2,
-  Utensils,
+  ChevronDown, ChevronUp, Package, Pencil, Coins,
+  ShoppingBag, Utensils,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
+const Avatar3DViewer = lazy(() => import('../components/avatar/Avatar3DViewer'));
+
 /** Game-style inventory item card */
-function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number }) {
-  const unlocked = !item.isPremium && item.requiredLevel <= playerLevel;
+function ItemCard({ item, playerLevel, purchased }: { item: AvatarItem; playerLevel: number; purchased: string[] }) {
+  const unlocked = isItemUnlocked(item.id, playerLevel, purchased);
   const rarity = getItemRarity(item);
   const info = RARITY_MAP[rarity];
 
   return (
     <div className="relative group" title={unlocked ? `${item.name} (${info.name})` : `Niv. ${item.requiredLevel} requis`}>
-      {/* Card */}
       <div
         className="relative rounded-xl overflow-hidden aspect-square flex flex-col items-center justify-center"
         style={{
@@ -39,12 +41,9 @@ function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number
           boxShadow: unlocked && info.glow ? `0 4px 12px ${info.glow}` : 'none',
         }}
       >
-        {/* Item visual */}
         <div className={`transition-all ${unlocked ? '' : 'opacity-25 grayscale'}`}>
           <ItemPreview itemId={item.id} emoji={item.emoji} type={item.type} size={40} />
         </div>
-
-        {/* Lock overlay */}
         {!unlocked && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-xl">
             <div className="bg-black/60 rounded-full w-6 h-6 flex items-center justify-center">
@@ -55,20 +54,14 @@ function ItemCard({ item, playerLevel }: { item: AvatarItem; playerLevel: number
             </div>
           </div>
         )}
-
-        {/* Rarity indicator bar */}
         <div
           className="absolute bottom-0 left-0 right-0 h-1"
           style={{ background: unlocked ? `linear-gradient(90deg, ${info.bgFrom}, ${info.bgTo})` : '#D1D5DB' }}
         />
       </div>
-
-      {/* Item name */}
       <p className={`text-[9px] font-medium text-center mt-1 truncate px-0.5 ${unlocked ? 'text-text-primary' : 'text-text-muted'}`}>
         {item.name}
       </p>
-
-      {/* Level badge */}
       {!unlocked && (
         <div className="absolute -top-1 -right-1 bg-text-primary text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow">
           {item.requiredLevel}
@@ -82,15 +75,24 @@ export default function Profile() {
   const {
     profile, weightLogs, streak, meals, sportSessions, waterLogs, mealPlan, productScans,
     setAuth, setOnboardingComplete, updateProfile, addWeightLog, showToast,
-    avatarConfig, setAvatarUrl, level, xp, selectedTitle, setSelectedTitle, dailyMissions,
+    avatarConfig, setAvatarConfig, level, xp, selectedTitle, setSelectedTitle, dailyMissions,
+    coins, purchasedItems,
   } = useStore();
 
-  const [showRPMCreator, setShowRPMCreator] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [newWeight, setNewWeight] = useState('');
   const [showWeightInput, setShowWeightInput] = useState(false);
   const [showTitlePicker, setShowTitlePicker] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+
+  // Auto-init avatar config
+  useEffect(() => {
+    if (!avatarConfig) {
+      setAvatarConfig({ ...DEFAULT_AVATAR_CONFIG });
+    }
+  }, [avatarConfig, setAvatarConfig]);
 
   if (!profile) return null;
 
@@ -98,7 +100,6 @@ export default function Profile() {
   const totalMeals = meals.length;
   const uniqueDays = new Set(meals.map(m => m.date)).size;
   const totalSport = sportSessions.length;
-  const avatarUrl = avatarConfig?.avatarUrl || null;
 
   const weightData = weightLogs.slice(-14).map(w => ({
     date: new Date(w.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
@@ -116,12 +117,6 @@ export default function Profile() {
 
   const handleLogout = () => { setAuth(false, null); setOnboardingComplete(false); };
 
-  const handleAvatarCreated = (url: string) => {
-    setAvatarUrl(url);
-    showToast('Avatar 3D sauvegarde !');
-  };
-
-  // Available titles
   const availableTitles = UNLOCKABLE_TITLES.filter(t => {
     if (t.requiredLevel > 0) return level >= t.requiredLevel;
     if (t.special === '30_day_streak') return streak >= 30;
@@ -129,7 +124,6 @@ export default function Profile() {
     return false;
   });
 
-  // Achievements
   const totalKcalBurned = sportSessions.reduce((s, ss) => s + ss.caloriesBurned, 0);
   const achievements = [
     { id: 'streak_1', label: 'Premier jour', unlocked: streak >= 1, emoji: 'fire' },
@@ -153,17 +147,15 @@ export default function Profile() {
   ];
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
-  // Item collection
   const unlockedItems = getUnlockedItems(level);
   const totalItems = ALL_ITEMS.filter(i => !i.isPremium).length;
 
-  // Active missions
   const activeMissions = dailyMissions.filter(m => !m.isCompleted);
   const completedMissions = dailyMissions.filter(m => m.isCompleted);
 
   return (
     <AnimatedPage className="max-w-lg mx-auto pb-4">
-      {/* Logout button (absolute top-right) */}
+      {/* Logout button */}
       <div className="absolute top-12 right-4 z-10">
         <motion.button whileTap={{ scale: 0.9 }} onClick={handleLogout}
           className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-sm">
@@ -171,58 +163,49 @@ export default function Profile() {
         </motion.button>
       </div>
 
-      {/* ── HERO: Avatar ── */}
+      {/* ── HERO: 3D Avatar ── */}
       <div className="relative">
-        {avatarUrl ? (
-          <div className="w-full rounded-2xl overflow-hidden" style={{ height: '55vh' }}>
-            <div className="absolute inset-0 bg-gradient-to-b from-primary-100 via-primary-50 to-white" />
-            <img src={avatarUrl} alt="Mon avatar" className="relative z-[1] w-full h-full object-contain" />
-          </div>
-        ) : (
-          <div className="w-full rounded-2xl overflow-hidden" style={{ height: '50vh' }}>
-            <div className="absolute inset-0 bg-gradient-to-b from-primary-200 via-primary-100 to-white" />
-            <div className="relative z-[1] flex flex-col items-center justify-center h-full">
-              {/* Avatar silhouette */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="relative"
-              >
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 shadow-2xl flex items-center justify-center">
-                  <UserCircle2 size={72} className="text-white/90" strokeWidth={1.2} />
-                </div>
-                <div className="absolute -inset-3 rounded-full border-2 border-primary-300/40 animate-pulse" />
-                <div className="absolute -inset-6 rounded-full border border-primary-200/25" />
-                {/* Level badge */}
-                <div className="absolute -bottom-1 -right-1 bg-primary-500 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
-                  {level}
-                </div>
-              </motion.div>
-              <p className="text-sm font-semibold text-primary-500 mt-5">Cree ton avatar 3D</p>
-              <p className="text-xs text-primary-400/70 mt-1">Personnalise ton personnage</p>
+        {avatarConfig ? (
+          <Suspense fallback={
+            <div className="w-full rounded-2xl bg-gradient-to-b from-indigo-100 to-pink-50 flex items-center justify-center" style={{ height: '280px' }}>
+              <div className="animate-pulse text-primary-400 text-sm font-medium">Chargement 3D...</div>
             </div>
+          }>
+            <Avatar3DViewer config={avatarConfig} height="280px" />
+          </Suspense>
+        ) : (
+          <div className="w-full rounded-2xl bg-gradient-to-b from-primary-200 via-primary-100 to-white flex items-center justify-center" style={{ height: '280px' }}>
+            <div className="animate-pulse text-primary-400 text-sm">Chargement...</div>
           </div>
         )}
 
-        {/* Modify/Create avatar button */}
+        {/* Customize button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
-          onClick={() => setShowRPMCreator(true)}
+          onClick={() => setShowEditor(true)}
           className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-float z-[2]"
         >
           <Pencil size={16} className="text-primary-500" />
-          <span className="text-xs font-bold text-primary-600">
-            {avatarUrl ? 'Modifier' : 'Creer mon avatar'}
-          </span>
+          <span className="text-xs font-bold text-primary-600">Personnaliser</span>
         </motion.button>
       </div>
 
-      {/* Content below avatar */}
+      {/* Content */}
       <div className="px-4 -mt-2 relative z-10">
+        {/* Coins bar */}
+        <ScrollReveal>
+          <div className="flex items-center justify-center gap-2 mb-3 pt-3">
+            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-4 py-2">
+              <Coins size={18} className="text-amber-500" />
+              <span className="text-base font-bold text-amber-700">{coins.toLocaleString()}</span>
+              <span className="text-xs text-amber-500 font-medium ml-0.5">coins</span>
+            </div>
+          </div>
+        </ScrollReveal>
+
         {/* Name + Title */}
         <ScrollReveal>
-          <div className="text-center mb-4 pt-4">
+          <div className="text-center mb-4">
             <h2 className="text-2xl font-black text-text-primary font-display">{profile.name}</h2>
             <button onClick={() => setShowTitlePicker(!showTitlePicker)}
               className="text-sm text-primary-500 font-medium mt-1 flex items-center justify-center gap-1 mx-auto">
@@ -231,7 +214,6 @@ export default function Profile() {
             </button>
             <p className="text-xs text-text-muted mt-1">{age} ans · {profile.sex === 'M' ? 'Homme' : 'Femme'}</p>
 
-            {/* Title picker */}
             <AnimatePresence>
               {showTitlePicker && availableTitles.length > 0 && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
@@ -253,7 +235,30 @@ export default function Profile() {
 
         {/* XP Bar */}
         <ScrollReveal delay={0.05}>
-          <LevelBar className="mb-4" />
+          <LevelBar className="mb-3" />
+        </ScrollReveal>
+
+        {/* Shop button */}
+        <ScrollReveal delay={0.08}>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setShowShop(true)}
+            className="w-full mb-4 bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-4 flex items-center justify-between shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <ShoppingBag size={20} className="text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-white">Boutique</p>
+                <p className="text-[11px] text-white/80">Acheter des items avec vos coins</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 bg-white/20 rounded-full px-3 py-1.5">
+              <Coins size={14} className="text-white" />
+              <span className="text-sm font-bold text-white">{coins.toLocaleString()}</span>
+            </div>
+          </motion.button>
         </ScrollReveal>
 
         {/* Missions */}
@@ -370,7 +375,7 @@ export default function Profile() {
           </AnimatedCard>
         </ScrollReveal>
 
-        {/* Item collection — Game-style inventory */}
+        {/* Item collection */}
         <ScrollReveal delay={0.3}>
           <AnimatedCard className="p-4 mb-4" index={6}>
             <button onClick={() => setShowCollection(!showCollection)}
@@ -381,7 +386,7 @@ export default function Profile() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
-                  {unlockedItems.length}/{totalItems}
+                  {unlockedItems.length + purchasedItems.length}/{totalItems}
                 </span>
                 {showCollection ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
               </div>
@@ -393,16 +398,16 @@ export default function Profile() {
                   <div className="space-y-4 mt-4">
                     {(['hairstyle', 'outfit', 'accessory', 'pet'] as const).map(type => {
                       const typeItems = ALL_ITEMS.filter(i => i.type === type);
-                      const unlocked = typeItems.filter(i => i.requiredLevel <= level && !i.isPremium);
+                      const owned = typeItems.filter(i => isItemUnlocked(i.id, level, purchasedItems));
                       const labelText = type === 'hairstyle' ? 'Coiffures' : type === 'outfit' ? 'Tenues' : type === 'accessory' ? 'Accessoires' : 'Compagnons';
                       return (
                         <div key={type}>
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-xs font-bold text-text-primary uppercase tracking-wider">{labelText}</p>
-                            <p className="text-[10px] text-text-muted font-medium">{unlocked.length}/{typeItems.filter(i => !i.isPremium).length}</p>
+                            <p className="text-[10px] text-text-muted font-medium">{owned.length}/{typeItems.length}</p>
                           </div>
                           <div className="grid grid-cols-4 gap-2">
-                            {typeItems.map(item => <ItemCard key={item.id} item={item} playerLevel={level} />)}
+                            {typeItems.map(item => <ItemCard key={item.id} item={item} playerLevel={level} purchased={purchasedItems} />)}
                           </div>
                         </div>
                       );
@@ -415,12 +420,9 @@ export default function Profile() {
         </ScrollReveal>
       </div>
 
-      {/* RPM Creator Modal */}
-      <RPMCreator
-        open={showRPMCreator}
-        onClose={() => setShowRPMCreator(false)}
-        onAvatarCreated={handleAvatarCreated}
-      />
+      {/* Modals */}
+      {showEditor && <AvatarEditor onClose={() => setShowEditor(false)} />}
+      {showShop && <ShopModal onClose={() => setShowShop(false)} />}
     </AnimatedPage>
   );
 }

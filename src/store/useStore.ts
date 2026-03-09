@@ -186,6 +186,8 @@ interface AppState {
   xp: number;
   level: number;
   lastLevelUp: number | null; // set when level up happens, cleared by dismissLevelUp
+  coins: number;
+  purchasedItems: string[];
   avatarConfig: AvatarConfig | null;
   selectedTitle: string;
   dailyMissions: AIMission[];
@@ -224,9 +226,12 @@ interface AppState {
 
   // ── Gamification actions ──
   addXP: (amount: number) => void;
+  addCoins: (amount: number) => void;
+  purchaseItem: (itemId: string, price: number) => boolean;
   dismissLevelUp: () => void;
   setAvatarConfig: (config: AvatarConfig) => void;
   updateAvatarConfig: (updates: Partial<AvatarConfig>) => void;
+  /** @deprecated RPM is dead, kept for backwards compat */
   setAvatarUrl: (url: string) => void;
   unlockAvatarItem: (itemId: string) => void;
   setSelectedTitle: (title: string) => void;
@@ -252,6 +257,8 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   xp: 0,
   level: 1,
   lastLevelUp: null,
+  coins: 100, // welcome gift
+  purchasedItems: [],
   avatarConfig: null,
   selectedTitle: 'Débutant motivé',
   dailyMissions: [],
@@ -334,13 +341,14 @@ export const useStore = create<AppState>()(persist((set, get) => ({
     let newLevel = s.level;
     let leveledUp: number | null = null;
     let newStreakProtection = s.streakProtectionAvailable;
+    let coinBonus = 0;
 
     // Check for level ups (can level up multiple times at once)
     while (newXp >= xpForNextLevel(newLevel)) {
       newXp -= xpForNextLevel(newLevel);
       newLevel++;
       leveledUp = newLevel;
-      // Unlock streak protection at level 5
+      coinBonus += 200; // +200 coins per level up
       if (newLevel === 5) newStreakProtection = true;
     }
 
@@ -348,9 +356,22 @@ export const useStore = create<AppState>()(persist((set, get) => ({
       xp: newXp,
       level: newLevel,
       lastLevelUp: leveledUp,
+      coins: s.coins + coinBonus,
       streakProtectionAvailable: newStreakProtection,
     };
   }),
+
+  addCoins: (amount) => set((s) => ({ coins: s.coins + amount })),
+
+  purchaseItem: (itemId, price) => {
+    const s = get();
+    if (s.coins < price || s.purchasedItems.includes(itemId)) return false;
+    set({
+      coins: s.coins - price,
+      purchasedItems: [...s.purchasedItems, itemId],
+    });
+    return true;
+  },
 
   dismissLevelUp: () => set({ lastLevelUp: null }),
 
@@ -383,15 +404,20 @@ export const useStore = create<AppState>()(persist((set, get) => ({
       m.id === missionId ? { ...m, isCompleted: true } : m
     );
 
+    // Coin reward based on difficulty
+    const coinReward = mission.difficulty === 'hard' ? 75 : mission.difficulty === 'medium' ? 50 : 25;
+
     // Add XP from the mission
     let newXp = s.xp + mission.xpReward;
     let newLevel = s.level;
     let leveledUp: number | null = null;
     let newStreakProtection = s.streakProtectionAvailable;
+    let levelUpCoins = 0;
     while (newXp >= xpForNextLevel(newLevel)) {
       newXp -= xpForNextLevel(newLevel);
       newLevel++;
       leveledUp = newLevel;
+      levelUpCoins += 200;
       if (newLevel === 5) newStreakProtection = true;
     }
 
@@ -400,6 +426,7 @@ export const useStore = create<AppState>()(persist((set, get) => ({
       xp: newXp,
       level: newLevel,
       lastLevelUp: leveledUp,
+      coins: s.coins + coinReward + levelUpCoins,
       streakProtectionAvailable: newStreakProtection,
     };
   }),

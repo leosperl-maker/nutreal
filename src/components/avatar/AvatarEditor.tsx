@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock } from 'lucide-react';
+import { X, Lock, Coins } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import Avatar from './Avatar';
 import Icon3D from '../Icon3D';
 import {
   HAIRSTYLES, OUTFITS, ACCESSORIES, PETS,
   SKIN_COLORS, HAIR_COLORS, EYE_COLORS, OUTFIT_COLORS,
-  isItemUnlocked,
+  isItemUnlocked, getItemRarity, RARITY_MAP,
 } from './avatarItems';
 import type { AvatarConfig } from '../../store/useStore';
+
+const Avatar3DViewer = lazy(() => import('./Avatar3DViewer'));
 
 interface AvatarEditorProps {
   onClose: () => void;
@@ -27,7 +29,7 @@ const TABS: { id: TabId; emoji: string; label: string }[] = [
 ];
 
 export default function AvatarEditor({ onClose }: AvatarEditorProps) {
-  const { avatarConfig, updateAvatarConfig, level } = useStore();
+  const { avatarConfig, updateAvatarConfig, level, purchasedItems, coins, purchaseItem, showToast } = useStore();
   const [tab, setTab] = useState<TabId>('skin');
 
   if (!avatarConfig) return null;
@@ -51,18 +53,31 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
     </div>
   );
 
+  const handleItemClick = (item: { id: string; name: string; price: number }, unlocked: boolean, onChange: (v: string | null) => void) => {
+    if (unlocked) {
+      onChange(item.id);
+    } else if (item.price > 0 && coins >= item.price) {
+      const success = purchaseItem(item.id, item.price);
+      if (success) {
+        showToast(`${item.name} acheté !`);
+        onChange(item.id);
+      }
+    }
+  };
+
   const renderItemGrid = (
-    items: { id: string; name: string; emoji: string; requiredLevel: number; isPremium: boolean }[],
+    items: { id: string; name: string; emoji: string; requiredLevel: number; isPremium: boolean; price: number }[],
     currentValue: string | null,
     onChange: (v: string | null) => void,
   ) => (
     <div className="grid grid-cols-3 gap-2">
       {items.map(item => {
-        const unlocked = isItemUnlocked(item.id, level);
+        const unlocked = isItemUnlocked(item.id, level, purchasedItems);
         const isActive = currentValue === item.id;
+        const canBuy = !unlocked && item.price > 0 && coins >= item.price;
         return (
-          <button key={item.id} onClick={() => unlocked && onChange(item.id)}
-            className={`relative p-3 rounded-xl text-center transition-all ${isActive ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-200'} ${!unlocked ? 'opacity-40' : ''}`}
+          <button key={item.id} onClick={() => handleItemClick(item, unlocked, onChange)}
+            className={`relative p-3 rounded-xl text-center transition-all ${isActive ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-200'} ${!unlocked && !canBuy ? 'opacity-40' : ''}`}
           >
             <span className="text-xl block">{item.emoji}</span>
             <span className={`text-[10px] font-medium block mt-1 ${isActive ? 'text-white' : 'text-text-secondary'}`}>
@@ -70,13 +85,17 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
             </span>
             {!unlocked && (
               <div className="absolute top-1 right-1 bg-surface-700/80 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
-                <Lock size={8} className="text-white" />
-                <span className="text-[8px] text-white font-bold">{item.requiredLevel}</span>
-              </div>
-            )}
-            {item.isPremium && unlocked && (
-              <div className="absolute top-1 right-1 bg-yellow-400 rounded-full px-1 py-0.5">
-                <span className="text-[8px] font-bold">PRO</span>
+                {canBuy ? (
+                  <>
+                    <Coins size={8} className="text-amber-300" />
+                    <span className="text-[8px] text-amber-300 font-bold">{item.price}</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={8} className="text-white" />
+                    <span className="text-[8px] text-white font-bold">{item.requiredLevel}</span>
+                  </>
+                )}
               </div>
             )}
           </button>
@@ -170,9 +189,15 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
             </button>
           </div>
 
-          {/* Avatar preview */}
-          <div className="flex justify-center py-4">
-            <Avatar config={avatarConfig} size={140} />
+          {/* Avatar 3D preview */}
+          <div className="px-4 py-2">
+            <Suspense fallback={
+              <div className="w-full h-[180px] rounded-xl bg-gradient-to-b from-indigo-50 to-pink-50 flex items-center justify-center">
+                <div className="animate-pulse text-primary-400 text-xs">Chargement 3D...</div>
+              </div>
+            }>
+              <Avatar3DViewer config={avatarConfig} height="180px" interactive={false} />
+            </Suspense>
           </div>
 
           {/* Tabs */}

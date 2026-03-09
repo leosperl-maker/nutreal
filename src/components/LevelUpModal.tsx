@@ -79,10 +79,22 @@ export default function LevelUpModal() {
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-white/60 text-sm mb-6"
+            className="text-white/60 text-sm mb-3"
           >
             {profile?.name || 'Vous'} atteint le niveau {newLevel}
           </motion.p>
+
+          {/* Coin reward */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.45, type: 'spring' }}
+            className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-400/30 rounded-full px-5 py-2 mb-6"
+          >
+            <span className="text-amber-300 text-lg">&#x1FA99;</span>
+            <span className="text-amber-300 font-black text-lg">+200</span>
+            <span className="text-amber-300/70 text-xs font-medium">coins</span>
+          </motion.div>
 
           {/* New unlocks */}
           {(newItems.length > 0 || newTitle) && (
