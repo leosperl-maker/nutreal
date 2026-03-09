@@ -1,1 +1,1 @@
-# nutreal
+# nutrilens-ai-nutrition-coach

@@ -12,14 +12,18 @@ import MealPlanPage from './pages/MealPlanPage';
 import Profile from './pages/Profile';
 import FoodJournal from './pages/FoodJournal';
 import AuthPage from './pages/AuthPage';
+import Achievements from './pages/Achievements';
 
 function AnimatedRoutes() {
   const location = useLocation();
   const { onboardingComplete, isAuthenticated } = useStore();
 
+  // Key changes when auth state changes, ensuring clean transitions between auth/onboarding/app
+  const routeKey = !isAuthenticated ? 'auth' : !onboardingComplete ? 'onboarding' : location.pathname;
+
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={routeKey}>
         {!isAuthenticated ? (
           <><Route path="/auth" element={<AuthPage />} /><Route path="*" element={<Navigate to="/auth" replace />} /></>
         ) : !onboardingComplete ? (
@@ -29,6 +33,7 @@ function AnimatedRoutes() {
             <Route index element={<Dashboard />} />
             <Route path="scanner" element={<Scanner />} />
             <Route path="sport" element={<SportPage />} />
+            <Route path="achievements" element={<Achievements />} />
             <Route path="meal-plan" element={<MealPlanPage />} />
             <Route path="profile" element={<Profile />} />
             <Route path="journal" element={<FoodJournal />} />

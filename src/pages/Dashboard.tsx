@@ -122,8 +122,8 @@ export default function Dashboard() {
         <AnimatedCard className="p-4 mb-4" index={2}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Droplets size={20} className="text-blue-500" />
+              <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                <Droplets size={20} className="text-primary-500" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Hydratation</h3>
@@ -141,7 +141,19 @@ export default function Dashboard() {
               </motion.button>
             </div>
           </div>
-          <AnimatedProgressBar percentage={waterTarget > 0 ? (waterToday / waterTarget) * 100 : 0} color="bg-blue-500" className="mt-3" />
+          <AnimatedProgressBar percentage={waterTarget > 0 ? (waterToday / waterTarget) * 100 : 0} color="bg-primary-500" className="mt-3" />
+          {/* Glass indicators */}
+          <div className="flex gap-1.5 flex-wrap mt-3">
+            {Array.from({ length: Math.min(Math.ceil(waterTarget / 250), 12) }).map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6 + i * 0.04, duration: 0.2 }}
+                className={`w-5 h-6 rounded-sm ${i < Math.floor(waterToday / 250) ? 'bg-primary-500' : 'bg-surface-200'}`}
+              />
+            ))}
+          </div>
         </AnimatedCard>
       </ScrollReveal>
 
