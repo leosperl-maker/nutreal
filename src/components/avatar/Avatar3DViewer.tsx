@@ -535,23 +535,23 @@ function CharacterModel({ config }: { config: AvatarConfig }) {
       <OutfitDetail outfit={config.top || 'top_tshirt'} color={config.topColor || '#3B82F6'} />
 
       {/* ── ARMS (with sleeves + hands) ── */}
-      {/* Left arm — straight down alongside body, top at shoulder (y≈0.40), bottom at hip (y≈-0.16) */}
-      <mesh position={[-0.27, 0.12, 0]} rotation={[0, 0, 0]}>
+      {/* Left arm — torso radius=0.2, arm radius=0.055, X=0.38 → gap=0.125, clearly visible */}
+      <mesh position={[-0.38, 0.12, 0]} rotation={[0, 0, 0]}>
         <capsuleGeometry args={[0.055, 0.45, 6, 10]} />
         <meshToonMaterial color={outfitColor} />
       </mesh>
-      {/* Left hand — directly below arm bottom */}
-      <mesh position={[-0.27, -0.215, 0]}>
+      {/* Left hand */}
+      <mesh position={[-0.38, -0.215, 0]}>
         <sphereGeometry args={[0.055, 10, 8]} />
         <meshToonMaterial color={skinColor} />
       </mesh>
-      {/* Right arm — straight down alongside body */}
-      <mesh position={[0.27, 0.12, 0]} rotation={[0, 0, 0]}>
+      {/* Right arm */}
+      <mesh position={[0.38, 0.12, 0]} rotation={[0, 0, 0]}>
         <capsuleGeometry args={[0.055, 0.45, 6, 10]} />
         <meshToonMaterial color={outfitColor} />
       </mesh>
-      {/* Right hand — directly below arm bottom */}
-      <mesh position={[0.27, -0.215, 0]}>
+      {/* Right hand */}
+      <mesh position={[0.38, -0.215, 0]}>
         <sphereGeometry args={[0.055, 10, 8]} />
         <meshToonMaterial color={skinColor} />
       </mesh>
@@ -747,10 +747,10 @@ function GLBCharacterModel({ config }: { config: AvatarConfig }) {
     clonedScene.updateWorldMatrix(true, true);
 
     const armTargets: [THREE.Bone | undefined, THREE.Bone | undefined, THREE.Vector3][] = [
-      // Left arm: slightly left (-X) and down (-Y), tiny forward (+Z) to avoid body clipping
-      [bones.leftArm, bones.leftForeArm, new THREE.Vector3(-0.18, -0.97, 0.05).normalize()],
-      // Right arm: slightly right (+X) and down (-Y), tiny forward (+Z)
-      [bones.rightArm, bones.rightForeArm, new THREE.Vector3(0.18, -0.97, 0.05).normalize()],
+      // Left arm is at world +X — target must be +X (outward) and -Y (down)
+      [bones.leftArm, bones.leftForeArm, new THREE.Vector3(0.25, -0.97, 0).normalize()],
+      // Right arm is at world -X — target must be -X (outward) and -Y (down)
+      [bones.rightArm, bones.rightForeArm, new THREE.Vector3(-0.25, -0.97, 0).normalize()],
     ];
 
     for (const [armBone, forearmBone, targetDir] of armTargets) {
