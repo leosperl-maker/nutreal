@@ -17,9 +17,9 @@ import ItemPreview from '../components/avatar/ItemPreview';
 import {
   LogOut, Scale, Save, Trophy, Calendar, Flame, Check,
   ChevronDown, ChevronUp, Package, Pencil, Coins,
-  ShoppingBag, Utensils,
+  ShoppingBag, Utensils, Moon, Sun, Download, BarChart3,
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar, Legend } from 'recharts';
 
 const Avatar3DViewer = lazy(() => import('../components/avatar/Avatar3DViewer'));
 
@@ -76,7 +76,7 @@ export default function Profile() {
     profile, weightLogs, streak, meals, sportSessions, waterLogs, mealPlan, productScans,
     setAuth, setOnboardingComplete, updateProfile, addWeightLog, showToast,
     avatarConfig, setAvatarConfig, level, xp, selectedTitle, setSelectedTitle, dailyMissions,
-    coins, purchasedItems,
+    coins, purchasedItems, darkMode, toggleDarkMode,
   } = useStore();
 
   const [showEditor, setShowEditor] = useState(false);
@@ -125,6 +125,41 @@ export default function Profile() {
   });
 
   const totalKcalBurned = sportSessions.reduce((s, ss) => s + ss.caloriesBurned, 0);
+
+  // Macro trend: last 30 days
+  const macroTrend = (() => {
+    const days: Record<string, { date: string; kcal: number; protein: number; carbs: number; fat: number }> = {};
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 29);
+    meals.forEach(m => {
+      if (new Date(m.date) < cutoff) return;
+      if (!days[m.date]) days[m.date] = { date: m.date, kcal: 0, protein: 0, carbs: 0, fat: 0 };
+      days[m.date].kcal += m.totalCalories;
+      days[m.date].protein += m.totalProtein;
+      days[m.date].carbs += m.totalCarbs;
+      days[m.date].fat += m.totalFat;
+    });
+    return Object.values(days).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
+      ...d,
+      date: new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      protein: Math.round(d.protein),
+      carbs: Math.round(d.carbs),
+      fat: Math.round(d.fat),
+      kcal: Math.round(d.kcal),
+    }));
+  })();
+
+  const exportCSV = () => {
+    const header = 'Date,Repas,Type,Calories,Protéines(g),Glucides(g),Lipides(g),Fibres(g)';
+    const rows = meals.map(m =>
+      `${m.date},"${m.dishName}",${m.mealType},${m.totalCalories},${m.totalProtein.toFixed(1)},${m.totalCarbs.toFixed(1)},${m.totalFat.toFixed(1)},${m.totalFiber.toFixed(1)}`
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'nutreal_journal.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Export CSV téléchargé !');
+  };
   const achievements = [
     { id: 'streak_1', label: 'Premier jour', unlocked: streak >= 1, emoji: 'fire' },
     { id: 'streak_7', label: 'Semaine parfaite', unlocked: streak >= 7, emoji: 'fire' },
@@ -155,10 +190,20 @@ export default function Profile() {
 
   return (
     <AnimatedPage className="max-w-lg mx-auto pb-4">
-      {/* Logout button */}
-      <div className="absolute top-12 right-4 z-10">
+      {/* Top-right action buttons */}
+      <div className="absolute top-12 right-4 z-10 flex gap-2">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleDarkMode}
+          className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-card"
+        >
+          {darkMode
+            ? <Sun size={18} className="text-warning-400" />
+            : <Moon size={18} className="text-primary-500" />
+          }
+        </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={handleLogout}
-          className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-sm">
+          className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-card">
           <LogOut size={18} className="text-error-300" />
         </motion.button>
       </div>
@@ -167,7 +212,7 @@ export default function Profile() {
       <div className="relative">
         {avatarConfig ? (
           <Suspense fallback={
-            <div className="w-full rounded-2xl bg-gradient-to-b from-indigo-100 to-pink-50 flex items-center justify-center" style={{ height: '280px' }}>
+            <div className="w-full rounded-2xl bg-gradient-to-b from-primary-100 to-primary-50 flex items-center justify-center" style={{ height: '280px' }}>
               <div className="animate-pulse text-primary-400 text-sm font-medium">Chargement 3D...</div>
             </div>
           }>
@@ -243,7 +288,7 @@ export default function Profile() {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowShop(true)}
-            className="w-full mb-4 bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-4 flex items-center justify-between shadow-md"
+            className="w-full mb-4 bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-4 flex items-center justify-between shadow-card"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -266,7 +311,7 @@ export default function Profile() {
           <ScrollReveal delay={0.1}>
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-text-primary">Missions du jour</h3>
+                <h3 className="font-display text-sm font-bold text-text-primary">Missions du jour</h3>
                 <span className="text-xs font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
                   {completedMissions.length}/{dailyMissions.length}
                 </span>
@@ -300,14 +345,65 @@ export default function Profile() {
           </div>
         </ScrollReveal>
 
+        {/* Macro Trends Chart */}
+        {macroTrend.length > 0 && (
+          <ScrollReveal delay={0.18}>
+            <AnimatedCard className="p-4 mb-4" index={4}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={18} className="text-primary-500" />
+                  <h3 className="font-display text-sm font-semibold text-text-primary">Macros — 30 jours</h3>
+                </div>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={exportCSV}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-100 rounded-xl text-xs font-medium text-text-secondary">
+                  <Download size={13} /> CSV
+                </motion.button>
+              </div>
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart data={macroTrend} barSize={4} margin={{ left: -20, right: 4 }}>
+                  <XAxis dataKey="date" tick={{ fontSize: 8 }} stroke="#9CAF9C" tickLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 8 }} stroke="#9CAF9C" tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: 10, border: 'none', fontSize: 11 }} />
+                  <Bar dataKey="protein" name="Protéines" fill="#2ea05a" stackId="a" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="carbs" name="Glucides" fill="#f0a500" stackId="a" />
+                  <Bar dataKey="fat" name="Lipides" fill="#E85438" stackId="a" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              {/* Macro goal jauges */}
+              {profile.macroTargets && (
+                <div className="mt-3 space-y-2">
+                  {[
+                    { label: 'Protéines', value: macroTrend[macroTrend.length - 1]?.protein ?? 0, target: profile.macroTargets.protein_g, color: 'bg-primary-500' },
+                    { label: 'Glucides', value: macroTrend[macroTrend.length - 1]?.carbs ?? 0, target: profile.macroTargets.carbs_g, color: 'bg-warning-300' },
+                    { label: 'Lipides', value: macroTrend[macroTrend.length - 1]?.fat ?? 0, target: profile.macroTargets.fat_g, color: 'bg-error-300' },
+                  ].map(m => {
+                    const pct = Math.min(100, m.target > 0 ? (m.value / m.target) * 100 : 0);
+                    return (
+                      <div key={m.label}>
+                        <div className="flex justify-between text-[10px] mb-0.5">
+                          <span className="text-text-muted">{m.label}</span>
+                          <span className="font-medium text-text-primary">{m.value}g / {m.target}g</span>
+                        </div>
+                        <div className="h-1.5 bg-surface-200 rounded-full overflow-hidden">
+                          <div className={`h-full ${m.color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </AnimatedCard>
+          </ScrollReveal>
+        )}
+
         {/* Achievements */}
         <ScrollReveal delay={0.2}>
-          <AnimatedCard className="p-4 mb-4" index={4}>
+          <AnimatedCard className="p-4 mb-4" index={5}>
             <button onClick={() => setShowAchievements(!showAchievements)}
               className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Trophy size={18} className="text-warning-300" />
-                <h3 className="text-sm font-bold text-text-primary">Succes</h3>
+                <h3 className="font-display text-sm font-bold text-text-primary">Succes</h3>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
@@ -343,7 +439,7 @@ export default function Profile() {
         <ScrollReveal delay={0.25}>
           <AnimatedCard className="p-4 mb-4" index={5}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-text-primary">Suivi du poids</h3>
+              <h3 className="font-display text-sm font-semibold text-text-primary">Suivi du poids</h3>
               <AnimatedButton variant="ghost" onClick={() => setShowWeightInput(!showWeightInput)} className="px-3 py-1.5 text-xs">
                 <Scale size={14} className="mr-1" /> Peser
               </AnimatedButton>
@@ -363,10 +459,10 @@ export default function Profile() {
             {weightData.length > 1 ? (
               <ResponsiveContainer width="100%" height={120}>
                 <LineChart data={weightData}>
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#8BA3B0" />
-                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10 }} stroke="#8BA3B0" width={35} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(42,107,138,0.1)' }} />
-                  <Line type="monotone" dataKey="weight" stroke="#2A6B8A" strokeWidth={2} dot={{ fill: '#2A6B8A', r: 3 }} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9CAF9C" />
+                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10 }} stroke="#9CAF9C" width={35} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 24px rgba(13,61,34,0.1)' }} />
+                  <Line type="monotone" dataKey="weight" stroke="#1a6b3f" strokeWidth={2} dot={{ fill: '#1a6b3f', r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -382,7 +478,7 @@ export default function Profile() {
               className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Package size={18} className="text-primary-500" />
-                <h3 className="text-sm font-bold text-text-primary">Inventaire</h3>
+                <h3 className="font-display text-sm font-bold text-text-primary">Inventaire</h3>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">

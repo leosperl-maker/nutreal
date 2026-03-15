@@ -143,7 +143,7 @@ export default function AIAnalysisLoading() {
         transition={{ type: 'spring', damping: 12 }}
         className="mb-12"
       >
-        <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center">
+        <div className="w-24 h-24 bg-white rounded-3xl shadow-float flex items-center justify-center">
           <span className="text-4xl font-black text-primary-600 font-display">N</span>
         </div>
         <h1 className="text-white font-bold text-2xl text-center mt-4 font-display">Nutreal</h1>

@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore';
 import ItemPreview from './avatar/ItemPreview';
 import Icon3D from './Icon3D';
 import {
-  HAIRSTYLES, OUTFITS, ACCESSORIES, PETS,
+  HAIRSTYLES, TOPS, OUTERWEAR, BOTTOMS, SHOES, ACCESSORIES, PETS,
   ALL_ITEMS, getItemRarity, RARITY_MAP, isItemUnlocked,
 } from './avatar/avatarItems';
 import type { AvatarItem, Rarity } from './avatar/avatarItems';
@@ -14,11 +14,11 @@ interface ShopModalProps {
   onClose: () => void;
 }
 
-type ShopTab = 'hairstyle' | 'outfit' | 'accessory' | 'pet';
+type ShopTab = 'hairstyle' | 'clothing' | 'accessory' | 'pet';
 
 const TABS: { id: ShopTab; label: string; emoji: string }[] = [
   { id: 'hairstyle', label: 'Coiffures', emoji: 'personGettingHaircut' },
-  { id: 'outfit', label: 'Tenues', emoji: 'tShirt' },
+  { id: 'clothing', label: 'Tenues', emoji: 'tShirt' },
   { id: 'accessory', label: 'Accessoires', emoji: 'glasses' },
   { id: 'pet', label: 'Compagnons', emoji: 'catFace' },
 ];
@@ -26,7 +26,7 @@ const TABS: { id: ShopTab; label: string; emoji: string }[] = [
 function getItemsForTab(tab: ShopTab): AvatarItem[] {
   switch (tab) {
     case 'hairstyle': return HAIRSTYLES;
-    case 'outfit': return OUTFITS;
+    case 'clothing': return [...TOPS, ...OUTERWEAR, ...BOTTOMS, ...SHOES];
     case 'accessory': return ACCESSORIES;
     case 'pet': return PETS;
   }
@@ -107,8 +107,8 @@ function ShopItem({ item, owned, unlocked, level, coins, onBuy }: {
               disabled={!canAfford}
               className={`w-full py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all
                 ${canAfford
-                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-sm active:scale-95'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-card active:scale-95'
+                  : 'bg-surface-200 text-text-muted cursor-not-allowed'
                 }`}
             >
               <Coins size={12} />

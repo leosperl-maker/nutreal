@@ -260,8 +260,8 @@ export default function ProductScanner() {
               className="bg-white rounded-t-3xl p-6 w-full max-w-lg"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-800">{showAdditiveModal.code} - {showAdditiveModal.name}</h3>
-                <button onClick={() => setShowAdditiveModal(null)} className="text-gray-400">
+                <h3 className="font-display font-bold text-text-primary">{showAdditiveModal.code} - {showAdditiveModal.name}</h3>
+                <button onClick={() => setShowAdditiveModal(null)} className="text-text-muted">
                   <X size={20} />
                 </button>
               </div>
@@ -272,7 +272,7 @@ export default function ProductScanner() {
                 {showAdditiveModal.risk === 'high' ? 'À risque' :
                  showAdditiveModal.risk === 'moderate' ? 'Risque modéré' : 'Risque faible'}
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">{showAdditiveModal.description}</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{showAdditiveModal.description}</p>
             </motion.div>
           </motion.div>
         )}
@@ -292,20 +292,20 @@ export default function ProductScanner() {
               <div className="w-16 h-16 bg-secondary-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <ScanBarcode size={32} className="text-secondary-500" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800 font-display mb-1">Scan Produit</h1>
-              <p className="text-sm text-gray-400">Analysez la qualité de vos produits</p>
+              <h1 className="text-2xl font-bold text-text-primary font-display mb-1">Scan Produit</h1>
+              <p className="text-sm text-text-muted">Analysez la qualité de vos produits</p>
             </div>
 
             {/* Barcode Input */}
             <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Code-barres</label>
+              <label className="text-xs font-medium text-text-muted mb-2 block">Code-barres</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={barcode}
                   onChange={(e) => setBarcode(e.target.value)}
                   placeholder="Ex: 3017620422003"
-                  className="flex-1 px-4 py-3 bg-surface-100 rounded-xl text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-500/30"
+                  className="flex-1 px-4 py-3 bg-surface-100 rounded-xl text-text-primary placeholder-surface-300 focus:outline-none focus:ring-2 focus:ring-secondary-500/30"
                   onKeyDown={(e) => e.key === 'Enter' && handleScan()}
                 />
                 <button
@@ -331,20 +331,20 @@ export default function ProductScanner() {
 
             {/* Search by Name */}
             <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
-              <label className="text-xs font-medium text-gray-500 mb-2 block">Ou rechercher par nom</label>
+              <label className="text-xs font-medium text-text-muted mb-2 block">Ou rechercher par nom</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Ex: Nutella, Coca-Cola..."
-                  className="flex-1 px-4 py-3 bg-surface-100 rounded-xl text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-secondary-500/30"
+                  className="flex-1 px-4 py-3 bg-surface-100 rounded-xl text-text-primary placeholder-surface-300 focus:outline-none focus:ring-2 focus:ring-secondary-500/30"
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
                 <button
                   onClick={handleSearch}
                   disabled={searching || !searchQuery.trim()}
-                  className="bg-gray-800 text-white px-5 py-3 rounded-xl font-semibold hover:bg-gray-900 active:scale-95 transition-all disabled:opacity-40"
+                  className="bg-forest text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#082510] active:scale-95 transition-all disabled:opacity-40"
                 >
                   {searching ? <Loader2 size={20} className="animate-spin" /> : <Search size={20} />}
                 </button>
@@ -361,13 +361,13 @@ export default function ProductScanner() {
                       {p.image_front_url ? (
                         <img src={p.image_front_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300">
+                        <div className="w-10 h-10 rounded-lg bg-surface-200 flex items-center justify-center text-surface-300">
                           <ScanBarcode size={16} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">{p.product_name || 'Produit inconnu'}</p>
-                        <p className="text-xs text-gray-400 truncate">{p.brands || ''}</p>
+                        <p className="text-sm font-medium text-text-primary truncate">{p.product_name || 'Produit inconnu'}</p>
+                        <p className="text-xs text-text-muted truncate">{p.brands || ''}</p>
                       </div>
                       {p.nutriscore_grade && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white ${
@@ -387,13 +387,13 @@ export default function ProductScanner() {
 
             {/* Quick Examples */}
             <div className="mb-4">
-              <p className="text-xs font-medium text-gray-400 mb-2">Essayez ces codes-barres :</p>
+              <p className="text-xs font-medium text-text-muted mb-2">Essayez ces codes-barres :</p>
               <div className="flex flex-wrap gap-2">
                 {['3017620422003', '5449000000996', '3175680011480', '8000500310427'].map(code => (
                   <button
                     key={code}
                     onClick={() => { setBarcode(code); }}
-                    className="px-3 py-1.5 bg-white rounded-full text-xs text-gray-600 shadow-sm hover:shadow-card transition-all"
+                    className="px-3 py-1.5 bg-white rounded-full text-xs text-text-secondary shadow-card hover:shadow-card transition-all"
                   >
                     {code}
                   </button>
@@ -404,7 +404,7 @@ export default function ProductScanner() {
             {/* Recent Scans */}
             {productScans.length > 0 && (
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">Scans récents</h3>
+                <h3 className="font-display font-semibold text-text-primary text-sm mb-2">Scans récents</h3>
                 <div className="space-y-2">
                   {productScans.slice(0, 5).map((scan, i) => {
                     const scoreInfo = getScoreLabel(scan.score);
@@ -417,11 +417,11 @@ export default function ProductScanner() {
                         {scan.imageUrl ? (
                           <img src={scan.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100" />
+                          <div className="w-10 h-10 rounded-lg bg-surface-200" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{scan.productName}</p>
-                          <p className="text-xs text-gray-400">{scan.brand}</p>
+                          <p className="text-sm font-medium text-text-primary truncate">{scan.productName}</p>
+                          <p className="text-xs text-text-muted">{scan.brand}</p>
                         </div>
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
@@ -449,7 +449,7 @@ export default function ProductScanner() {
           >
             <button
               onClick={() => { setView('scanner'); setProduct(null); setBarcode(''); }}
-              className="flex items-center gap-1 text-gray-400 text-sm mb-4 hover:text-gray-600"
+              className="flex items-center gap-1 text-text-muted text-sm mb-4 hover:text-text-secondary"
             >
               ← Retour
             </button>
@@ -463,15 +463,15 @@ export default function ProductScanner() {
                   className="w-20 h-20 rounded-xl object-cover"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center">
-                  <ScanBarcode size={24} className="text-gray-300" />
+                <div className="w-20 h-20 rounded-xl bg-surface-200 flex items-center justify-center">
+                  <ScanBarcode size={24} className="text-surface-300" />
                 </div>
               )}
               <div className="flex-1">
-                <h2 className="font-bold text-gray-800 text-lg leading-tight">{product.product_name}</h2>
-                <p className="text-sm text-gray-400">{product.brands || 'Marque inconnue'}</p>
+                <h2 className="font-display font-bold text-text-primary text-lg leading-tight">{product.product_name}</h2>
+                <p className="text-sm text-text-muted">{product.brands || 'Marque inconnue'}</p>
                 {product.quantity && (
-                  <p className="text-xs text-gray-300 mt-1">{product.quantity}</p>
+                  <p className="text-xs text-surface-300 mt-1">{product.quantity}</p>
                 )}
               </div>
             </div>
@@ -486,15 +486,15 @@ export default function ProductScanner() {
               <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
                 <div className="flex items-center gap-2 mb-3">
                   <ShieldAlert size={18} className="text-red-500" />
-                  <h3 className="font-semibold text-gray-800 text-sm">Défauts</h3>
+                  <h3 className="font-display font-semibold text-text-primary text-sm">Défauts</h3>
                 </div>
                 <div className="space-y-2">
                   {getDefaults().map((defect, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-red-50/50">
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: defect.color }} />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">{defect.label}</p>
-                        <p className="text-xs text-gray-400">{defect.value}</p>
+                        <p className="text-sm font-medium text-text-primary">{defect.label}</p>
+                        <p className="text-xs text-text-muted">{defect.value}</p>
                       </div>
                     </div>
                   ))}
@@ -507,15 +507,15 @@ export default function ProductScanner() {
               <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
                 <div className="flex items-center gap-2 mb-3">
                   <ShieldCheck size={18} className="text-green-500" />
-                  <h3 className="font-semibold text-gray-800 text-sm">Qualités</h3>
+                  <h3 className="font-display font-semibold text-text-primary text-sm">Qualités</h3>
                 </div>
                 <div className="space-y-2">
                   {getQualities().map((quality, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-green-50/50">
                       <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-700">{quality.label}</p>
-                        <p className="text-xs text-gray-400">{quality.value}</p>
+                        <p className="text-sm font-medium text-text-primary">{quality.label}</p>
+                        <p className="text-xs text-text-muted">{quality.value}</p>
                       </div>
                     </div>
                   ))}
@@ -526,7 +526,7 @@ export default function ProductScanner() {
             {/* Additives */}
             {product.additives_tags && product.additives_tags.length > 0 && (
               <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
-                <h3 className="font-semibold text-gray-800 text-sm mb-3">Composition - Additifs</h3>
+                <h3 className="font-display font-semibold text-text-primary text-sm mb-3">Composition - Additifs</h3>
                 <div className="space-y-2">
                   {product.additives_tags.map((additive: string, i: number) => {
                     const code = additive.replace('en:', '');
@@ -536,10 +536,10 @@ export default function ProductScanner() {
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           info?.risk === 'high' ? 'bg-red-500' :
                           info?.risk === 'moderate' ? 'bg-orange-500' :
-                          info?.risk === 'low' ? 'bg-yellow-500' : 'bg-gray-300'
+                          info?.risk === 'low' ? 'bg-yellow-500' : 'bg-surface-300'
                         }`} />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-700">
+                          <p className="text-sm font-medium text-text-primary">
                             {info ? `${info.name} ${info.code}` : code.toUpperCase()}
                           </p>
                           {info && (
@@ -555,7 +555,7 @@ export default function ProductScanner() {
                         {info && (
                           <button
                             onClick={() => setShowAdditiveModal(info)}
-                            className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200"
+                            className="w-7 h-7 rounded-full bg-surface-200 flex items-center justify-center text-text-muted hover:bg-surface-300"
                           >
                             <Info size={14} />
                           </button>
@@ -570,7 +570,7 @@ export default function ProductScanner() {
             {/* Alternatives */}
             {alternatives.length > 0 && (
               <div className="bg-white rounded-2xl p-4 shadow-card mb-4">
-                <h3 className="font-semibold text-gray-800 text-sm mb-3">Alternatives plus saines</h3>
+                <h3 className="font-display font-semibold text-text-primary text-sm mb-3">Alternatives plus saines</h3>
                 <div className="space-y-3">
                   {alternatives.map((alt, i) => {
                     const altAdditives = (alt.additives_tags || []).map((a: string) => a.replace('en:', ''));
@@ -594,11 +594,11 @@ export default function ProductScanner() {
                         {alt.image_front_url ? (
                           <img src={alt.image_front_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-gray-100" />
+                          <div className="w-12 h-12 rounded-lg bg-surface-200" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{alt.product_name}</p>
-                          <p className="text-xs text-gray-400">{alt.brands || ''}</p>
+                          <p className="text-sm font-medium text-text-primary truncate">{alt.product_name}</p>
+                          <p className="text-xs text-text-muted">{alt.brands || ''}</p>
                         </div>
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold"

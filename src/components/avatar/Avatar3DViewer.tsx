@@ -486,8 +486,8 @@ function CharacterModel({ config }: { config: AvatarConfig }) {
 
   const skinColor = useMemo(() => new THREE.Color(config.skinColor), [config.skinColor]);
   const skinDark = useMemo(() => new THREE.Color(shadeColor(config.skinColor, -8)), [config.skinColor]);
-  const outfitColor = useMemo(() => new THREE.Color(config.topColor || '#3B82F6'), [config.topColor]);
-  const outfitDark = useMemo(() => new THREE.Color(shadeColor(config.topColor || '#3B82F6', -15)), [config.topColor]);
+  const outfitColor = useMemo(() => new THREE.Color(config.topColor || '#FFFFFF'), [config.topColor]);
+  const outfitDark = useMemo(() => new THREE.Color(shadeColor(config.topColor || '#FFFFFF', -15)), [config.topColor]);
   const eyeColor = useMemo(() => new THREE.Color(config.eyeColor), [config.eyeColor]);
   const hairBrowColor = useMemo(() => new THREE.Color(config.hairColor), [config.hairColor]);
 
@@ -532,7 +532,7 @@ function CharacterModel({ config }: { config: AvatarConfig }) {
         <capsuleGeometry args={[0.2, 0.38, 8, 14]} />
         <meshToonMaterial color={outfitColor} />
       </mesh>
-      <OutfitDetail outfit={config.top || 'top_tshirt'} color={config.topColor || '#3B82F6'} />
+      <OutfitDetail outfit={config.top || 'top_tshirt'} color={config.topColor || '#FFFFFF'} />
 
       {/* ── ARMS (with sleeves + hands) ── */}
       {/* Left arm — torso radius=0.2, arm radius=0.055, X=0.38 → gap=0.125, clearly visible */}
@@ -653,7 +653,7 @@ function CharacterModel({ config }: { config: AvatarConfig }) {
       <HairMesh style={config.hairStyle} color={config.hairColor} />
 
       {/* ── ACCESSORY ── */}
-      <AccessoryMesh accessory={config.accessories?.[0] || null} />
+      <AccessoryMesh accessory={config.accessories?.[0] ?? null} />
 
       {/* ── PET ── */}
       <PetMesh pet={config.pet} />
@@ -781,32 +781,11 @@ function GLBCharacterModel({ config }: { config: AvatarConfig }) {
       armBone.quaternion.premultiply(localRot);
     }
 
-    // ── Female body proportions via bone scaling ──
-    // Adjust skeleton to create a feminine silhouette:
-    // narrower shoulders, wider hips, slimmer waist, slightly smaller head
-    if (config.sex === 'F') {
-      // Narrower shoulders
-      if (bones.leftShoulder) bones.leftShoulder.scale.set(0.88, 0.95, 0.95);
-      if (bones.rightShoulder) bones.rightShoulder.scale.set(0.88, 0.95, 0.95);
-      // Slimmer arms
-      if (bones.leftArm) bones.leftArm.scale.set(1, 0.9, 0.9);
-      if (bones.rightArm) bones.rightArm.scale.set(1, 0.9, 0.9);
-      // Slimmer waist (Spine1 = mid-torso)
-      if (bones.spine1) bones.spine1.scale.set(1, 0.92, 0.88);
-      // Wider hips
-      if (bones.hips) bones.hips.scale.set(1, 1.06, 1.1);
-      // Slightly wider upper legs (hip area)
-      if (bones.leftUpLeg) bones.leftUpLeg.scale.set(1, 1.03, 1.05);
-      if (bones.rightUpLeg) bones.rightUpLeg.scale.set(1, 1.03, 1.05);
-      // Slightly smaller head for proportional look
-      if (bones.head) bones.head.scale.set(0.96, 0.96, 0.96);
-    }
-
     // Store the posed quaternions for animation reference
     Object.entries(bones).forEach(([key, bone]) => {
       if (bone) initialQuatsRef.current.set(key + '_posed', bone.quaternion.clone());
     });
-  }, [clonedScene, config.sex]);
+  }, [clonedScene]);
 
   // ── Update mesh visibility based on avatar config (multi-slot) ──
   useEffect(() => {
@@ -819,7 +798,7 @@ function GLBCharacterModel({ config }: { config: AvatarConfig }) {
 
     // Hair
     addMeshes(config.hairStyle);
-    // Clothing slots
+    // Multi-slot clothing
     addMeshes(config.top);
     addMeshes(config.outerwear);
     addMeshes(config.bottom);
@@ -949,9 +928,11 @@ interface Avatar3DViewerProps {
   height?: string;
   className?: string;
   interactive?: boolean;
+  /** Show only head/shoulders — ideal for small avatars (header, badges) */
+  bust?: boolean;
 }
 
-export default function Avatar3DViewer({ config, height = '280px', className = '', interactive = true }: Avatar3DViewerProps) {
+export default function Avatar3DViewer({ config, height = '280px', className = '', interactive = true, bust = false }: Avatar3DViewerProps) {
   const [useGLB, setUseGLB] = useState(false);
 
   // Check if GLB models are available by verifying magic bytes
@@ -974,13 +955,16 @@ export default function Avatar3DViewer({ config, height = '280px', className = '
 
   return (
     <div className={`relative w-full overflow-hidden ${className}`} style={{ height }}>
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-100 via-purple-50 to-pink-50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary-100 via-primary-50 to-white" />
       <Canvas
-        camera={{ position: [0, 0.2, 5], fov: 35 }}
+        camera={{
+          position: bust ? [0, 0.3, 3.2] : [0, 0.2, 5],
+          fov: bust ? 32 : 35,
+        }}
         style={{ position: 'absolute', inset: 0 }}
       >
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[3, 4, 5]} intensity={0.9} />
+        <ambientLight intensity={bust ? 1.0 : 0.7} />
+        <directionalLight position={[3, 4, 5]} intensity={bust ? 1.1 : 0.9} />
         <directionalLight position={[-2, 3, -3]} intensity={0.3} color="#B4C6FF" />
         <hemisphereLight args={['#B4C6FF', '#FDE68A', 0.3]} />
 
@@ -989,22 +973,26 @@ export default function Avatar3DViewer({ config, height = '280px', className = '
           <Suspense fallback={null}>
             <group position={[0, -0.9, 0]}>
               <GLBCharacterModel config={config} />
-              {petPath && <PetModel path={petPath} />}
+              {!bust && petPath && <PetModel path={petPath} />}
               {/* Floor shadow at feet */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[0.8, 28]} />
-                <meshStandardMaterial color="#000000" opacity={0.1} transparent />
-              </mesh>
+              {!bust && (
+                <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                  <circleGeometry args={[0.8, 28]} />
+                  <meshStandardMaterial color="#000000" opacity={0.1} transparent />
+                </mesh>
+              )}
             </group>
           </Suspense>
         ) : (
           /* Procedural fallback */
           <group position={[0, -0.3, 0]}>
             <CharacterModel config={config} />
-            <mesh position={[0, -0.88, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <circleGeometry args={[0.45, 28]} />
-              <meshStandardMaterial color="#000000" opacity={0.1} transparent />
-            </mesh>
+            {!bust && (
+              <mesh position={[0, -0.88, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.45, 28]} />
+                <meshStandardMaterial color="#000000" opacity={0.1} transparent />
+              </mesh>
+            )}
           </group>
         )}
 

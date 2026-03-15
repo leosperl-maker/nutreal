@@ -29,12 +29,12 @@ export default function WeeklyReport({ open, onClose }: WeeklyReportProps) {
   const completedMissions = dailyMissions.filter(m => m.isCompleted).length;
 
   const stats = [
-    { icon: Utensils, label: 'Repas enregistrés', value: weekMeals.length, emoji: 'forkAndKnife', color: 'from-blue-400 to-blue-600' },
+    { icon: Utensils, label: 'Repas enregistrés', value: weekMeals.length, emoji: 'forkAndKnife', color: 'from-primary-400 to-primary-600' },
     { icon: Flame, label: 'Calories consommées', value: `${Math.round(weekCalories).toLocaleString()} kcal`, emoji: 'fire', color: 'from-orange-400 to-red-500' },
     { icon: Dumbbell, label: 'Séances sport', value: weekSport.length, emoji: 'flexedBiceps', color: 'from-green-400 to-emerald-600' },
-    { icon: Dumbbell, label: 'Calories brûlées', value: `${weekBurned} kcal`, emoji: 'highVoltage', color: 'from-yellow-400 to-amber-500' },
-    { icon: Droplets, label: 'Eau bue', value: `${(weekWaterTotal / 1000).toFixed(1)}L`, emoji: 'droplet', color: 'from-cyan-400 to-blue-500' },
-    { icon: Target, label: 'Missions complétées', value: completedMissions, emoji: 'bullseye', color: 'from-purple-400 to-violet-600' },
+    { icon: Dumbbell, label: 'Calories brûlées', value: `${weekBurned} kcal`, emoji: 'highVoltage', color: 'from-amber-400 to-amber-500' },
+    { icon: Droplets, label: 'Eau bue', value: `${(weekWaterTotal / 1000).toFixed(1)}L`, emoji: 'droplet', color: 'from-teal-400 to-teal-600' },
+    { icon: Target, label: 'Missions complétées', value: completedMissions, emoji: 'bullseye', color: 'from-primary-600 to-primary-800' },
   ];
 
   return (

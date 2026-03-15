@@ -99,8 +99,9 @@ const FLUENT_MAP: Record<string, string> = {
   coat: 'Coat/3D/coat_3d.png',
   personInTuxedo: 'Person in tuxedo/Default/3D/person_in_tuxedo_3d_default.png',
 
-  // ── People ──
+  // ── People / Gestures ──
   bustInSilhouette: 'Bust in silhouette/3D/bust_in_silhouette_3d.png',
+  wavingHand: 'Waving hand/Default/3D/waving_hand_3d_default.png',
   personGettingHaircut: 'Person getting haircut/Default/3D/person_getting_haircut_3d_default.png',
 
   // ── Animals ──
@@ -109,6 +110,26 @@ const FLUENT_MAP: Record<string, string> = {
   parrot: 'Parrot/3D/parrot_3d.png',
   rabbitFace: 'Rabbit face/3D/rabbit_face_3d.png',
   hamster: 'Hamster/3D/hamster_3d.png',
+
+  // ── Onboarding / Goals ──
+  directHit: 'Bullseye/3D/bullseye_3d.png',
+  greenSalad: 'Green salad/3D/green_salad_3d.png',
+  balanceScale: 'Balance scale/3D/balance_scale_3d.png',
+  hospital: 'Hospital/3D/hospital_3d.png',
+  heart: 'Red heart/3D/red_heart_3d.png',
+  redHeart: 'Red heart/3D/red_heart_3d.png',
+  lotus: 'Lotus/3D/lotus_3d.png',
+  stethoscope: 'Stethoscope/3D/stethoscope_3d.png',
+  raisingHands: 'Raising hands/Default/3D/raising_hands_3d_default.png',
+
+  // ── Food extra ──
+  bowlWithSpoon: 'Bowl with spoon/3D/bowl_with_spoon_3d.png',
+  cookie: 'Cookie/3D/cookie_3d.png',
+  cook: 'Cook/Default/3D/cook_3d_default.png',
+  takeoutBox: 'Takeout box/3D/takeout_box_3d.png',
+  timerClock: 'Timer clock/3D/timer_clock_3d.png',
+  globeShowingEuropeAfrica: 'Globe showing Europe-Africa/3D/globe_showing_europe-africa_3d.png',
+  camera: 'Camera/3D/camera_3d.png',
 
   // ── Misc ──
   artistPalette: 'Artist palette/3D/artist_palette_3d.png',

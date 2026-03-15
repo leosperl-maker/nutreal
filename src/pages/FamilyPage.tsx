@@ -65,7 +65,7 @@ export default function FamilyPage() {
     const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
     const chefId = Math.random().toString(36).slice(2, 10);
     const age = calculateAge(profile.birthDate);
-    const dailyCalorieBudget = calculateCalorieBudget(
+    const dailyCalorieTarget = calculateCalorieBudget(
       profile.weightCurrentKg, profile.heightCm, age, profile.sex, profile.activityLevel
     );
     const chefMember: FamilyMember = {
@@ -77,7 +77,7 @@ export default function FamilyPage() {
       weightKg: profile.weightCurrentKg,
       heightCm: profile.heightCm,
       activityLevel: profile.activityLevel,
-      dailyCalorieBudget,
+      dailyCalorieTarget,
     };
     setFamily({
       id: Math.random().toString(36).slice(2, 10),
@@ -101,7 +101,7 @@ export default function FamilyPage() {
   const handleAddMember = () => {
     if (!name.trim() || !birthDate || !weight || !height) return;
     const age = calculateAge(birthDate);
-    const dailyCalorieBudget = calculateCalorieBudget(
+    const dailyCalorieTarget = calculateCalorieBudget(
       parseFloat(weight), parseFloat(height), age, sex, activityLevel
     );
     const member: FamilyMember = {
@@ -113,7 +113,7 @@ export default function FamilyPage() {
       weightKg: parseFloat(weight),
       heightCm: parseFloat(height),
       activityLevel,
-      dailyCalorieBudget,
+      dailyCalorieTarget,
     };
     addFamilyMember(member);
     // Reset form
@@ -131,7 +131,7 @@ export default function FamilyPage() {
     <AnimatedPage className="px-4 pt-12 pb-4 max-w-lg mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-black text-text-primary tracking-tight">Ma famille</h1>
+        <h1 className="font-display text-3xl font-black text-text-primary tracking-tight">Ma famille</h1>
         <p className="text-sm text-text-muted mt-0.5">
           {family ? `${family.members.length} membre${family.members.length > 1 ? 's' : ''}` : 'Gérez votre foyer'}
         </p>
@@ -146,11 +146,11 @@ export default function FamilyPage() {
             <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-primary-400/10 rounded-full blur-2xl" />
 
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-float">
                 <Users size={28} className="text-white" />
               </div>
 
-              <h2 className="text-xl font-bold text-text-primary mb-2">Mode Famille</h2>
+              <h2 className="font-display text-xl font-bold text-text-primary mb-2">Mode Famille</h2>
               <p className="text-sm text-text-secondary leading-relaxed mb-4">
                 Partagez vos repas avec votre famille. Chaque membre aura un profil adapté à ses besoins nutritionnels.
               </p>
@@ -226,7 +226,7 @@ export default function FamilyPage() {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden mb-4"
                 >
-                  <div className="bg-white rounded-2xl border border-surface-200 p-4 space-y-3 shadow-sm">
+                  <div className="bg-white rounded-2xl border border-surface-200 p-4 space-y-3 shadow-card">
                     <h4 className="text-sm font-semibold text-text-primary">Nouveau membre</h4>
 
                     {/* Name */}
@@ -330,7 +330,7 @@ export default function FamilyPage() {
                       <div className="w-12 h-12 bg-surface-100 rounded-xl flex items-center justify-center text-xl relative">
                         <Icon3D name={ROLE_EMOJIS[member.role]} size={24} />
                         {isChef && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning-300 rounded-full flex items-center justify-center shadow-sm">
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning-300 rounded-full flex items-center justify-center shadow-card">
                             <Crown size={10} className="text-white" />
                           </div>
                         )}
@@ -350,7 +350,7 @@ export default function FamilyPage() {
                       </div>
                       <div className="text-right flex items-center gap-2">
                         <div>
-                          <p className="text-sm font-bold text-primary-500">{member.dailyCalorieBudget}</p>
+                          <p className="text-sm font-bold text-primary-500">{member.dailyCalorieTarget}</p>
                           <p className="text-[10px] text-text-muted">kcal/jour</p>
                         </div>
                         {!isChef && (
@@ -374,7 +374,7 @@ export default function FamilyPage() {
               <div className="mt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <Trophy size={16} className="text-warning-300" />
-                  <h3 className="text-sm font-bold text-text-primary">Classement familial</h3>
+                  <h3 className="font-display text-sm font-bold text-text-primary">Classement familial</h3>
                 </div>
                 <AnimatedCard index={family.members.length + 2} className="p-4">
                   <p className="text-xs text-text-muted mb-3">Qui est le plus régulier cette semaine ?</p>
@@ -387,7 +387,7 @@ export default function FamilyPage() {
                           <Icon3D name={ROLE_EMOJIS[member.role]} size={20} />
                           <span className="text-sm font-medium text-text-primary flex-1">{member.name}</span>
                           <div className="text-right">
-                            <p className="text-xs font-bold text-primary-500">{member.dailyCalorieBudget} kcal</p>
+                            <p className="text-xs font-bold text-primary-500">{member.dailyCalorieTarget} kcal</p>
                           </div>
                         </div>
                       );

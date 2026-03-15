@@ -4,7 +4,7 @@ import AnimatedCounter from './AnimatedCounter';
 
 interface Props { value: number; max: number; size?: number; strokeWidth?: number; color?: string; label?: string; unit?: string; children?: React.ReactNode; }
 
-export default function CircularProgress({ value, max, size = 180, strokeWidth = 10, color = '#2A6B8A', label, unit, children }: Props) {
+export default function CircularProgress({ value, max, size = 180, strokeWidth = 10, color = '#2ea05a', label, unit, children }: Props) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const percentage = max > 0 ? Math.min(value / max, 1) : 0;
@@ -12,7 +12,7 @@ export default function CircularProgress({ value, max, size = 180, strokeWidth =
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E4EAED" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2ece6" strokeWidth={strokeWidth} />
         <motion.circle
           cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
           strokeLinecap="round" strokeDasharray={circumference}

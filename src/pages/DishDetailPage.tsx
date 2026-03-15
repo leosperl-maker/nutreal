@@ -68,14 +68,14 @@ export default function DishDetailPage() {
   };
 
   const macros = [
-    { label: 'Prot\u00e9ines', value: opt.protein_g, unit: 'g', icon: Drumstick, color: 'blue',  max: macroMax.protein },
+    { label: 'Prot\u00e9ines', value: opt.protein_g, unit: 'g', icon: Drumstick, color: 'primary',  max: macroMax.protein },
     { label: 'Glucides',   value: opt.carbs_g,   unit: 'g', icon: Wheat,     color: 'amber', max: macroMax.carbs },
     { label: 'Lipides',    value: opt.fat_g,     unit: 'g', icon: Droplet,   color: 'rose',  max: macroMax.fat },
     { label: 'Fibres',     value: opt.fiber_g,   unit: 'g', icon: Leaf,      color: 'green', max: macroMax.fiber },
   ];
 
   const colorMap: Record<string, { bg: string; fill: string; text: string; iconBg: string }> = {
-    blue:  { bg: 'bg-blue-100',  fill: 'bg-blue-500',  text: 'text-blue-600',  iconBg: 'bg-blue-50' },
+    primary: { bg: 'bg-primary-100', fill: 'bg-primary-500', text: 'text-primary-600', iconBg: 'bg-primary-50' },
     amber: { bg: 'bg-amber-100', fill: 'bg-amber-500', text: 'text-amber-600', iconBg: 'bg-amber-50' },
     rose:  { bg: 'bg-rose-100',  fill: 'bg-rose-500',  text: 'text-rose-600',  iconBg: 'bg-rose-50' },
     green: { bg: 'bg-green-100', fill: 'bg-green-500', text: 'text-green-600', iconBg: 'bg-green-50' },
@@ -107,13 +107,13 @@ export default function DishDetailPage() {
           <span className="inline-block text-xs font-semibold text-white/80 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1 mb-2">
             {slotInfo.emoji} {slotInfo.label}
           </span>
-          <h1 className="text-2xl font-black text-white leading-tight">{opt.name}</h1>
+          <h1 className="font-display text-2xl font-black text-white leading-tight">{opt.name}</h1>
         </div>
       </div>
 
       {/* ── Quick info bar ─────────────────────────────────────────────────────── */}
       <div className="mx-4 -mt-6 relative z-10">
-        <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-around">
+        <div className="bg-white rounded-2xl shadow-card p-4 flex items-center justify-around">
           <div className="flex flex-col items-center gap-1">
             <Clock size={18} className="text-text-secondary" />
             <span className="text-xs font-bold text-text-primary">{opt.prepTime || '~20 min'}</span>
@@ -136,14 +136,14 @@ export default function DishDetailPage() {
 
       {/* ── Macros section ─────────────────────────────────────────────────────── */}
       <div className="px-4 mt-6">
-        <h2 className="text-sm font-bold text-text-primary mb-3">Macronutriments</h2>
+        <h2 className="font-display text-sm font-bold text-text-primary mb-3">Macronutriments</h2>
         <div className="grid grid-cols-2 gap-3">
           {macros.map((m) => {
             const colors = colorMap[m.color];
             const Icon = m.icon;
             const pct = Math.min((m.value / m.max) * 100, 100);
             return (
-              <div key={m.label} className="bg-white rounded-2xl p-3 shadow-sm border border-surface-200">
+              <div key={m.label} className="bg-white rounded-2xl p-3 shadow-card border border-surface-200">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-8 h-8 rounded-xl ${colors.iconBg} flex items-center justify-center`}>
                     <Icon size={16} className={colors.text} />
@@ -169,8 +169,8 @@ export default function DishDetailPage() {
 
       {/* ── Ingredients list ───────────────────────────────────────────────────── */}
       <div className="px-4 mt-6">
-        <h2 className="text-sm font-bold text-text-primary mb-3">Ingr\u00e9dients</h2>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-surface-200">
+        <h2 className="font-display text-sm font-bold text-text-primary mb-3">Ingr\u00e9dients</h2>
+        <div className="bg-white rounded-2xl p-4 shadow-card border border-surface-200">
           <ul className="space-y-2">
             {opt.ingredients.map((ing, i) => (
               <li key={i} className="flex items-start gap-2">
@@ -184,11 +184,11 @@ export default function DishDetailPage() {
 
       {/* ── Recipe section ─────────────────────────────────────────────────────── */}
       <div className="px-4 mt-6">
-        <h2 className="text-sm font-bold text-text-primary mb-3">Recette</h2>
+        <h2 className="font-display text-sm font-bold text-text-primary mb-3">Recette</h2>
 
         {loadingRecipe ? (
           /* Shimmer skeleton */
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-surface-200 space-y-4">
+          <div className="bg-white rounded-2xl p-4 shadow-card border border-surface-200 space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="h-4 w-1/3 rounded-lg bg-gradient-to-r from-surface-200 via-surface-100 to-surface-200 animate-shimmer bg-[length:200%_100%]" />
@@ -198,7 +198,7 @@ export default function DishDetailPage() {
             ))}
           </div>
         ) : recipe ? (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-surface-200">
+          <div className="bg-white rounded-2xl p-4 shadow-card border border-surface-200">
             {/* Recipe meta */}
             <div className="flex flex-wrap gap-3 mb-4">
               {recipe.prepTime && (
@@ -264,7 +264,7 @@ export default function DishDetailPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-surface-200">
+          <div className="bg-white rounded-2xl p-4 shadow-card border border-surface-200">
             <p className="text-sm text-text-muted text-center">Impossible de charger la recette. R\u00e9essayez plus tard.</p>
           </div>
         )}
@@ -273,7 +273,7 @@ export default function DishDetailPage() {
       {/* ── "Pourquoi c'est bon" section ───────────────────────────────────────── */}
       {opt.benefitsNote && (
         <div className="px-4 mt-6">
-          <h2 className="text-sm font-bold text-text-primary mb-3">Pourquoi c'est bon pour vous</h2>
+          <h2 className="font-display text-sm font-bold text-text-primary mb-3">Pourquoi c'est bon pour vous</h2>
           <div className="bg-green-50 rounded-2xl p-4 border border-green-100">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">

@@ -1,4 +1,4 @@
-// Workout Generator - NutriLens Sport Module
+// Workout Generator - NutReal Sport Module
 // Générateur de programmes d'entraînement adaptatif
 
 export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps' | 'legs' | 'glutes' | 'core' | 'full_body' | 'cardio';

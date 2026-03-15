@@ -169,7 +169,7 @@ export default function MilestoneModal({ milestone, onClose, onCelebrate }: Mile
               onClick={handleClose}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-100 flex items-center justify-center hover:bg-surface-200 transition-colors"
             >
-              <X size={16} className="text-gray-400" />
+              <X size={16} className="text-text-muted" />
             </button>
 
             {/* Trophy animation */}
@@ -177,7 +177,7 @@ export default function MilestoneModal({ milestone, onClose, onCelebrate }: Mile
               initial={{ scale: 0, rotate: -20 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.2, type: 'spring', damping: 10 }}
-              className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-300 to-orange-400 flex items-center justify-center shadow-lg"
+              className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-300 to-orange-400 flex items-center justify-center shadow-float"
             >
               <span className="text-5xl">{milestone.emoji}</span>
             </motion.div>
@@ -187,7 +187,7 @@ export default function MilestoneModal({ milestone, onClose, onCelebrate }: Mile
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-2xl font-bold text-gray-800 text-center font-display mb-2"
+              className="text-2xl font-bold text-text-primary text-center font-display mb-2"
             >
               {milestone.title}
             </motion.h2>
@@ -209,7 +209,7 @@ export default function MilestoneModal({ milestone, onClose, onCelebrate }: Mile
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-center text-gray-600 text-sm leading-relaxed mb-6"
+              className="text-center text-text-secondary text-sm leading-relaxed mb-6"
             >
               {milestone.message}
             </motion.p>

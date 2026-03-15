@@ -46,7 +46,7 @@ interface ConfettiExplosionProps {
 
 export default function ConfettiExplosion({
   trigger,
-  colors = ['#2A6B8A', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A8E6CF', '#FFB347'],
+  colors = ['#0d3d22', '#2ea05a', '#8fd44a', '#f0a500', '#A8E6CF', '#FFB347'],
   particleCount = 120,
   spread = 80,
   origin = { x: 0.5, y: 0.5 },
@@ -86,7 +86,7 @@ export default function ConfettiExplosion({
 
 /** Convenience hook — call fireConfetti() to launch confetti anywhere */
 export function useConfetti(
-  colors = ['#2A6B8A', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A8E6CF', '#FFB347']
+  colors = ['#0d3d22', '#2ea05a', '#8fd44a', '#f0a500', '#A8E6CF', '#FFB347']
 ) {
   const fireConfetti = (opts?: ConfettiOpts) => {
     const base: ConfettiOpts = {

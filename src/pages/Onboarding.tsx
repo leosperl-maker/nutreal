@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import type { DetailedHealthIssue } from '../store/useStore';
 import { calculateNutritionPlan, LOCATION_OPTIONS, FOOD_PREFERENCE_OPTIONS, GROCERY_FREQUENCY_OPTIONS, getCurrencyForLocation } from '../lib/nutrition';
-import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home, Sparkles, Pill, Plus, Trash2, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User, Ruler, Target, Activity, MapPin, ShoppingCart, Heart, Utensils, Clock, Home, Sparkles, Pill, Plus, Trash2, FileText, Loader2 } from 'lucide-react';
 import AnimatedButton from '../components/AnimatedButton';
 import Icon3D from '../components/Icon3D';
+import { celebrateOnboarding, haptic } from '../lib/celebrations';
 
 type HealthDetail = 'musculaire' | 'osseux' | 'articulaire' | 'cerebral';
 
 const ICON_MAP: Record<string, any> = {
+  'Goal': Target, 'Motivation': Heart, 'RepasHabitudes': Utensils, 'CuisineRelation': Clock,
+  'Lifestyle': Activity, 'Rythme': Target, 'Engagement': Sparkles, 'Calcul': Loader2, 'Résultat': Check,
   'Profil': User, 'Mensurations': Ruler, 'Objectif': Target, 'Activité': Activity,
   'Localisation': MapPin, 'Budget': ShoppingCart, 'Cuisine': Clock, 'Foyer': Home,
   'Santé': Heart, 'Aller plus loin': Sparkles,
@@ -19,10 +22,57 @@ const ICON_MAP: Record<string, any> = {
   'Aliments': Utensils,
 };
 
+const GOALS = [
+  { value: 'lose_weight', icon: 'directHit', label: 'Perdre du poids', desc: 'Atteindre un poids santé' },
+  { value: 'gain_muscle', icon: 'flexedBiceps', label: 'Prendre du muscle', desc: 'Se tonifier et gagner en force' },
+  { value: 'eat_healthy', icon: 'greenSalad', label: 'Manger plus sainement', desc: 'Améliorer mon alimentation' },
+  { value: 'maintain', icon: 'balanceScale', label: 'Maintenir mon poids', desc: 'Garder mes acquis' },
+  { value: 'medical', icon: 'hospital', label: 'Raison médicale', desc: 'Diabète, cholestérol, etc.' },
+];
+
+const MOTIVATIONS = [
+  { value: 'health', icon: 'heart', label: 'Ma santé' },
+  { value: 'confidence', icon: 'sparkles', label: 'Confiance en moi' },
+  { value: 'energy', icon: 'highVoltage', label: "Plus d'énergie" },
+  { value: 'sport', icon: 'personLiftingWeights', label: 'Performance sportive' },
+  { value: 'clothes', icon: 'tShirt', label: 'Mes vêtements' },
+  { value: 'example', icon: 'raisingHands', label: 'Être un exemple' },
+  { value: 'wellbeing', icon: 'lotus', label: 'Bien-être' },
+  { value: 'medical', icon: 'stethoscope', label: 'Raison médicale' },
+];
+
+const COOKING_STYLES = [
+  { value: 'love_cooking', icon: 'cook', label: "J'adore cuisiner", desc: 'Recettes élaborées bienvenues' },
+  { value: 'order_often', icon: 'takeoutBox', label: 'Je commande souvent', desc: 'Plats à emporter, livraison' },
+  { value: 'want_quick', icon: 'timerClock', label: 'Je veux du rapide', desc: '15 min max en cuisine' },
+  { value: 'love_discover', icon: 'globeShowingEuropeAfrica', label: "J'aime découvrir", desc: 'Nouvelles cuisines et saveurs' },
+];
+
+const CALC_STEPS = [
+  { label: 'Analyse de votre métabolisme...', delay: 500 },
+  { label: 'Calcul de vos besoins caloriques...', delay: 1200 },
+  { label: 'Personnalisation de votre plan...', delay: 1900 },
+  { label: 'Adaptation à vos habitudes...', delay: 2600 },
+  { label: 'Préparation de vos objectifs...', delay: 3300 },
+];
+
+const STEP_LABELS: Record<string, string> = {
+  'Goal': 'Mon objectif',
+  'Motivation': 'Mes motivations',
+  'RepasHabitudes': 'Mes habitudes',
+  'CuisineRelation': 'Ma cuisine',
+  'Lifestyle': 'Mon quotidien',
+  'Rythme': 'Mon rythme',
+  'Engagement': 'Mon engagement',
+  'Calcul': 'Calcul en cours...',
+  'Résultat': 'Votre plan',
+};
+
 export default function Onboarding() {
   const { setProfile, setDetailedHealthIssues } = useStore();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [calcStepsDone, setCalcStepsDone] = useState(0);
   const [form, setForm] = useState({
     name: '', sex: 'M' as 'M' | 'F', birthDate: '1990-01-01', heightCm: 175,
     weightCurrentKg: 80, weightGoalKg: 75, activityLevel: 'moderate',
@@ -35,22 +85,44 @@ export default function Onboarding() {
     cycleData: null as { lastPeriodDate: string; cycleLength: number; periodLength: number } | null,
     medications: [] as { name: string; frequency: string; time: string }[],
     detailedIssues: [] as DetailedHealthIssue[],
+    // New fields
+    goal: 'lose_weight',
+    motivation: [] as string[],
+    mealsPerDay: '3',
+    snackingHabit: 'sometimes',
+    cookedMealsFrequency: 'sometimes',
+    cookingRelation: 'want_quick',
+    sleepHours: '7_8',
+    stressLevel: 'medium',
+    waterHabit: 'normal',
+    alcoholFrequency: 'never',
+    pace: 'moderate',
   });
 
   // Dynamic steps based on selected health modules
   const steps = useMemo(() => {
-    const base = ['Profil', 'Mensurations', 'Objectif', 'Activité', 'Localisation', 'Budget', 'Cuisine', 'Foyer', 'Santé', 'Aller plus loin'];
+    const base = ['Goal', 'Motivation', 'Profil', 'Mensurations', 'Objectif', 'RepasHabitudes', 'CuisineRelation', 'Lifestyle', 'Activité', 'Localisation', 'Budget', 'Cuisine', 'Foyer', 'Santé', 'Aller plus loin'];
     if (form.healthModules.includes('muscle_joint')) {
       base.push('Corps & articulations');
       base.push('Détails conditions');
     }
     if (form.healthModules.includes('cycle')) base.push('Cycle menstruel');
     if (form.healthModules.includes('medications')) base.push('Médicaments');
-    base.push('Aliments');
+    base.push('Aliments', 'Rythme', 'Engagement', 'Calcul', 'Résultat');
     return base;
   }, [form.healthModules]);
 
-  const Icon = ICON_MAP[steps[step]] || Heart;
+  const currentStepName = steps[step];
+  const Icon = ICON_MAP[currentStepName] || Heart;
+
+  // Calculating animation effect
+  React.useEffect(() => {
+    if (currentStepName !== 'Calcul') return;
+    setCalcStepsDone(0);
+    const timers = CALC_STEPS.map((cs, i) => setTimeout(() => setCalcStepsDone(i + 1), cs.delay));
+    const advance = setTimeout(() => setStep(s => s + 1), 4200);
+    return () => { timers.forEach(clearTimeout); clearTimeout(advance); };
+  }, [currentStepName]);
 
   const update = (k: string, v: any) => {
     setForm(f => {
@@ -115,7 +187,7 @@ export default function Onboarding() {
     const plan = calculateNutritionPlan(form as any);
     setProfile({
       ...form,
-      dailyCalorieBudget: plan.dailyCalorieBudget,
+      dailyCalorieTarget: plan.dailyCalorieTarget,
       macroTargets: plan.macroTargets,
       tdee: plan.tdee,
       estimatedGoalDate: plan.estimatedGoalDate,
@@ -123,7 +195,7 @@ export default function Onboarding() {
     if (form.detailedIssues.length > 0) {
       setDetailedHealthIssues(form.detailedIssues);
     }
-    // Navigate to AI analysis loading screen
+    celebrateOnboarding();
     navigate('/loading');
   };
 
@@ -132,8 +204,6 @@ export default function Onboarding() {
     acc[loc.group].push(loc);
     return acc;
   }, {} as Record<string, typeof LOCATION_OPTIONS>);
-
-  const currentStepName = steps[step];
 
   // Render step content based on step name (not index) for dynamic steps
   const renderStep = () => {
@@ -589,6 +659,366 @@ export default function Onboarding() {
           </div>
         );
 
+      case 'Goal':
+        return (
+          <div className="space-y-3">
+            {GOALS.map(g => (
+              <motion.button key={g.value} whileTap={{ scale: 0.97 }}
+                onClick={() => { update('goal', g.value); setTimeout(() => setStep(s => s + 1), 150); }}
+                className={`w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 ${form.goal === g.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                <Icon3D name={g.icon} size={36} />
+                <div className="flex-1">
+                  <div className="font-semibold">{g.label}</div>
+                  <div className={`text-xs mt-0.5 ${form.goal === g.value ? 'text-white/70' : 'text-text-muted'}`}>{g.desc}</div>
+                </div>
+                {form.goal === g.value && <Check size={18} />}
+              </motion.button>
+            ))}
+          </div>
+        );
+
+      case 'Motivation':
+        return (
+          <div>
+            <p className="text-sm text-text-secondary mb-4">Ce qui vous motive (plusieurs choix possible)</p>
+            <div className="grid grid-cols-2 gap-2">
+              {MOTIVATIONS.map(m => {
+                const sel = form.motivation.includes(m.value);
+                return (
+                  <motion.button key={m.value} whileTap={{ scale: 0.97 }}
+                    onClick={() => setForm(f => ({ ...f, motivation: sel ? f.motivation.filter(x => x !== m.value) : [...f.motivation, m.value] }))}
+                    className={`p-4 rounded-2xl text-center transition-all flex flex-col items-center gap-2 ${sel ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <Icon3D name={m.icon} size={32} />
+                    <div className="text-xs font-semibold">{m.label}</div>
+                    {sel && <Check size={12} />}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        );
+
+      case 'RepasHabitudes':
+        return (
+          <div className="space-y-6">
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Combien de repas par jour ?</label>
+              <div className="flex gap-2">
+                {['2', '3', '4', '5+'].map(v => (
+                  <button key={v} onClick={() => update('mealsPerDay', v)}
+                    className={`flex-1 py-3 rounded-xl font-bold transition-all ${form.mealsPerDay === v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300 text-text-primary'}`}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Vous grignotez entre les repas ?</label>
+              <div className="space-y-2">
+                {[
+                  { v: 'never', l: 'Jamais', icon: 'leafyGreen' },
+                  { v: 'sometimes', l: 'Parfois', icon: 'sparkles' },
+                  { v: 'often', l: 'Souvent', icon: 'forkAndKnife' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('snackingHabit', o.v)}
+                    className={`w-full p-3 rounded-xl text-left text-sm flex items-center gap-3 transition-all ${form.snackingHabit === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <Icon3D name={o.icon} size={20} /> {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Vous cuisinez maison ?</label>
+              <div className="space-y-2">
+                {[
+                  { v: 'always', l: 'Toujours ou presque', icon: 'forkAndKnife' },
+                  { v: 'sometimes', l: 'La moitié du temps', icon: 'takeoutBox' },
+                  { v: 'rarely', l: 'Rarement', icon: 'highVoltage' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('cookedMealsFrequency', o.v)}
+                    className={`w-full p-3 rounded-xl text-left text-sm flex items-center gap-3 transition-all ${form.cookedMealsFrequency === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <Icon3D name={o.icon} size={20} /> {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'CuisineRelation':
+        return (
+          <div className="space-y-3">
+            {COOKING_STYLES.map(cs => (
+              <motion.button key={cs.value} whileTap={{ scale: 0.97 }}
+                onClick={() => { update('cookingRelation', cs.value); setTimeout(() => setStep(s => s + 1), 150); }}
+                className={`w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 ${form.cookingRelation === cs.value ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                <Icon3D name={cs.icon} size={36} />
+                <div className="flex-1">
+                  <div className="font-semibold text-sm">{cs.label}</div>
+                  <div className={`text-xs mt-0.5 ${form.cookingRelation === cs.value ? 'text-white/70' : 'text-text-muted'}`}>{cs.desc}</div>
+                </div>
+                {form.cookingRelation === cs.value && <Check size={18} />}
+              </motion.button>
+            ))}
+          </div>
+        );
+
+      case 'Lifestyle':
+        return (
+          <div className="space-y-6">
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Heures de sommeil</label>
+              <div className="space-y-2">
+                {[
+                  { v: 'less_5', l: 'Moins de 5h', desc: 'Souvent en manque' },
+                  { v: '5_6', l: '5 à 6h', desc: 'Un peu insuffisant' },
+                  { v: '7_8', l: '7 à 8h', desc: 'Idéal' },
+                  { v: '9plus', l: '9h ou plus', desc: 'Vous dormez beaucoup' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('sleepHours', o.v)}
+                    className={`w-full p-3 rounded-xl text-left text-sm flex items-center justify-between transition-all ${form.sleepHours === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <span className="font-medium">{o.l}</span>
+                    <span className={`text-xs ${form.sleepHours === o.v ? 'text-white/70' : 'text-text-muted'}`}>{o.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Niveau de stress</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { v: 'low', l: 'Faible' }, { v: 'medium', l: 'Modéré' },
+                  { v: 'high', l: 'Élevé' }, { v: 'very_high', l: 'Très élevé' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('stressLevel', o.v)}
+                    className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${form.stressLevel === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300 text-text-primary'}`}>
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Hydratation quotidienne</label>
+              <div className="space-y-2">
+                {[
+                  { v: 'low', l: 'Peu hydraté(e)', desc: '< 1L/jour' },
+                  { v: 'normal', l: 'Normal', desc: '1 à 1.5L' },
+                  { v: 'good', l: 'Bien hydraté(e)', desc: '1.5 à 2L' },
+                  { v: 'excellent', l: 'Très bien hydraté(e)', desc: '> 2L' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('waterHabit', o.v)}
+                    className={`w-full p-3 rounded-xl text-left text-sm flex items-center justify-between transition-all ${form.waterHabit === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                    <span className="font-medium">{o.l}</span>
+                    <span className={`text-xs ${form.waterHabit === o.v ? 'text-white/70' : 'text-text-muted'}`}>{o.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-text-primary mb-3 block">Alcool</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { v: 'never', l: 'Jamais' }, { v: 'occasional', l: 'Occasionnel' },
+                  { v: 'weekly', l: 'Hebdomadaire' }, { v: 'regular', l: 'Régulier' },
+                ].map(o => (
+                  <button key={o.v} onClick={() => update('alcoholFrequency', o.v)}
+                    className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${form.alcoholFrequency === o.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300 text-text-primary'}`}>
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'Rythme': {
+        const wDiff = form.weightCurrentKg - form.weightGoalKg;
+        const calcWeeks = (defPerDay: number) => defPerDay > 0 ? Math.round((Math.abs(wDiff) * 7700) / (defPerDay * 7)) : 0;
+        return (
+          <div className="space-y-4">
+            {form.goal !== 'lose_weight' && (
+              <div className="bg-primary-50 rounded-2xl p-4 text-sm text-primary-700">
+                Cette étape s'applique surtout à la perte de poids. Votre plan sera optimisé selon vos objectifs.
+              </div>
+            )}
+            <div className="space-y-3">
+              {[
+                { v: 'slow', l: 'Progressif', icon: 'sparkles', deficit: 250, desc: 'Durable et sans frustration' },
+                { v: 'moderate', l: 'Équilibré', icon: 'directHit', deficit: 500, desc: 'Meilleur rapport effort/résultat', recommended: true },
+                { v: 'fast', l: 'Intensif', icon: 'fire', deficit: 750, desc: 'Résultats rapides, plus de discipline' },
+              ].map(pace => (
+                <motion.button key={pace.v} whileTap={{ scale: 0.97 }}
+                  onClick={() => update('pace', pace.v)}
+                  className={`w-full p-4 rounded-2xl text-left transition-all ${form.pace === pace.v ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-300'}`}>
+                  <div className="flex items-center gap-3 mb-1">
+                    <Icon3D name={pace.icon} size={28} />
+                    <div className="flex-1">
+                      <div className="font-semibold flex items-center gap-2">
+                        {pace.l}
+                        {(pace as any).recommended && <span className="text-xs bg-green-400 text-white px-2 py-0.5 rounded-full">Recommandé</span>}
+                      </div>
+                      <div className={`text-xs ${form.pace === pace.v ? 'text-white/70' : 'text-text-muted'}`}>{pace.desc}</div>
+                    </div>
+                    {form.pace === pace.v && <Check size={18} />}
+                  </div>
+                  {wDiff > 0 && form.goal === 'lose_weight' && (
+                    <div className={`text-xs mt-2 border-t pt-2 ${form.pace === pace.v ? 'text-white/80 border-white/20' : 'text-text-muted border-surface-200'}`}>
+                      -{pace.deficit} kcal/jour · Objectif en ~{calcWeeks(pace.deficit)} semaines
+                    </div>
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      case 'Engagement':
+        return (
+          <div className="space-y-5">
+            <div className="bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl p-6 text-white text-center">
+              <div className="mb-3 flex justify-center"><Icon3D name="sparkles" size={48} /></div>
+              <h3 className="text-xl font-bold font-display mb-2">
+                {form.name ? `${form.name}, vous y êtes presque !` : 'Vous y êtes presque !'}
+              </h3>
+              <p className="text-white/80 text-sm">Votre plan personnalisé est prêt à être calculé</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { stat: '94%', label: 'atteignent leur objectif' },
+                { stat: '3×', label: 'plus rapide avec un coach IA' },
+                { stat: '14j', label: 'pour les premiers résultats' },
+              ].map((s, i) => (
+                <div key={i} className="bg-white rounded-2xl p-3 text-center border border-surface-200">
+                  <div className="text-xl font-black text-primary-500">{s.stat}</div>
+                  <div className="text-xs text-text-muted mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-2xl border border-surface-200 p-4 space-y-3">
+              {[
+                'Je vais suivre mes repas chaque jour',
+                'Je suis prêt(e) à faire de petits efforts réguliers',
+                'Je vais me peser 1×/semaine pour suivre mes progrès',
+              ].map((txt, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm text-text-primary">
+                  <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <Check size={12} className="text-primary-500" />
+                  </div>
+                  {txt}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'Calcul':
+        return (
+          <div className="py-8">
+            <div className="text-center mb-8">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Loader2 size={32} className="text-primary-500" />
+              </motion.div>
+              <h3 className="text-lg font-bold text-text-primary">Calcul en cours...</h3>
+              <p className="text-sm text-text-muted mt-1">NutReal prépare votre plan sur mesure</p>
+            </div>
+            <div className="space-y-3">
+              {CALC_STEPS.map((cs, i) => (
+                <motion.div key={i}
+                  initial={{ opacity: 0.3 }}
+                  animate={i < calcStepsDone ? { opacity: 1 } : { opacity: 0.3 }}
+                  transition={{ duration: 0.4 }}
+                  className="flex items-center gap-3 p-3 bg-white rounded-xl border border-surface-200">
+                  {i < calcStepsDone ? (
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+                      className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check size={14} className="text-white" />
+                    </motion.div>
+                  ) : (
+                    <div className="w-6 h-6 bg-surface-200 rounded-full flex-shrink-0" />
+                  )}
+                  <span className={`text-sm ${i < calcStepsDone ? 'text-text-primary font-medium' : 'text-text-muted'}`}>{cs.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'Résultat': {
+        const plan = calculateNutritionPlan(form as any);
+        const isGain = form.goal === 'gain_muscle';
+        const svgPoints = Array.from({ length: 6 }, (_, i) => {
+          const p = i / 5;
+          return {
+            x: parseFloat((20 + p * 270).toFixed(1)),
+            y: parseFloat((isGain ? 100 - p * 80 : 20 + p * 80).toFixed(1)),
+          };
+        });
+        const svgPts = svgPoints.map(pt => `${pt.x},${pt.y}`).join(' ');
+        return (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl p-5 text-white">
+              <div className="flex items-center gap-3 mb-4">
+                <Icon3D name="partyPopper" size={40} />
+                <div>
+                  <h3 className="font-bold text-lg font-display">{form.name ? `Bravo ${form.name} !` : 'Votre plan est prêt !'}</h3>
+                  <p className="text-white/80 text-sm">Plan nutritionnel personnalisé</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/20 rounded-2xl p-3">
+                  <div className="text-2xl font-black">{plan.dailyCalorieTarget}</div>
+                  <div className="text-xs text-white/70">kcal / jour</div>
+                </div>
+                <div className="bg-white/20 rounded-2xl p-3">
+                  <div className="text-2xl font-black">{plan.macroTargets.protein_g}g</div>
+                  <div className="text-xs text-white/70">protéines / jour</div>
+                </div>
+              </div>
+            </div>
+            {plan.estimatedWeeksToGoal > 0 && (
+              <div className="bg-white rounded-2xl border border-surface-200 p-4">
+                <h4 className="text-sm font-semibold text-text-primary mb-3">Votre progression estimée</h4>
+                <svg viewBox="0 0 310 125" className="w-full">
+                  <defs>
+                    <linearGradient id="svgGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#7B5EA7" />
+                      <stop offset="100%" stopColor="#2E9E6B" />
+                    </linearGradient>
+                  </defs>
+                  <polyline points={svgPts} fill="none" stroke="url(#svgGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  {svgPoints.map((pt, i) => (
+                    <circle key={i} cx={pt.x} cy={pt.y} r={i === 0 || i === 5 ? 5 : 3} fill={i === 5 ? '#2E9E6B' : '#7B5EA7'} />
+                  ))}
+                  <text x="18" y={isGain ? '118' : '15'} fontSize="9" fill="#9CA3AF">{form.weightCurrentKg}kg</text>
+                  <text x="262" y={isGain ? '15' : '118'} fontSize="9" fill="#2E9E6B">{form.weightGoalKg}kg</text>
+                </svg>
+                <p className="text-xs text-text-muted text-center">Objectif estimé en ~{plan.estimatedWeeksToGoal} semaines</p>
+              </div>
+            )}
+            <div className="bg-white rounded-2xl border border-surface-200 p-4 space-y-2">
+              {[
+                { label: 'Métabolisme de base', value: `${plan.bmr} kcal` },
+                { label: 'Dépense totale', value: `${plan.tdee} kcal` },
+                { label: 'Votre objectif', value: `${plan.dailyCalorieTarget} kcal`, highlight: true },
+              ].map((row, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <span className="text-text-muted">{row.label}</span>
+                  <span className={row.highlight ? 'font-bold text-primary-500' : 'font-medium text-text-primary'}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <AnimatedButton onClick={finish}
+              className="w-full py-4 text-base font-bold flex items-center justify-center gap-2">
+              <Icon3D name="rocket" size={22} /> C'est parti !
+            </AnimatedButton>
+          </div>
+        );
+      }
+
       case 'Aliments':
         return (
           <div>
@@ -613,12 +1043,20 @@ export default function Onboarding() {
     <div className="min-h-screen bg-surface-100 flex flex-col">
       {/* Progress */}
       <div className="px-4 pt-12 pb-4">
-        <div className="flex items-center gap-1 mb-2">
-          {steps.map((_, i) => (
-            <div key={i} className={`flex-1 h-1.5 rounded-full transition-all ${i <= step ? 'bg-primary-500' : 'bg-surface-300'}`} />
-          ))}
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex-1 bg-surface-200 rounded-full h-2 overflow-hidden">
+            <motion.div
+              className="h-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.round(((step + 1) / steps.length) * 100)}%` }}
+              transition={{ duration: 0.4 }}
+            />
+          </div>
+          <span className="text-xs font-semibold text-primary-500 w-9 text-right">
+            {Math.round(((step + 1) / steps.length) * 100)}%
+          </span>
         </div>
-        <p className="text-xs text-text-secondary text-center">{step + 1}/{steps.length} — {steps[step]}</p>
+        <p className="text-xs text-text-secondary text-center">{STEP_LABELS[currentStepName] || currentStepName}</p>
       </div>
 
       <div className="flex-1 px-4 pb-4 overflow-y-auto">
@@ -629,7 +1067,7 @@ export default function Onboarding() {
               <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center">
                 <Icon size={24} className="text-primary-500" />
               </div>
-              <h2 className="text-xl font-bold text-text-primary font-display">{steps[step]}</h2>
+              <h2 className="text-xl font-bold text-text-primary font-display">{STEP_LABELS[currentStepName] || currentStepName}</h2>
             </div>
 
             {renderStep()}
@@ -637,19 +1075,21 @@ export default function Onboarding() {
         </AnimatePresence>
       </div>
 
-      {/* Navigation */}
-      <div className="px-4 pb-8 pt-2 flex gap-3 max-w-md mx-auto w-full">
-        {step > 0 && (
-          <AnimatedButton variant="secondary" onClick={() => setStep(s => s - 1)} className="px-6 py-3 text-sm">
-            <ChevronLeft size={18} />
+      {/* Navigation — hidden on Calcul (auto-advance) and Résultat (has its own CTA) */}
+      {currentStepName !== 'Calcul' && currentStepName !== 'Résultat' && (
+        <div className="px-4 pb-8 pt-2 flex gap-3 max-w-md mx-auto w-full">
+          {step > 0 && (
+            <AnimatedButton variant="secondary" onClick={() => { haptic('light'); setStep(s => s - 1); }} className="px-6 py-3 text-sm">
+              <ChevronLeft size={18} />
+            </AnimatedButton>
+          )}
+          <AnimatedButton onClick={() => { haptic('light'); setStep(s => s + 1); }}
+            className="flex-1 py-3.5 text-sm flex items-center justify-center gap-2"
+            disabled={currentStepName === 'Motivation' && form.motivation.length === 0}>
+            <span>Suivant</span><ChevronRight size={18} />
           </AnimatedButton>
-        )}
-        <AnimatedButton onClick={() => step < steps.length - 1 ? setStep(s => s + 1) : finish()}
-          className="flex-1 py-3.5 text-sm flex items-center justify-center gap-2"
-          disabled={step === 0 && !form.name}>
-          {step < steps.length - 1 ? <><span>Suivant</span><ChevronRight size={18} /></> : <><Check size={18} /><span>Commencer</span></>}
-        </AnimatedButton>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

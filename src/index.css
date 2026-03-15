@@ -1,50 +1,111 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=Epilogue:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Light mode tokens (v7 cream/green theme) ── */
 :root {
-  --color-primary: #2A6B8A;
-  --color-primary-light: #3D8BAD;
-  --color-primary-dark: #1E5270;
-  --color-accent: #E8F4F8;
-  --color-bg: #F8FAFB;
-  --color-text: #1A2F3A;
-  --color-text-secondary: #5A7A8A;
-  --color-success: #2E9E6B;
-  --color-warning: #E8A838;
+  --color-primary: #0d3d22;
+  --color-primary-light: #1a6b3f;
+  --color-primary-dark: #082510;
+  --color-accent: #e8f5ed;
+  --color-bg: #faf8f4;
+  --color-text: #0f1f15;
+  --color-text-secondary: #3d5948;
+  --color-success: #2ea05a;
+  --color-warning: #f0a500;
   --color-error: #E85438;
+
+  /* v7 palette */
+  --forest: #0d3d22;
+  --palm: #1a6b3f;
+  --leaf: #2ea05a;
+  --lime: #8fd44a;
+  --mango: #f0a500;
+  --sand: #f5f0e8;
+  --cream: #faf8f4;
+  --border: #e2ece6;
+
+  /* Tailwind surface/text via RGB triples */
+  --c-surface-50:  255 255 255;
+  --c-surface-100: 250 248 244;
+  --c-surface-200: 245 240 232;
+  --c-surface-300: 226 236 230;
+
+  --c-text-primary:   15  31  21;
+  --c-text-secondary: 61  89  72;
+  --c-text-muted:    143 168 152;
+  --c-text-inverse:  255 255 255;
 }
 
+/* ── Dark mode tokens ── */
+html.dark {
+  color-scheme: dark;
+
+  --color-bg: #0a1a10;
+  --color-text: #e8f5ed;
+  --color-text-secondary: #96b8a4;
+
+  --c-surface-50:   18  30  22;
+  --c-surface-100:  12  22  16;
+  --c-surface-200:  18  32  24;
+  --c-surface-300:  26  44  34;
+
+  --c-text-primary:   232 245 237;
+  --c-text-secondary: 150 184 164;
+  --c-text-muted:     100 138 118;
+  --c-text-inverse:    15  31  21;
+}
+
+/* bg-white inside dark mode → card background */
+html.dark .bg-white { background-color: rgb(18 30 22) !important; }
+html.dark .border-surface-200 { border-color: rgb(26 44 34) !important; }
+
 @layer base {
-  body { @apply bg-surface-100 text-text-primary font-sans antialiased; }
+  body { @apply bg-surface-100 text-text-primary font-sans antialiased transition-colors duration-300; }
   * { -webkit-tap-highlight-color: transparent; }
 }
 
 @layer utilities {
-  .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .font-display { font-family: 'Exo 2', 'Plus Jakarta Sans', sans-serif; }
+
   .glass {
     background: rgba(255,255,255,0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 4px 24px rgba(42,107,138,0.08);
+    box-shadow: 0 4px 24px rgba(13,61,34,0.08);
   }
+  html.dark .glass {
+    background: rgba(12,22,16,0.80);
+    border-color: rgba(255,255,255,0.08);
+  }
+
   .glass-strong {
     background: rgba(255,255,255,0.88);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.4);
   }
-  .shadow-card { box-shadow: 0 1px 3px rgba(42,107,138,0.04), 0 1px 2px rgba(42,107,138,0.06); }
-  .shadow-float { box-shadow: 0 4px 24px rgba(42,107,138,0.08); }
-  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  html.dark .glass-strong {
+    background: rgba(12,22,16,0.92);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .shadow-card  { box-shadow: 0 1px 3px rgba(13,61,34,0.04), 0 1px 2px rgba(13,61,34,0.06); }
+  .shadow-float { box-shadow: 0 16px 50px rgba(13,61,34,0.16), 0 2px 10px rgba(13,61,34,0.06); }
+  .safe-bottom  { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
   .shimmer {
-    background: linear-gradient(90deg, #E4EAED 25%, #D1E9F1 50%, #E4EAED 75%);
+    background: linear-gradient(90deg, #e2ece6 25%, #d1e5d9 50%, #e2ece6 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
+  }
+  html.dark .shimmer {
+    background: linear-gradient(90deg, rgb(18 32 24) 25%, rgb(26 44 34) 50%, rgb(18 32 24) 75%);
+    background-size: 200% 100%;
   }
 }

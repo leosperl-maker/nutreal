@@ -95,7 +95,7 @@ export default function WorkoutComplete({ result, sessionName, onSelectFeeling }
         className="grid grid-cols-3 gap-4 w-full max-w-sm mb-8"
       >
         <div className="bg-white/10 rounded-2xl p-4 text-center">
-          <Clock size={20} className="text-blue-400 mx-auto mb-1" />
+          <Clock size={20} className="text-teal-400 mx-auto mb-1" />
           <p className="text-white font-bold text-lg">{result.duration}</p>
           <p className="text-white/40 text-xs">minutes</p>
         </div>

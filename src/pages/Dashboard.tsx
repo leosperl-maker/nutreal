@@ -3,40 +3,47 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
-import AnimatedCard from '../components/AnimatedCard';
-import AnimatedCounter from '../components/AnimatedCounter';
-import AnimatedProgressBar from '../components/AnimatedProgressBar';
-import CircularProgress from '../components/CircularProgress';
 import ScrollReveal from '../components/ScrollReveal';
 import { DashboardSkeleton } from '../components/ShimmerSkeleton';
-import LevelBar from '../components/LevelBar';
 import LevelUpModal from '../components/LevelUpModal';
 import MissionCard from '../components/MissionCard';
 import CheckInModal from '../components/CheckInModal';
 import WeeklyReport from '../components/WeeklyReport';
-import { Droplets, Footprints, Flame, BookOpen, Dumbbell, TrendingUp, Sparkles, ChevronRight, Target, ClipboardCheck, BarChart3 } from 'lucide-react';
-import Icon3D from '../components/Icon3D';
+import { Target, ChevronRight, ClipboardCheck, BarChart3 } from 'lucide-react';
+import { celebrateStreak, celebrateWaterComplete } from '../lib/celebrations';
+import { generateCoachTip } from '../lib/coachTips';
+import V7Glass from '../components/svg/V7Glass';
+import {
+  LogoMark, StarSticker, SunSticker, PlateSticker, MoonSticker, AppleSticker,
+  SneakerSticker, WeightSticker, ProteinIcon, CarbsIcon, FatIcon, FiberIcon,
+} from '../components/svg/V7Stickers';
 
 const WATER_GOAL = 2000;
 const GLASS_ML = 250;
 const GLASSES_TOTAL = 8;
 
-const QUOTES = [
-  "Chaque repas est une opportunité de nourrir ton corps.",
-  "La constance bat l'intensité. Continue !",
-  "Ton corps est ton temple, prends-en soin.",
-  "Un pas à la fois vers tes objectifs.",
-  "La nutrition est la base de tout progrès.",
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile, meals, waterLogs, dailySteps, stepsGoal, sportSessions, streak, calculateStreak, addWater, getTodayCalories, dailyMissions, addXP, showToast, checkIns } = useStore();
+  const {
+    profile, meals, waterLogs, dailySteps, stepsGoal, sportSessions,
+    streak, calculateStreak, addWater, getTodayCalories, dailyMissions,
+    addXP, showToast, checkIns,
+  } = useStore();
   const [loading, setLoading] = useState(true);
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showWeeklyReport, setShowWeeklyReport] = useState(false);
 
-  useEffect(() => { calculateStreak(); setTimeout(() => setLoading(false), 600); }, []);
+  useEffect(() => {
+    calculateStreak();
+    setTimeout(() => setLoading(false), 600);
+    const lastCelebrated = sessionStorage.getItem('lastStreakCelebrated');
+    if (streak > 0 && lastCelebrated !== String(streak)) {
+      setTimeout(() => {
+        celebrateStreak(streak);
+        sessionStorage.setItem('lastStreakCelebrated', String(streak));
+      }, 1200);
+    }
+  }, []);
 
   if (!profile || loading) return <DashboardSkeleton />;
 
@@ -44,17 +51,20 @@ export default function Dashboard() {
   const todayStats = getTodayCalories();
   const todaySport = sportSessions.filter(s => s.date === today);
   const burned = todaySport.reduce((s, ss) => s + ss.caloriesBurned, 0);
-  const remaining = profile.dailyCalorieBudget + burned - todayStats.consumed;
+  const remaining = profile.dailyCalorieTarget + burned - todayStats.consumed;
   const waterToday = Math.max(0, waterLogs.find(w => w.date === today)?.amount || 0);
   const glassesConsumed = Math.min(GLASSES_TOTAL, Math.floor(waterToday / GLASS_ML));
+
   const handleGlassTap = (i: number) => {
     const target = i < glassesConsumed ? i * GLASS_ML : (i + 1) * GLASS_ML;
-    addWater(today, target - waterToday);
+    const delta = target - waterToday;
+    addWater(today, delta);
+    if (delta > 0 && waterToday + delta >= WATER_GOAL) {
+      setTimeout(() => celebrateWaterComplete(), 300);
+    }
   };
-  const quote = QUOTES[new Date().getDate() % QUOTES.length];
-  const todayMeals = meals.filter(m => m.date === today);
 
-  // Check-in due if no check-in in last 7 days
+  const todayMeals = meals.filter(m => m.date === today);
   const lastCheckIn = checkIns[0]?.date;
   const checkInDue = !lastCheckIn || (() => {
     const diff = (new Date(today).getTime() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60 * 24);
@@ -62,43 +72,323 @@ export default function Dashboard() {
   })();
   const isMonday = new Date().getDay() === 1;
 
-  const macros = [
-    { label: 'Protéines', value: todayStats.protein, target: profile.macroTargets.protein_g, color: 'bg-primary-500', unit: 'g' },
-    { label: 'Glucides', value: todayStats.carbs, target: profile.macroTargets.carbs_g, color: 'bg-warning-300', unit: 'g' },
-    { label: 'Lipides', value: todayStats.fat, target: profile.macroTargets.fat_g, color: 'bg-error-300', unit: 'g' },
-    { label: 'Fibres', value: todayStats.fiber, target: profile.macroTargets.fiber_g, color: 'bg-success-400', unit: 'g' },
+  const macroData = [
+    { label: 'Protéines', value: todayStats.protein, target: profile.macroTargets.protein_g, icon: <ProteinIcon />, gradient: 'linear-gradient(90deg,#2ea05a,#8fd44a)', bgTint: 'rgba(46,160,90,0.04)' },
+    { label: 'Glucides', value: todayStats.carbs, target: profile.macroTargets.carbs_g, icon: <CarbsIcon />, gradient: 'linear-gradient(90deg,#f0a500,#fbbf24)', bgTint: 'rgba(240,165,0,0.04)' },
+    { label: 'Lipides', value: todayStats.fat, target: profile.macroTargets.fat_g, icon: <FatIcon />, gradient: 'linear-gradient(90deg,#0b4f5c,#1a8a9e)', bgTint: 'rgba(11,79,92,0.04)' },
+    { label: 'Fibres', value: todayStats.fiber, target: profile.macroTargets.fiber_g, icon: <FiberIcon />, gradient: 'linear-gradient(90deg,#8fd44a,#bbf451)', bgTint: 'rgba(143,212,74,0.05)' },
   ];
 
+  const coachTip = generateCoachTip(profile, todayStats.consumed, waterToday, streak);
+
+  const consumedPct = Math.min((todayStats.consumed / (profile.dailyCalorieTarget || 1)) * 100, 100);
+  const waterPct = Math.round((waterToday / WATER_GOAL) * 100);
+
+  const mealTypes = [
+    { key: 'breakfast', label: 'Petit-déjeuner', sticker: <SunSticker /> },
+    { key: 'lunch', label: 'Déjeuner', sticker: <PlateSticker /> },
+    { key: 'dinner', label: 'Dîner', sticker: <MoonSticker /> },
+    { key: 'snack', label: 'Collation', sticker: <AppleSticker /> },
+  ] as const;
+
+  // XP / level data
+  const store = useStore.getState();
+  const xp = (store as any).xp ?? 20;
+  const level = (store as any).level ?? 1;
+  const xpForNext = level * 300;
+  const xpPct = Math.min((xp / xpForNext) * 100, 100);
+
+  const dayName = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
   return (
-    <AnimatedPage className="px-4 pt-12 pb-4 max-w-lg mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary font-display">Bonjour, {profile.name}</h1>
-          <p className="text-sm text-text-secondary">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <AnimatedPage className="pb-4 max-w-[430px] mx-auto">
+      {/* ═══════════════════ HEADER ═══════════════════ */}
+      <div
+        className="relative overflow-hidden"
+        style={{ background: '#0d3d22', padding: '54px 24px 110px', borderRadius: '0 0 44px 44px' }}
+      >
+        {/* Blobs */}
+        <div className="absolute -top-20 -right-20 w-[300px] h-[300px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(143,212,74,0.14) 0%, transparent 65%)' }} />
+        <div className="absolute bottom-5 -left-[60px] w-[220px] h-[220px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(26,107,63,0.45) 0%, transparent 70%)' }} />
+
+        {/* Top bar */}
+        <div className="flex justify-between items-center mb-[26px] relative z-[2]">
+          <div className="flex items-center gap-2.5">
+            <LogoMark />
+            <span className="font-display text-[21px] font-extrabold text-white tracking-tight">NutReal</span>
+          </div>
+          <div className="flex gap-2">
+            <button className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
+            <button onClick={() => navigate('/profile')} className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
+          </div>
         </div>
-        {streak > 0 && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.3 }}
-            className="bg-warning-50 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-            <Flame size={16} className="text-warning-300" />
-            <span className="text-sm font-bold text-warning-500">{streak}j</span>
-          </motion.div>
-        )}
+
+        {/* Greeting */}
+        <div className="relative z-[2]">
+          <div className="inline-block px-3 py-1 rounded-[20px] mb-2.5 text-[11px] font-display font-bold tracking-[2px] uppercase"
+            style={{ background: 'rgba(143,212,74,0.2)', border: '1px solid rgba(143,212,74,0.3)', color: '#8fd44a' }}>
+            {dayName}
+          </div>
+          <div className="font-display text-[34px] font-black text-white leading-[1.05] tracking-tight mb-1.5">
+            Bonjour,<br />{profile.name}
+          </div>
+          <div className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>Prêt à manger sainement ?</div>
+
+          {/* XP strip */}
+          <div className="flex items-center gap-3 mt-[22px]">
+            <span className="font-display text-[11px] font-extrabold px-3.5 py-[5px] rounded-[20px] whitespace-nowrap"
+              style={{ background: '#8fd44a', color: '#0d3d22' }}>
+              Niv. {level}
+            </span>
+            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: '#8fd44a' }}
+                initial={{ width: 0 }}
+                animate={{ width: `${xpPct}%` }}
+                transition={{ duration: 1.4, ease: [0.23, 1, 0.32, 1], delay: 0.6 }}
+              />
+            </div>
+            <span className="text-xs whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {xp} / {xpForNext} XP
+            </span>
+          </div>
+        </div>
+
       </div>
 
-      {/* Level Bar */}
-      <ScrollReveal>
-        <LevelBar compact className="mb-4" />
+      {/* ═══════════════════ FLOAT CALORIE CARD ═══════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
+        className="bg-white relative z-10 mx-[18px]"
+        style={{ marginTop: '-52px', borderRadius: '28px', padding: '24px', boxShadow: '0 16px 50px rgba(13,61,34,0.16), 0 2px 10px rgba(13,61,34,0.06)' }}
+      >
+        <div className="font-display text-[10px] font-bold tracking-[2.5px] uppercase text-text-muted mb-[18px]">
+          Bilan du jour
+        </div>
+        <div className="grid grid-cols-3 text-center">
+          {[
+            { value: remaining, label: 'Restantes', active: true },
+            { value: todayStats.consumed, label: 'Consommées', active: false },
+            { value: burned, label: 'Brûlées', active: false },
+          ].map((col, i) => (
+            <div key={col.label} className="relative">
+              {i < 2 && (
+                <div className="absolute right-0 top-[8%] bottom-[8%] w-px" style={{ background: '#e2ece6' }} />
+              )}
+              <div className={`font-display text-[32px] font-black tracking-tight leading-none mb-[5px] ${col.active ? 'text-leaf' : 'text-surface-300'}`}>
+                {Math.round(col.value)}
+              </div>
+              <div className="text-[11px] font-medium text-text-muted">{col.label}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-[18px] h-[3px] rounded-full overflow-hidden" style={{ background: '#eaf3ec' }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: '#2ea05a' }}
+            initial={{ width: 0 }}
+            animate={{ width: `${consumedPct}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        </div>
+      </motion.div>
+
+      {/* ═══════════════════ COACH ═══════════════════ */}
+      <ScrollReveal delay={0.15}>
+        <div className="px-[18px] pt-[26px]">
+          <div className="relative overflow-visible min-h-[72px]"
+            style={{ background: 'linear-gradient(135deg,#fffbf0,#fff6da)', border: '1px solid #f5e498', borderRadius: '20px', padding: '18px 20px 18px 70px' }}>
+            <div className="absolute -left-3.5 -top-3.5" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))' }}>
+              <StarSticker />
+            </div>
+            <div className="font-display text-[10px] font-bold tracking-[1.5px] uppercase mb-1" style={{ color: '#f0a500' }}>
+              Coach NutReal
+            </div>
+            <div className="text-sm font-medium leading-relaxed" style={{ color: '#3d2d00' }}>
+              {coachTip.message}
+            </div>
+          </div>
+        </div>
       </ScrollReveal>
 
-      {/* Missions widget */}
+      {/* ═══════════════════ REPAS DU JOUR ═══════════════════ */}
+      <ScrollReveal delay={0.22}>
+        <div className="px-[18px] pt-[26px]">
+          <div className="flex justify-between items-baseline mb-3.5">
+            <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary">Repas du jour</h2>
+            <button onClick={() => navigate('/journal')} className="text-xs font-semibold text-leaf">Journal →</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {mealTypes.map(({ key, label, sticker }) => {
+              const meal = todayMeals.find(m => m.mealType === key);
+              return (
+                <motion.div
+                  key={key}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/log')}
+                  className="bg-white cursor-pointer relative overflow-visible min-h-[130px]"
+                  style={{ borderRadius: '20px', padding: '16px', border: '1px solid #e2ece6', transition: 'transform 0.18s, box-shadow 0.18s' }}
+                >
+                  <div className="absolute -top-5 -right-2 z-[2]" style={{ filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.18))' }}>
+                    {sticker}
+                  </div>
+                  <div className="font-display text-[13px] font-bold mt-[30px] mb-[3px]">{label}</div>
+                  {meal ? (
+                    <div className="text-sm font-bold text-leaf">{meal.totalCalories} <span className="text-[10px] font-normal text-text-muted">kcal</span></div>
+                  ) : (
+                    <>
+                      <div className="text-[11px] text-text-muted">Non enregistré</div>
+                      <div className="inline-flex items-center gap-1 mt-2.5 rounded-[20px] px-2.5 py-[5px] text-[11px] font-semibold"
+                        style={{ background: '#f5f0e8', color: '#1a6b3f' }}>
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 1v10M1 6h10" /></svg>
+                        Ajouter
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* ═══════════════════ MACRONUTRIMENTS ═══════════════════ */}
+      <ScrollReveal delay={0.28}>
+        <div className="px-[18px] pt-[26px]">
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary mb-3.5">Macronutriments</h2>
+          <div className="bg-white overflow-hidden" style={{ borderRadius: '20px', border: '1px solid #e2ece6' }}>
+            {macroData.map((m, i) => {
+              const pct = m.target > 0 ? Math.min(Math.round((m.value / m.target) * 100), 100) : 0;
+              return (
+                <div
+                  key={m.label}
+                  className="flex flex-col gap-2 px-4 py-3.5"
+                  style={{
+                    background: `linear-gradient(90deg, ${m.bgTint} 0%, transparent 100%)`,
+                    borderBottom: i < macroData.length - 1 ? '1px solid #e2ece6' : 'none',
+                  }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {m.icon}
+                    <div>
+                      <div className="font-display text-[13px] font-bold text-text-primary leading-tight">{m.label}</div>
+                      <div className="text-[11px] font-medium text-text-muted">{Math.round(m.value)} / {m.target}g</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-1 h-2 rounded-lg overflow-hidden" style={{ background: '#edf4ef' }}>
+                      <motion.div
+                        className="h-full rounded-lg"
+                        style={{ background: m.gradient }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 1.2, ease: [0.23, 1, 0.32, 1], delay: 0.3 + i * 0.15 }}
+                      />
+                    </div>
+                    <span className="font-display text-xs font-bold text-text-muted min-w-[28px] text-right">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* ═══════════════════ HYDRATION ═══════════════════ */}
+      <ScrollReveal delay={0.28}>
+        <div className="px-[18px] pt-[26px]">
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary mb-3.5">Hydratation</h2>
+          <div className="relative overflow-hidden" style={{ background: 'linear-gradient(150deg, #0b4f5c 0%, #062e37 100%)', borderRadius: '24px', padding: '22px' }}>
+            {/* Glow */}
+            <div className="absolute -top-[60px] -right-[60px] w-[200px] h-[200px] rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(26,143,160,0.4) 0%, transparent 60%)' }} />
+
+            <div className="flex justify-between items-start mb-5 relative">
+              <div>
+                <div className="font-display text-[10px] font-bold tracking-[2px] uppercase mb-[5px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                  Objectif eau
+                </div>
+                <div className="font-display text-[28px] font-black text-white">
+                  {Math.min(waterToday, WATER_GOAL)} ml
+                </div>
+                <div className="text-xs mt-[3px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {glassesConsumed} / {GLASSES_TOTAL} verres
+                </div>
+              </div>
+              <div className="font-display text-[42px] font-black tracking-tight" style={{ color: '#7fffd4' }}>
+                {waterPct}%
+              </div>
+            </div>
+
+            <div className="flex gap-[9px] flex-wrap">
+              {Array.from({ length: GLASSES_TOTAL }).map((_, i) => (
+                <V7Glass
+                  key={i}
+                  index={i}
+                  filled={i < glassesConsumed}
+                  onClick={() => handleGlassTap(i)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* ═══════════════════ ACTIVITY ═══════════════════ */}
+      <ScrollReveal delay={0.34}>
+        <div className="px-[18px] pt-[26px]">
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary mb-3.5">Activité</h2>
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Steps */}
+            <div className="bg-white relative overflow-visible min-h-[110px]"
+              style={{ borderRadius: '20px', padding: '18px', border: '1px solid #e2ece6' }}>
+              <div className="absolute -top-[22px] -right-2.5 z-[2]" style={{ filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.18))' }}>
+                <SneakerSticker />
+              </div>
+              <div className="font-display text-[11px] font-bold tracking-[0.8px] uppercase text-text-muted mt-7 mb-1">Pas</div>
+              <div className="font-display text-2xl font-black tracking-tight text-text-primary">{dailySteps.toLocaleString()}</div>
+              <div className="text-[11px] text-text-muted mt-0.5">/ {stepsGoal.toLocaleString()}</div>
+            </div>
+
+            {/* Sport */}
+            <motion.div
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/sport')}
+              className="bg-white relative overflow-visible min-h-[110px] cursor-pointer"
+              style={{ borderRadius: '20px', padding: '18px', border: '1px solid #e2ece6' }}
+            >
+              <div className="absolute -top-[22px] -right-2.5 z-[2]" style={{ filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.18))' }}>
+                <WeightSticker />
+              </div>
+              <div className="font-display text-[11px] font-bold tracking-[0.8px] uppercase text-text-muted mt-7 mb-1">Sport</div>
+              <div className="font-display text-2xl font-black tracking-tight text-text-primary">{todaySport.length} séance{todaySport.length !== 1 ? 's' : ''}</div>
+              <div className="text-[11px] text-text-muted mt-0.5">{burned} kcal brûlées</div>
+            </motion.div>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* ═══════════════════ MISSIONS ═══════════════════ */}
       {dailyMissions.length > 0 && dailyMissions.some(m => !m.isCompleted) && (
-        <ScrollReveal delay={0.03}>
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
+        <ScrollReveal delay={0.36}>
+          <div className="px-[18px] pt-[26px]">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Target size={16} className="text-primary-500" />
-                <h3 className="text-sm font-bold text-text-primary">Missions</h3>
+                <Target size={16} className="text-leaf" />
+                <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary">Missions</h2>
               </div>
               <span className="text-xs text-text-muted">
                 {dailyMissions.filter(m => m.isCompleted).length}/{dailyMissions.length}
@@ -113,35 +403,66 @@ export default function Dashboard() {
         </ScrollReveal>
       )}
 
-      {/* Quote */}
-      <ScrollReveal delay={0.05}>
-        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3">
-          <Sparkles size={20} className="text-primary-400 flex-shrink-0" />
-          <p className="text-sm text-text-secondary italic">{quote}</p>
+      {/* ═══════════════════ PLAN DE REPAS ═══════════════════ */}
+      <ScrollReveal delay={0.34}>
+        <div className="px-[18px] pt-[26px]">
+          <div className="flex justify-between items-baseline mb-3.5">
+            <h2 className="font-display text-lg font-extrabold tracking-tight text-text-primary">Plan de repas</h2>
+            <button onClick={() => navigate('/meal-plan')} className="text-xs font-semibold text-leaf">Voir tout →</button>
+          </div>
+          <div className="bg-white overflow-hidden" style={{ borderRadius: '20px', border: '1px solid #e2ece6' }}>
+            {[
+              { name: 'Flocons d\'avoine aux baies', meta: '703 kcal · 10 min', img: 'https://images.pexels.com/photos/842571/pexels-photo-842571.jpeg?auto=compress&cs=tinysrgb&w=200' },
+              { name: 'Poisson blanc citronné', meta: '600 kcal · 20 min', img: 'https://images.pexels.com/photos/1640769/pexels-photo-1640769.jpeg?auto=compress&cs=tinysrgb&w=200' },
+              { name: 'Muffins aux œufs du Sud-Ouest', meta: '655 kcal · 25 min', img: 'https://images.pexels.com/photos/70497/pexels-photo-70497.jpeg?auto=compress&cs=tinysrgb&w=200' },
+              { name: 'Tomates cerises & mozzarella', meta: '124 kcal · 3 min', img: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=200' },
+              { name: 'Morceaux d\'ananas frais', meta: '150 kcal · 2 min', img: 'https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=200' },
+            ].map((item, i, arr) => (
+              <motion.div
+                key={item.name}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/meal-plan')}
+                className="flex items-center gap-3.5 px-4 py-3 cursor-pointer hover:bg-[#fafdf9] transition-colors"
+                style={{ borderBottom: i < arr.length - 1 ? '1px solid #e2ece6' : 'none' }}
+              >
+                <div className="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden"
+                  style={{ border: '2px solid #e2ece6' }}>
+                  <img src={item.img} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-display text-sm font-bold text-text-primary mb-[3px]">{item.name}</div>
+                  <div className="text-xs font-medium text-text-muted">{item.meta}</div>
+                </div>
+                <ChevronRight size={16} className="text-surface-300 flex-shrink-0" />
+              </motion.div>
+            ))}
+          </div>
         </div>
       </ScrollReveal>
 
-      {/* Check-in & Weekly Report banners */}
+      {/* ═══════════════════ CHECK-IN & WEEKLY REPORT ═══════════════════ */}
       {(checkInDue || isMonday) && (
-        <ScrollReveal delay={0.06}>
-          <div className="flex gap-2 mb-4">
+        <ScrollReveal delay={0.38}>
+          <div className="flex gap-2 px-[18px] pt-[26px]">
             {checkInDue && (
               <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowCheckIn(true)}
-                className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-3 flex items-center gap-3 shadow-float">
+                className="flex-1 rounded-2xl p-3 flex items-center gap-3 shadow-float"
+                style={{ background: 'linear-gradient(135deg, #1a6b3f, #2ea05a)' }}>
                 <ClipboardCheck size={18} className="text-white" />
                 <div className="text-left">
                   <p className="text-xs font-bold text-white">Check-in</p>
-                  <p className="text-[10px] text-white/60">Comment allez-vous ?</p>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.6)' }}>Comment allez-vous ?</p>
                 </div>
               </motion.button>
             )}
             {isMonday && (
               <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowWeeklyReport(true)}
-                className="flex-1 bg-gradient-to-r from-primary-500 to-primary-700 rounded-2xl p-3 flex items-center gap-3 shadow-float">
+                className="flex-1 rounded-2xl p-3 flex items-center gap-3 shadow-float"
+                style={{ background: 'linear-gradient(135deg, #0d3d22, #1a6b3f)' }}>
                 <BarChart3 size={18} className="text-white" />
                 <div className="text-left">
                   <p className="text-xs font-bold text-white">Recap hebdo</p>
-                  <p className="text-[10px] text-white/60">Voir la semaine</p>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.6)' }}>Voir la semaine</p>
                 </div>
               </motion.button>
             )}
@@ -149,174 +470,10 @@ export default function Dashboard() {
         </ScrollReveal>
       )}
 
-      {/* Calorie Ring */}
-      <ScrollReveal delay={0.05}>
-        <AnimatedCard className="p-6 mb-4" index={0}>
-          <div className="flex justify-center mb-4">
-            <CircularProgress value={todayStats.consumed} max={profile.dailyCalorieBudget} size={180} color="#2A6B8A">
-              <div className="text-center">
-                <AnimatedCounter value={remaining} className="text-3xl font-bold text-text-primary font-display" />
-                <p className="text-xs text-text-secondary mt-0.5">Restant</p>
-              </div>
-            </CircularProgress>
-          </div>
-          <div className="grid grid-cols-3 text-center gap-2 text-xs">
-            <div className="bg-primary-50 rounded-xl py-2 px-1">
-              <p className="font-bold text-primary-500"><AnimatedCounter value={profile.dailyCalorieBudget} /></p>
-              <p className="text-text-muted">Budget</p>
-            </div>
-            <div className="bg-success-50 rounded-xl py-2 px-1">
-              <p className="font-bold text-success-400"><AnimatedCounter value={todayStats.consumed} /></p>
-              <p className="text-text-muted">Consommé</p>
-            </div>
-            <div className="bg-warning-50 rounded-xl py-2 px-1">
-              <p className="font-bold text-warning-300"><AnimatedCounter value={burned} /></p>
-              <p className="text-text-muted">Brûlé</p>
-            </div>
-          </div>
-        </AnimatedCard>
-      </ScrollReveal>
+      {/* Spacer for bottom nav */}
+      <div className="h-6" />
 
-      {/* Macros */}
-      <ScrollReveal delay={0.1}>
-        <AnimatedCard className="p-4 mb-4" index={1}>
-          <h3 className="text-sm font-semibold text-text-primary mb-3">Macronutriments</h3>
-          <div className="space-y-3">
-            {macros.map((m, i) => (
-              <div key={m.label}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-text-secondary">{m.label}</span>
-                  <span className="font-medium text-text-primary">{Math.round(m.value)}/{m.target}{m.unit}</span>
-                </div>
-                <AnimatedProgressBar percentage={m.target > 0 ? (m.value / m.target) * 100 : 0} color={m.color} delay={0.2 + i * 0.1} />
-              </div>
-            ))}
-          </div>
-        </AnimatedCard>
-      </ScrollReveal>
-
-      {/* Water */}
-      <ScrollReveal delay={0.15}>
-        <AnimatedCard className="p-4 mb-4" index={2}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
-                <Droplets size={20} className="text-primary-500" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-text-primary">Hydratation</h3>
-                <p className="text-xs text-text-secondary">
-                  {glassesConsumed}/{GLASSES_TOTAL} verres · {Math.min(waterToday, WATER_GOAL)}/{WATER_GOAL} ml
-                </p>
-              </div>
-            </div>
-            <p className="text-lg font-bold text-primary-500">
-              {Math.round((waterToday / WATER_GOAL) * 100)}%
-            </p>
-          </div>
-          <AnimatedProgressBar percentage={Math.min((waterToday / WATER_GOAL) * 100, 100)} color="bg-primary-500" className="mb-4" />
-          {/* 8 verres cliquables */}
-          <div className="flex justify-between px-1">
-            {Array.from({ length: GLASSES_TOTAL }).map((_, i) => (
-              <motion.button
-                key={i}
-                onClick={() => handleGlassTap(i)}
-                whileTap={{ scale: 0.8 }}
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 + i * 0.06, duration: 0.2 }}
-                className="flex flex-col items-center gap-1"
-                aria-label={`Verre ${i + 1}`}
-              >
-                <Droplets
-                  size={28}
-                  className={i < glassesConsumed ? 'text-primary-500' : 'text-surface-300'}
-                  strokeWidth={i < glassesConsumed ? 2.5 : 1.5}
-                />
-                <span className={`text-[9px] font-medium ${i < glassesConsumed ? 'text-primary-500' : 'text-text-muted'}`}>
-                  {(i + 1) * GLASS_ML / 1000 >= 1 ? `${(i + 1) * GLASS_ML / 1000}L` : `${(i + 1) * GLASS_ML}ml`}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </AnimatedCard>
-      </ScrollReveal>
-
-      {/* Steps & Sport */}
-      <ScrollReveal delay={0.2}>
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <AnimatedCard className="p-4" index={3}>
-            <div className="flex items-center gap-2 mb-2">
-              <Footprints size={18} className="text-primary-400" />
-              <span className="text-xs font-medium text-text-secondary">Pas</span>
-            </div>
-            <AnimatedCounter value={dailySteps} className="text-xl font-bold text-text-primary" />
-            <p className="text-xs text-text-muted">/ {stepsGoal.toLocaleString()}</p>
-          </AnimatedCard>
-          <AnimatedCard className="p-4" index={4} onClick={() => navigate('/sport')}>
-            <div className="flex items-center gap-2 mb-2">
-              <Dumbbell size={18} className="text-success-400" />
-              <span className="text-xs font-medium text-text-secondary">Sport</span>
-            </div>
-            <AnimatedCounter value={todaySport.length} className="text-xl font-bold text-text-primary" suffix=" séance(s)" />
-            <p className="text-xs text-text-muted">{burned} kcal brûlées</p>
-          </AnimatedCard>
-        </div>
-      </ScrollReveal>
-
-      {/* Today's meals */}
-      <ScrollReveal delay={0.25}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-text-primary">Repas du jour</h3>
-          <button onClick={() => navigate('/journal')} className="text-xs text-primary-500 font-medium flex items-center gap-1">
-            Journal <ChevronRight size={14} />
-          </button>
-        </div>
-        {todayMeals.length === 0 ? (
-          <AnimatedCard className="p-6 text-center" index={5}>
-            <BookOpen size={32} className="text-text-muted mx-auto mb-2" />
-            <p className="text-sm text-text-secondary">Aucun repas enregistré</p>
-            <button onClick={() => navigate('/scanner')} className="text-primary-500 text-sm font-medium mt-2">Scanner un repas →</button>
-          </AnimatedCard>
-        ) : (
-          <div className="space-y-2">
-            {todayMeals.map((meal, i) => (
-              <AnimatedCard key={meal.id} className="p-3 flex items-center gap-3" index={5 + i}>
-                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
-                  <Icon3D name={meal.mealType === 'breakfast' ? 'sunrise' : meal.mealType === 'lunch' ? 'sun' : meal.mealType === 'snack' ? 'redApple' : 'crescentMoon'} size={24} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">{meal.dishName}</p>
-                  <p className="text-xs text-text-muted">{meal.totalCalories} kcal</p>
-                </div>
-              </AnimatedCard>
-            ))}
-          </div>
-        )}
-      </ScrollReveal>
-
-      {/* Quick actions */}
-      <ScrollReveal delay={0.3}>
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate('/scanner')}
-            className="bg-primary-500 text-white rounded-2xl p-4 text-left shadow-float">
-            <TrendingUp size={20} className="mb-2" />
-            <p className="text-sm font-semibold">Scanner</p>
-            <p className="text-xs text-white/70">Photo ou code-barres</p>
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.96 }} onClick={() => navigate('/meal-plan')}
-            className="bg-success-400 text-white rounded-2xl p-4 text-left shadow-float">
-            <BookOpen size={20} className="mb-2" />
-            <p className="text-sm font-semibold">Plan repas</p>
-            <p className="text-xs text-white/70">Planifier la semaine</p>
-          </motion.button>
-        </div>
-      </ScrollReveal>
-
-      {/* Level Up Modal (global) */}
       <LevelUpModal />
-
-      {/* Check-in & Weekly Report modals */}
       <CheckInModal open={showCheckIn} onClose={() => setShowCheckIn(false)} />
       <WeeklyReport open={showWeeklyReport} onClose={() => setShowWeeklyReport(false)} />
     </AnimatedPage>

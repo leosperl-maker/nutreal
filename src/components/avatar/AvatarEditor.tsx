@@ -2,12 +2,11 @@ import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Coins } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import Avatar from './Avatar';
 import Icon3D from '../Icon3D';
 import {
-  HAIRSTYLES, OUTFITS, ACCESSORIES, PETS,
-  SKIN_COLORS, HAIR_COLORS, EYE_COLORS, OUTFIT_COLORS,
-  isItemUnlocked, getItemRarity, RARITY_MAP,
+  HAIRSTYLES, TOPS, OUTERWEAR, BOTTOMS, SHOES, ACCESSORIES, PETS,
+  SKIN_COLORS, HAIR_COLORS, EYE_COLORS, SLOT_COLORS,
+  isItemUnlocked, resolveAccessoryConflicts,
 } from './avatarItems';
 import type { AvatarConfig } from '../../store/useStore';
 
@@ -17,13 +16,13 @@ interface AvatarEditorProps {
   onClose: () => void;
 }
 
-type TabId = 'skin' | 'hair' | 'eyes' | 'outfit' | 'accessory' | 'pet';
+type TabId = 'skin' | 'hair' | 'eyes' | 'clothing' | 'accessory' | 'pet';
 
 const TABS: { id: TabId; emoji: string; label: string }[] = [
   { id: 'skin', emoji: 'artistPalette', label: 'Peau' },
   { id: 'hair', emoji: 'personGettingHaircut', label: 'Cheveux' },
   { id: 'eyes', emoji: 'eye', label: 'Yeux' },
-  { id: 'outfit', emoji: 'tShirt', label: 'Tenue' },
+  { id: 'clothing', emoji: 'tShirt', label: 'Tenue' },
   { id: 'accessory', emoji: 'watch', label: 'Accessoires' },
   { id: 'pet', emoji: 'catFace', label: 'Animaux' },
 ];
@@ -104,6 +103,58 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
     </div>
   );
 
+  // Multi-accessory grid: accessories is an array, toggle items on/off
+  const renderAccessoryGrid = () => {
+    const currentAcc = avatarConfig.accessories || [];
+    return (
+      <div className="grid grid-cols-3 gap-2">
+        {ACCESSORIES.map(item => {
+          const unlocked = isItemUnlocked(item.id, level, purchasedItems);
+          const isActive = currentAcc.includes(item.id);
+          const canBuy = !unlocked && item.price > 0 && coins >= item.price;
+          return (
+            <button key={item.id}
+              onClick={() => {
+                if (!unlocked && canBuy) {
+                  const success = purchaseItem(item.id, item.price);
+                  if (success) showToast(`${item.name} acheté !`);
+                  else return;
+                } else if (!unlocked) return;
+
+                if (isActive) {
+                  setConfig({ accessories: currentAcc.filter(a => a !== item.id) });
+                } else {
+                  setConfig({ accessories: resolveAccessoryConflicts(currentAcc, item.id) });
+                }
+              }}
+              className={`relative p-3 rounded-xl text-center transition-all ${isActive ? 'bg-primary-500 text-white shadow-float' : 'bg-white border border-surface-200'} ${!unlocked && !canBuy ? 'opacity-40' : ''}`}
+            >
+              <span className="text-xl block">{item.emoji}</span>
+              <span className={`text-[10px] font-medium block mt-1 ${isActive ? 'text-white' : 'text-text-secondary'}`}>
+                {item.name}
+              </span>
+              {!unlocked && (
+                <div className="absolute top-1 right-1 bg-surface-700/80 rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                  {canBuy ? (
+                    <>
+                      <Coins size={8} className="text-amber-300" />
+                      <span className="text-[8px] text-amber-300 font-bold">{item.price}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={8} className="text-white" />
+                      <span className="text-[8px] text-white font-bold">{item.requiredLevel}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderTab = () => {
     switch (tab) {
       case 'skin':
@@ -133,16 +184,38 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
             {renderColorGrid(EYE_COLORS, avatarConfig.eyeColor, v => setConfig({ eyeColor: v }))}
           </div>
         );
-      case 'outfit':
+      case 'clothing':
         return (
           <div className="space-y-5">
             <div>
-              <h3 className="text-sm font-semibold text-text-secondary mb-3">Tenue</h3>
-              {renderItemGrid(OUTFITS, avatarConfig.outfit, v => v && setConfig({ outfit: v }))}
+              <h3 className="text-sm font-semibold text-text-secondary mb-3">Haut</h3>
+              {renderItemGrid(TOPS, avatarConfig.top, v => v && setConfig({ top: v }))}
+              <div className="mt-2">
+                {renderColorGrid(SLOT_COLORS, avatarConfig.topColor, v => setConfig({ topColor: v }))}
+              </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-text-secondary mb-3">Couleur</h3>
-              {renderColorGrid(OUTFIT_COLORS, avatarConfig.outfitColor, v => setConfig({ outfitColor: v }))}
+              <h3 className="text-sm font-semibold text-text-secondary mb-3">Veste / Sur-vêtement</h3>
+              {renderItemGrid(OUTERWEAR, avatarConfig.outerwear, v => setConfig({ outerwear: v }))}
+              {avatarConfig.outerwear && avatarConfig.outerwear !== 'ow_none' && (
+                <div className="mt-2">
+                  {renderColorGrid(SLOT_COLORS, avatarConfig.outerwearColor, v => setConfig({ outerwearColor: v }))}
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-text-secondary mb-3">Bas</h3>
+              {renderItemGrid(BOTTOMS, avatarConfig.bottom, v => v && setConfig({ bottom: v }))}
+              <div className="mt-2">
+                {renderColorGrid(SLOT_COLORS, avatarConfig.bottomColor, v => setConfig({ bottomColor: v }))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-text-secondary mb-3">Chaussures</h3>
+              {renderItemGrid(SHOES, avatarConfig.shoes, v => v && setConfig({ shoes: v }))}
+              <div className="mt-2">
+                {renderColorGrid(SLOT_COLORS, avatarConfig.shoesColor, v => setConfig({ shoesColor: v }))}
+              </div>
             </div>
           </div>
         );
@@ -150,14 +223,15 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-text-secondary mb-3">Accessoires</h3>
-            {renderItemGrid(ACCESSORIES, avatarConfig.accessory, v => setConfig({ accessory: v }))}
+            <p className="text-xs text-text-muted">Plusieurs accessoires combinables</p>
+            {renderAccessoryGrid()}
           </div>
         );
       case 'pet':
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-text-secondary mb-3">Animaux de compagnie</h3>
-            <p className="text-xs text-text-muted">Débloqués à partir du niveau 10</p>
+            <p className="text-xs text-text-muted">Débloqués à partir du niveau 5</p>
             {renderItemGrid(PETS, avatarConfig.pet, v => setConfig({ pet: v }))}
           </div>
         );
@@ -181,7 +255,7 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           className="bg-surface-100 rounded-t-3xl w-full max-w-lg max-h-[85vh] flex flex-col"
           onClick={e => e.stopPropagation()}
         >
-          {/* Header + Preview */}
+          {/* Header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2 className="text-lg font-bold text-text-primary font-display">Mon avatar</h2>
             <button onClick={onClose} className="w-8 h-8 bg-surface-200 rounded-full flex items-center justify-center">
@@ -192,7 +266,7 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           {/* Avatar 3D preview */}
           <div className="px-4 py-2">
             <Suspense fallback={
-              <div className="w-full h-[180px] rounded-xl bg-gradient-to-b from-indigo-50 to-pink-50 flex items-center justify-center">
+              <div className="w-full h-[180px] rounded-xl bg-gradient-to-b from-primary-100 to-primary-50 flex items-center justify-center">
                 <div className="animate-pulse text-primary-400 text-xs">Chargement 3D...</div>
               </div>
             }>

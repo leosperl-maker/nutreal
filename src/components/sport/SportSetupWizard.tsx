@@ -123,15 +123,15 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 onClick={() => setGoal(g.value)}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${
                   goal === g.value
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-100 bg-white hover:border-gray-200'
+                    ? 'border-primary-500 bg-primary-50 shadow-card'
+                    : 'border-surface-200 bg-white hover:border-surface-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon3D name={g.emoji} size={28} />
                   <div>
-                    <p className="font-semibold text-gray-800">{g.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{g.desc}</p>
+                    <p className="font-semibold text-text-primary">{g.label}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{g.desc}</p>
                   </div>
                 </div>
               </button>
@@ -148,15 +148,15 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 onClick={() => setLevel(l.value)}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${
                   level === l.value
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-100 bg-white hover:border-gray-200'
+                    ? 'border-primary-500 bg-primary-50 shadow-card'
+                    : 'border-surface-200 bg-white hover:border-surface-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon3D name={l.emoji} size={28} />
                   <div>
-                    <p className="font-semibold text-gray-800">{l.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{l.desc}</p>
+                    <p className="font-semibold text-text-primary">{l.label}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{l.desc}</p>
                   </div>
                 </div>
               </button>
@@ -167,20 +167,20 @@ export default function SportSetupWizard({ onComplete }: Props) {
       case 2:
         return (
           <div className="space-y-3">
-            <p className="text-sm text-gray-400 mb-2">Sélectionnez toutes les limitations qui s'appliquent :</p>
+            <p className="text-sm text-text-muted mb-2">Sélectionnez toutes les limitations qui s'appliquent :</p>
             {LIMITATIONS_OPTIONS.map(l => (
               <button
                 key={l.value}
                 onClick={() => toggleLimitation(l.value)}
                 className={`w-full p-3.5 rounded-2xl border-2 text-left transition-all ${
                   (l.value === 'none' && limitations.length === 0) || limitations.includes(l.value)
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-100 bg-white hover:border-gray-200'
+                    ? 'border-primary-500 bg-primary-50 shadow-card'
+                    : 'border-surface-200 bg-white hover:border-surface-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon3D name={l.emoji} size={22} />
-                  <p className="font-medium text-gray-800">{l.label}</p>
+                  <p className="font-medium text-text-primary">{l.label}</p>
                 </div>
               </button>
             ))}
@@ -190,20 +190,20 @@ export default function SportSetupWizard({ onComplete }: Props) {
       case 3:
         return (
           <div className="space-y-3">
-            <p className="text-sm text-gray-400 mb-2">Quel équipement avez-vous à disposition ?</p>
+            <p className="text-sm text-text-muted mb-2">Quel équipement avez-vous à disposition ?</p>
             {EQUIPMENT_OPTIONS.map(e => (
               <button
                 key={e.value}
                 onClick={() => toggleEquipment(e.value)}
                 className={`w-full p-3.5 rounded-2xl border-2 text-left transition-all ${
                   equipment.includes(e.value)
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-100 bg-white hover:border-gray-200'
+                    ? 'border-primary-500 bg-primary-50 shadow-card'
+                    : 'border-surface-200 bg-white hover:border-surface-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon3D name={e.emoji} size={22} />
-                  <p className="font-medium text-gray-800">{e.label}</p>
+                  <p className="font-medium text-text-primary">{e.label}</p>
                 </div>
               </button>
             ))}
@@ -214,7 +214,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-text-secondary mb-3">
                 <Calendar size={16} className="inline mr-2" />
                 Jours d'entraînement par semaine
               </label>
@@ -225,15 +225,15 @@ export default function SportSetupWizard({ onComplete }: Props) {
                     onClick={() => setDaysPerWeek(d)}
                     className={`flex-1 py-3 rounded-xl font-bold text-lg transition-all ${
                       daysPerWeek === d
-                        ? 'bg-primary-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-primary-500 text-white shadow-card'
+                        : 'bg-surface-200 text-text-secondary hover:bg-surface-300'
                     }`}
                   >
                     {d}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-2 text-center">
+              <p className="text-xs text-text-muted mt-2 text-center">
                 {daysPerWeek <= 2 ? 'Parfait pour commencer !' : 
                  daysPerWeek <= 4 ? 'Bon équilibre entraînement/repos' : 
                  'Programme intensif — assurez-vous de bien récupérer'}
@@ -241,7 +241,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-text-secondary mb-3">
                 <Clock size={16} className="inline mr-2" />
                 Durée par séance : <span className="text-primary-500">{sessionDuration} min</span>
               </label>
@@ -252,9 +252,9 @@ export default function SportSetupWizard({ onComplete }: Props) {
                 step={5}
                 value={sessionDuration}
                 onChange={(e) => setSessionDuration(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                className="w-full h-2 bg-surface-300 rounded-lg appearance-none cursor-pointer accent-primary-500"
               />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-text-muted mt-1">
                 <span>15 min</span>
                 <span>45 min</span>
                 <span>90 min</span>
@@ -276,7 +276,7 @@ export default function SportSetupWizard({ onComplete }: Props) {
           <div
             key={s.id}
             className={`h-1.5 flex-1 rounded-full transition-all ${
-              i <= step ? 'bg-primary-500' : 'bg-gray-200'
+              i <= step ? 'bg-primary-500' : 'bg-surface-300'
             }`}
           />
         ))}
@@ -291,9 +291,9 @@ export default function SportSetupWizard({ onComplete }: Props) {
       >
         <div className="flex items-center gap-3 mb-2">
           {React.createElement(STEPS[step].icon, { size: 24, className: 'text-primary-500' })}
-          <h1 className="text-2xl font-bold text-gray-800 font-display">{STEPS[step].title}</h1>
+          <h1 className="text-2xl font-bold text-text-primary font-display">{STEPS[step].title}</h1>
         </div>
-        <p className="text-sm text-gray-400">Étape {step + 1} sur {STEPS.length}</p>
+        <p className="text-sm text-text-muted">Étape {step + 1} sur {STEPS.length}</p>
       </motion.div>
 
       {/* Content */}
@@ -310,12 +310,12 @@ export default function SportSetupWizard({ onComplete }: Props) {
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-gray-100">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-lg border-t border-surface-200">
         <div className="flex gap-3 max-w-lg mx-auto">
           {step > 0 && (
             <button
               onClick={() => setStep(s => s - 1)}
-              className="flex items-center justify-center gap-1 px-6 py-3.5 rounded-xl bg-gray-100 text-gray-600 font-medium"
+              className="flex items-center justify-center gap-1 px-6 py-3.5 rounded-xl bg-surface-200 text-text-secondary font-medium"
             >
               <ChevronLeft size={18} />
               Retour
@@ -332,8 +332,8 @@ export default function SportSetupWizard({ onComplete }: Props) {
             disabled={!canProceed()}
             className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold transition-all ${
               canProceed()
-                ? 'bg-primary-500 text-white shadow-md hover:bg-primary-600 active:scale-[0.98]'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-primary-500 text-white shadow-card hover:bg-primary-600 active:scale-[0.98]'
+                : 'bg-surface-300 text-text-muted cursor-not-allowed'
             }`}
           >
             {step < STEPS.length - 1 ? (

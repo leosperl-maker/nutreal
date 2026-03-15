@@ -34,6 +34,18 @@ interface SportState {
   getStreak: () => number;
 }
 
+function migrateSportStorage() {
+  try {
+    const oldData = localStorage.getItem('nutrilens-sport-storage');
+    if (oldData && !localStorage.getItem('nutreal-sport-storage')) {
+      localStorage.setItem('nutreal-sport-storage', oldData);
+      localStorage.removeItem('nutrilens-sport-storage');
+      console.warn('[Nutreal] Sport storage migré depuis nutrilens');
+    }
+  } catch {}
+}
+migrateSportStorage();
+
 export const useSportStore = create<SportState>()(
   persist(
     (set, get) => ({
@@ -131,7 +143,7 @@ export const useSportStore = create<SportState>()(
       },
     }),
     {
-      name: 'nutrilens-sport-storage',
+      name: 'nutreal-sport-storage',
     }
   )
 );

@@ -158,8 +158,8 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
 
   const phaseColors: Record<Phase, string> = {
     warmup: 'from-orange-500 to-amber-500',
-    exercise: 'from-primary-500 to-purple-600',
-    rest: 'from-blue-500 to-cyan-500',
+    exercise: 'from-primary-500 to-primary-700',
+    rest: 'from-teal-500 to-teal-600',
     cooldown: 'from-green-500 to-emerald-500',
     complete: 'from-yellow-500 to-orange-500',
   };
@@ -178,7 +178,7 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 bg-gray-900 flex flex-col"
+      className="fixed inset-0 z-50 bg-[#061a10] flex flex-col"
     >
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-black/30">
@@ -220,8 +220,8 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
               exit={{ opacity: 0, scale: 0.8 }}
               className="text-center"
             >
-              <p className="text-blue-400 text-sm font-medium mb-4">Repos</p>
-              <div className="w-40 h-40 rounded-full border-4 border-blue-400 flex items-center justify-center mb-6">
+              <p className="text-teal-400 text-sm font-medium mb-4">Repos</p>
+              <div className="w-40 h-40 rounded-full border-4 border-teal-400 flex items-center justify-center mb-6">
                 <span className="text-5xl font-bold text-white">{restTimer}</span>
               </div>
               <p className="text-white/60 text-sm">
@@ -229,7 +229,7 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
               </p>
               <button
                 onClick={() => { setIsResting(false); setRestTimer(0); }}
-                className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-full text-sm font-medium"
+                className="mt-4 px-6 py-2 bg-teal-500 text-white rounded-full text-sm font-medium"
               >
                 Passer le repos
               </button>
@@ -310,7 +310,7 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
             </button>
             <button
               onClick={nextExercise}
-              className={`flex-1 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] bg-gradient-to-r ${phaseColors[phase]} text-white shadow-lg`}
+              className={`flex-1 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] bg-gradient-to-r ${phaseColors[phase]} text-white shadow-float`}
             >
               <CheckCircle2 size={22} />
               {currentExercise?.sets && currentSet < currentExercise.sets ? 'Série terminée' : 'Exercice terminé'}
@@ -336,7 +336,7 @@ export default function LiveWorkout({ session, onComplete, onCancel }: Props) {
             <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              className="bg-gray-800 rounded-2xl p-6 w-full max-w-sm"
+              className="bg-[#0a2a16] rounded-2xl p-6 w-full max-w-sm"
             >
               <h3 className="text-white font-bold text-lg mb-2">Quitter l'entraînement ?</h3>
               <p className="text-white/60 text-sm mb-4">

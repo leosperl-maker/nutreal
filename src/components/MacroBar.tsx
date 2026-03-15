@@ -14,12 +14,12 @@ export default function MacroBar({ label, current, target, color, unit = 'g' }: 
   return (
     <div className="flex-1">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-gray-500">{label}</span>
-        <span className="text-xs font-semibold text-gray-700">
+        <span className="text-xs font-medium text-text-muted">{label}</span>
+        <span className="text-xs font-semibold text-text-primary">
           {Math.round(current)}/{target}{unit}
         </span>
       </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-[#edf4ef] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
           style={{

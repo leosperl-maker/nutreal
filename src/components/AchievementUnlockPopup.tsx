@@ -15,7 +15,7 @@ interface AchievementUnlockPopupProps {
 }
 
 export default function AchievementUnlockPopup({ achievement, onClose }: AchievementUnlockPopupProps) {
-  const { fireConfetti } = useConfetti(['#FFD700', '#FFA500', '#FFE66D', '#FFEC8B', '#FFC200', '#2A6B8A']);
+  const { fireConfetti } = useConfetti(['#FFD700', '#FFA500', '#FFE66D', '#FFEC8B', '#FFC200', '#2ea05a']);
 
   useEffect(() => {
     if (!achievement) return;
@@ -107,8 +107,8 @@ export default function AchievementUnlockPopup({ achievement, onClose }: Achieve
                     <Icon size={22} className={achievement.color ?? 'text-warning-300'} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-gray-900">{achievement.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{achievement.desc}</p>
+                    <p className="text-base font-bold text-text-primary">{achievement.label}</p>
+                    <p className="text-sm text-text-muted mt-0.5">{achievement.desc}</p>
                   </div>
                 </motion.div>
 
@@ -130,7 +130,7 @@ export default function AchievementUnlockPopup({ achievement, onClose }: Achieve
               onClick={onClose}
               className="absolute top-3 right-3 w-7 h-7 bg-white/80 rounded-full flex items-center justify-center"
             >
-              <X size={14} className="text-gray-600" />
+              <X size={14} className="text-text-secondary" />
             </button>
           </motion.div>
         </>

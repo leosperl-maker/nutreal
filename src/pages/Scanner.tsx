@@ -7,7 +7,8 @@ import AnimatedCard from '../components/AnimatedCard';
 import AnimatedButton from '../components/AnimatedButton';
 import SuccessCheckmark from '../components/SuccessCheckmark';
 import Icon3D from '../components/Icon3D';
-import { Camera, CameraOff, Barcode, Upload, Loader2, AlertCircle, Plus, X, Pencil, Trash2, Check, MessageSquare } from 'lucide-react';
+import { Camera, CameraOff, Barcode, Upload, Loader2, AlertCircle, Plus, X, Pencil, Trash2, Check, MessageSquare, PenLine, Clock } from 'lucide-react';
+import { celebrateMealLogged } from '../lib/celebrations';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 
 const MEAL_TYPES = [
@@ -219,10 +220,64 @@ function FeedbackBanner({ onCorrect }: { onCorrect: () => void }) {
   );
 }
 
+// ─── Manual entry form ───────────────────────────────────────────────────────
+function ManualForm({ onResult }: { onResult: (r: any) => void }) {
+  const [name, setName] = useState('');
+  const [calories, setCalories] = useState('');
+  const [protein, setProtein] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fat, setFat] = useState('');
+  const [quantity, setQuantity] = useState('100');
+
+  const handleCreate = () => {
+    if (!name.trim()) return;
+    const cal = Number(calories) || 0;
+    const prot = Number(protein) || 0;
+    const c = Number(carbs) || 0;
+    const f = Number(fat) || 0;
+    const q = Number(quantity) || 100;
+    onResult({
+      dishName: name.trim(),
+      foods: [{ name: name.trim(), calories: cal, protein_g: prot, fat_g: f, carbs_g: c, fiber_g: 0, quantity_g: q }],
+      totalCalories: cal, totalProtein: prot, totalFat: f, totalCarbs: c, totalFiber: 0, tip: '',
+    });
+  };
+
+  return (
+    <AnimatedCard className="p-4">
+      <p className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+        <PenLine size={15} className="text-primary-500" /> Saisie manuelle
+      </p>
+      <div className="space-y-3">
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nom du plat ou aliment"
+          className="w-full text-sm text-text-primary bg-surface-50 rounded-xl px-3 py-3 border border-surface-200 focus:border-primary-300 focus:outline-none" />
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Calories (kcal)', val: calories, set: setCalories },
+            { label: 'Quantité (g)', val: quantity, set: setQuantity },
+            { label: 'Protéines (g)', val: protein, set: setProtein },
+            { label: 'Glucides (g)', val: carbs, set: setCarbs },
+            { label: 'Lipides (g)', val: fat, set: setFat },
+          ].map(f => (
+            <div key={f.label}>
+              <label className="text-[10px] text-text-muted block mb-0.5">{f.label}</label>
+              <input type="number" value={f.val} onChange={e => f.set(e.target.value)}
+                className="w-full text-sm bg-surface-50 rounded-lg px-2 py-2 border border-surface-200 focus:border-primary-300 focus:outline-none" />
+            </div>
+          ))}
+        </div>
+        <AnimatedButton onClick={handleCreate} className="w-full py-3 text-sm flex items-center justify-center gap-2">
+          <Check size={16} /> Créer le repas
+        </AnimatedButton>
+      </div>
+    </AnimatedCard>
+  );
+}
+
 // ─── Main Scanner ────────────────────────────────────────────────────────────
 export default function Scanner() {
-  const { addMeal, showToast } = useStore();
-  const [mode, setMode] = useState<'photo' | 'barcode'>('photo');
+  const { addMeal, showToast, meals } = useStore();
+  const [mode, setMode] = useState<'photo' | 'barcode' | 'manual'>('photo');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [mealType, setMealType] = useState<string>('lunch');
@@ -262,6 +317,7 @@ export default function Scanner() {
         async (res, _err) => {
           if (res && !detectedRef.current) {
             detectedRef.current = true;
+            if (navigator.vibrate) navigator.vibrate(100);
             controlsRef.current?.stop();
             controlsRef.current = null;
             if (videoRef.current?.srcObject instanceof MediaStream) {
@@ -353,6 +409,7 @@ export default function Scanner() {
       aiTip: result.tip, createdAt: new Date().toISOString(),
     });
     setSaved(true); showToast('Repas enregistré !');
+    celebrateMealLogged();
     setTimeout(() => { setSaved(false); setResult(null); setCorrecting(false); }, 2000);
   };
 
@@ -362,11 +419,15 @@ export default function Scanner() {
 
       {/* Mode toggle */}
       <div className="flex bg-surface-200 rounded-xl p-1 mb-6">
-        {[{ v: 'photo', l: 'Photo IA' }, { v: 'barcode', l: 'Code-barres' }].map(m => (
+        {[
+          { v: 'photo', l: 'Photo IA', icon: <Camera size={14} /> },
+          { v: 'barcode', l: 'Code-barres', icon: <Barcode size={14} /> },
+          { v: 'manual', l: 'Manuel', icon: <PenLine size={14} /> },
+        ].map(m => (
           <button key={m.v}
             onClick={() => { setMode(m.v as any); setResult(null); setError(''); stopScan(); setCorrecting(false); }}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${mode === m.v ? 'bg-white text-primary-500 shadow-card' : 'text-text-secondary'}`}>
-            {m.l}
+            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === m.v ? 'bg-white text-primary-500 shadow-card' : 'text-text-secondary'}`}>
+            {m.icon}{m.l}
           </button>
         ))}
       </div>
@@ -394,7 +455,7 @@ export default function Scanner() {
                 <div className="flex-1 mr-2">
                   <h3 className="text-base font-bold text-text-primary leading-tight">{result.dishName}</h3>
                   {result.nutriscore && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-white text-xs font-bold mt-1 ${NUTRISCORE_COLORS[result.nutriscore] || 'bg-gray-400'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-white text-xs font-bold mt-1 ${NUTRISCORE_COLORS[result.nutriscore] || 'bg-surface-300'}`}>
                       Nutri-Score {result.nutriscore}
                     </span>
                   )}
@@ -472,6 +533,36 @@ export default function Scanner() {
                 <p className="text-xs text-error-400">{error}</p>
               </div>
             )}
+            {/* Recent scans */}
+            {meals.length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock size={13} className="text-text-muted" />
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Récents</p>
+                </div>
+                <div className="space-y-2">
+                  {[...meals]
+                    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .slice(0, 5)
+                    .map((meal: any) => (
+                      <motion.button key={meal.id} whileTap={{ scale: 0.98 }}
+                        onClick={() => setResult({
+                          dishName: meal.dishName, foods: meal.foods,
+                          totalCalories: meal.totalCalories, totalProtein: meal.totalProtein,
+                          totalFat: meal.totalFat, totalCarbs: meal.totalCarbs,
+                          totalFiber: meal.totalFiber, tip: meal.aiTip || '',
+                        })}
+                        className="w-full flex items-center gap-3 bg-white rounded-xl px-3 py-2.5 border border-surface-200 text-left">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">{meal.dishName}</p>
+                          <p className="text-xs text-text-muted">{meal.totalCalories} kcal · {meal.mealType}</p>
+                        </div>
+                        <Plus size={16} className="text-primary-400 flex-shrink-0" />
+                      </motion.button>
+                    ))}
+                </div>
+              </div>
+            )}
             {mode === 'photo' ? (
               <AnimatedCard className="p-8 text-center" onClick={() => fileRef.current?.click()}>
                 <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
@@ -486,7 +577,7 @@ export default function Scanner() {
                   <span className="text-xs text-text-muted">ou importez depuis la galerie</span>
                 </div>
               </AnimatedCard>
-            ) : (
+            ) : mode === 'barcode' ? (
               <AnimatedCard className="p-4">
                 <div className="relative mb-4 overflow-hidden rounded-xl bg-black">
                   <video ref={videoRef} autoPlay playsInline muted
@@ -516,7 +607,7 @@ export default function Scanner() {
                 <div className="flex flex-col gap-2">
                   {scanning ? (
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={stopScan}
-                      className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 bg-gradient-to-r from-red-400 to-red-500 text-white shadow-md">
+                      className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 bg-gradient-to-r from-red-400 to-red-500 text-white shadow-card">
                       <CameraOff size={18} /> Arrêter le scan
                     </motion.button>
                   ) : (
@@ -524,9 +615,11 @@ export default function Scanner() {
                       <Camera size={18} /> Démarrer le scanner
                     </AnimatedButton>
                   )}
-                  <p className="text-[11px] text-text-muted text-center">Propulsé par Open Food Facts</p>
+                  <p className="text-[11px] text-text-muted text-center">+3 millions de produits référencés</p>
                 </div>
               </AnimatedCard>
+            ) : (
+              <ManualForm onResult={setResult} />
             )}
           </motion.div>
         )}

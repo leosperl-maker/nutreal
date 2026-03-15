@@ -60,7 +60,7 @@ export default function LevelUpModal() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
-            className="w-24 h-24 mx-auto bg-gradient-to-br from-primary-400 to-primary-600 rounded-3xl flex items-center justify-center shadow-xl mb-6"
+            className="w-24 h-24 mx-auto bg-gradient-to-br from-primary-400 to-primary-600 rounded-3xl flex items-center justify-center shadow-float mb-6"
           >
             <span className="text-white text-4xl font-black">{newLevel}</span>
           </motion.div>
@@ -120,7 +120,7 @@ export default function LevelUpModal() {
                 <div key={item.id} className="flex items-center gap-3 p-2 bg-white/10 rounded-xl mb-1.5 last:mb-0">
                   <Icon3D name={item.emoji} size={24} />
                   <div className="text-left">
-                    <p className="text-xs text-white/60 capitalize">{item.type === 'hairstyle' ? 'Coiffure' : item.type === 'outfit' ? 'Tenue' : item.type === 'accessory' ? 'Accessoire' : 'Animal'}</p>
+                    <p className="text-xs text-white/60 capitalize">{item.type === 'hairstyle' ? 'Coiffure' : item.type === 'accessory' ? 'Accessoire' : item.type === 'pet' ? 'Animal' : 'Tenue'}</p>
                     <p className="text-sm font-bold text-white">{item.name}</p>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default function LevelUpModal() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
             onClick={dismissLevelUp}
-            className="w-full py-4 bg-white rounded-2xl font-bold text-primary-600 text-sm shadow-xl active:scale-95 transition-transform"
+            className="w-full py-4 bg-white rounded-2xl font-bold text-primary-600 text-sm shadow-float active:scale-95 transition-transform"
           >
             Continuer
           </motion.button>

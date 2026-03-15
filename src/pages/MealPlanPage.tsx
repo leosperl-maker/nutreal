@@ -7,13 +7,14 @@ import AnimatedPage from '../components/AnimatedPage';
 import AnimatedCard from '../components/AnimatedCard';
 import SuccessCheckmark from '../components/SuccessCheckmark';
 import Icon3D from '../components/Icon3D';
-import { ChefHat, ShoppingCart, Check, Sparkles, RefreshCw, UtensilsCrossed, Clock, ChevronRight } from 'lucide-react';
+import { ChefHat, ShoppingCart, Check, Sparkles, RefreshCw, UtensilsCrossed, Clock, ChevronRight, Filter, X as XIcon, Flame, ChevronLeft } from 'lucide-react';
+import { HEALTHY_FAST_FOOD } from '../data/healthyFastFood';
 
 const SLOT_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
   breakfast: { label: 'Petit-déj', emoji: 'sunrise', color: 'from-amber-400 to-orange-500' },
-  lunch: { label: 'Déjeuner', emoji: 'sun', color: 'from-blue-400 to-cyan-500' },
+  lunch: { label: 'Déjeuner', emoji: 'sun', color: 'from-primary-400 to-primary-600' },
   snack: { label: 'Collation', emoji: 'redApple', color: 'from-green-400 to-emerald-500' },
-  dinner: { label: 'Dîner', emoji: 'crescentMoon', color: 'from-indigo-400 to-purple-500' },
+  dinner: { label: 'Dîner', emoji: 'crescentMoon', color: 'from-primary-700 to-primary-900' },
 };
 
 const DAY_SHORT: Record<string, string> = {
@@ -37,7 +38,7 @@ const IMG = {
   bread:   'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=400',
 };
 
-type PoolItem = Omit<MealPlanOption, 'recipe'>;
+type PoolItem = Omit<MealPlanOption, 'recipe'> & { tags?: string[] };
 
 // ─── Food pools (with prepTime & benefitsNote) ──────────────────────────────
 const BREAKFAST_POOL: PoolItem[] = [
@@ -53,6 +54,14 @@ const BREAKFAST_POOL: PoolItem[] = [
   { name: 'Smoothie vert épinards', ingredients: ['épinards', 'banane', 'pomme', 'gingembre', 'lait végétal', 'chia'], calories: 290, protein_g: 8, fat_g: 5, carbs_g: 55, fiber_g: 8, imageUrl: IMG.smoothie, prepTime: '5 min', benefitsNote: 'Les épinards apportent du fer et de l\'acide folique, essentiels à la vitalité.' },
   { name: 'Toast saumon fumé cream cheese', ingredients: ['pain de seigle', 'saumon fumé', 'cream cheese', 'câpres', 'aneth'], calories: 360, protein_g: 20, fat_g: 16, carbs_g: 34, fiber_g: 4, imageUrl: IMG.fish, prepTime: '5 min', benefitsNote: 'Combinaison parfaite de protéines et oméga-3 pour bien démarrer la journée.' },
   { name: 'Overnight oats chocolat', ingredients: ['flocons d\'avoine', 'lait', 'cacao', 'banane', 'beurre de cacahuète'], calories: 420, protein_g: 14, fat_g: 15, carbs_g: 58, fiber_g: 6, imageUrl: IMG.grains, prepTime: '5 min', benefitsNote: 'Préparé la veille, ce petit-déjeuner riche en fibres régule la glycémie toute la matinée.' },
+  { name: 'Tartines ricotta miel figues', ingredients: ['pain complet', 'ricotta', 'miel', 'figues fraîches', 'pistaches'], calories: 340, protein_g: 12, fat_g: 10, carbs_g: 52, fiber_g: 4, imageUrl: IMG.bread, prepTime: '5 min', benefitsNote: 'Les figues sont riches en calcium et fibres, la ricotta apporte des protéines légères.', tags: ['vegetarian', 'halal'] },
+  { name: 'Muesli maison noix', ingredients: ['flocons d\'avoine', 'amandes', 'noix', 'raisins secs', 'graines de tournesol', 'lait'], calories: 390, protein_g: 11, fat_g: 14, carbs_g: 56, fiber_g: 6, imageUrl: IMG.grains, prepTime: '5 min', benefitsNote: 'Mélange de céréales non transformées, riches en fibres et acides gras essentiels.', tags: ['vegetarian', 'halal'] },
+  { name: 'Œufs brouillés avocat toast', ingredients: ['œufs', 'avocat', 'ciboulette', 'huile d\'olive', 'pain complet'], calories: 380, protein_g: 20, fat_g: 22, carbs_g: 24, fiber_g: 5, imageUrl: IMG.eggs, prepTime: '10 min', benefitsNote: 'Les œufs apportent tous les acides aminés essentiels, l\'avocat les bons lipides.', tags: ['vegetarian', 'halal', 'high-protein'] },
+  { name: 'Bagel saumon cream cheese', ingredients: ['bagel complet', 'saumon fumé', 'cream cheese allégé', 'câpres', 'tomate', 'aneth'], calories: 430, protein_g: 24, fat_g: 16, carbs_g: 48, fiber_g: 3, imageUrl: IMG.fish, prepTime: '5 min', benefitsNote: 'Riche en oméga-3 DHA et EPA, idéal pour la concentration et la mémoire.', tags: ['halal'] },
+  { name: 'Gaufres protéinées myrtilles', ingredients: ['farine d\'avoine', 'œufs', 'protéine vanille', 'banane', 'myrtilles'], calories: 360, protein_g: 25, fat_g: 8, carbs_g: 48, fiber_g: 6, imageUrl: IMG.bread, prepTime: '15 min', benefitsNote: 'Gaufres riches en protéines complètes, idéales post-entraînement.', tags: ['vegetarian', 'halal', 'high-protein'] },
+  { name: 'Chia pudding mangue coco', ingredients: ['chia', 'lait de coco', 'mangue', 'granola', 'citron vert'], calories: 330, protein_g: 9, fat_g: 12, carbs_g: 48, fiber_g: 10, imageUrl: IMG.smoothie, prepTime: '5 min', benefitsNote: 'Préparé la veille, les graines de chia gonflées sont ultra-digestibles et riches en fibres.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Toast beurre cacahuète banane', ingredients: ['pain complet', 'beurre de cacahuète', 'banane', 'miel', 'graines de chanvre'], calories: 420, protein_g: 14, fat_g: 16, carbs_g: 58, fiber_g: 5, imageUrl: IMG.bread, prepTime: '3 min', benefitsNote: 'Le beurre de cacahuète apporte magnésium et vitamine E, parfait avant l\'effort.', tags: ['vegetarian', 'halal'] },
+  { name: 'Congee riz gingembre œuf', ingredients: ['riz', 'bouillon de légumes', 'gingembre frais', 'sésame', 'ciboulette', 'œuf poché'], calories: 280, protein_g: 10, fat_g: 6, carbs_g: 48, fiber_g: 2, imageUrl: IMG.grains, prepTime: '20 min', benefitsNote: 'Bouillie de riz asiatique très digeste, le gingembre soulage les nausées et favorise la digestion.', tags: ['vegetarian', 'gluten-free', 'halal'] },
 ];
 
 const LUNCH_POOL: PoolItem[] = [
@@ -68,6 +77,14 @@ const LUNCH_POOL: PoolItem[] = [
   { name: 'Risotto champignons', ingredients: ['riz arborio', 'champignons', 'parmesan', 'vin blanc', 'bouillon'], calories: 560, protein_g: 16, fat_g: 18, carbs_g: 80, fiber_g: 5, imageUrl: IMG.grains, prepTime: '35 min', benefitsNote: 'Les champignons sont riches en vitamine D et en antioxydants.' },
   { name: 'Wrap poulet Caesar', ingredients: ['tortilla blé', 'poulet grillé', 'romaine', 'parmesan', 'sauce Caesar'], calories: 480, protein_g: 32, fat_g: 20, carbs_g: 42, fiber_g: 3, imageUrl: IMG.chicken, prepTime: '10 min', benefitsNote: 'Pratique à emporter, bon ratio protéines/calories pour un déjeuner actif.' },
   { name: 'Soupe pho vietnamienne', ingredients: ['bouillon bœuf', 'nouilles de riz', 'bœuf', 'herbes fraîches', 'germes soja'], calories: 420, protein_g: 28, fat_g: 10, carbs_g: 55, fiber_g: 3, imageUrl: IMG.bowl, prepTime: '40 min', benefitsNote: 'Bouillon riche en collagène, les herbes fraîches apportent vitamines et minéraux.' },
+  { name: 'Falafel wrap houmous', ingredients: ['falafel', 'pain pita', 'houmous', 'salade', 'tomate', 'oignon', 'tahini'], calories: 470, protein_g: 16, fat_g: 18, carbs_g: 62, fiber_g: 10, imageUrl: IMG.bowl, prepTime: '15 min', benefitsNote: 'Protéines végétales des pois chiches, le houmous est riche en acides aminés.', tags: ['vegetarian', 'vegan', 'halal'] },
+  { name: 'Ceviche crevettes avocat', ingredients: ['crevettes', 'citron vert', 'oignon rouge', 'coriandre', 'piment', 'avocat'], calories: 280, protein_g: 26, fat_g: 10, carbs_g: 12, fiber_g: 4, imageUrl: IMG.fish, prepTime: '20 min', benefitsNote: 'Très pauvre en calories, riche en protéines maigres. Le citron cuit les crevettes.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Souvlaki pita grec', ingredients: ['poulet', 'pain pita', 'tzatziki', 'tomate', 'concombre', 'oignon'], calories: 460, protein_g: 32, fat_g: 14, carbs_g: 52, fiber_g: 3, imageUrl: IMG.chicken, prepTime: '20 min', benefitsNote: 'Poulet mariné aux herbes méditerranéennes, le tzatziki apporte probiotiques et fraîcheur.', tags: ['halal', 'high-protein'] },
+  { name: 'Chirashi saumon thon', ingredients: ['riz sushi', 'saumon', 'thon', 'avocat', 'edamame', 'sauce soja', 'sésame'], calories: 520, protein_g: 34, fat_g: 18, carbs_g: 55, fiber_g: 5, imageUrl: IMG.fish, prepTime: '15 min', benefitsNote: 'Double apport en oméga-3 avec le saumon et le thon, excellent pour la santé cardiovasculaire.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Salade César poulet grillé', ingredients: ['romaine', 'poulet grillé', 'croûtons', 'parmesan', 'sauce César allégée'], calories: 430, protein_g: 35, fat_g: 18, carbs_g: 28, fiber_g: 5, imageUrl: IMG.salad, prepTime: '15 min', benefitsNote: 'Classique équilibré, la romaine est riche en vitamine K et folates.', tags: ['halal', 'high-protein'] },
+  { name: 'Burrito bowl quinoa', ingredients: ['quinoa', 'haricots noirs', 'poulet', 'avocat', 'maïs', 'salsa', 'fromage'], calories: 540, protein_g: 34, fat_g: 16, carbs_g: 62, fiber_g: 12, imageUrl: IMG.bowl, prepTime: '20 min', benefitsNote: 'Quinoa = protéine végétale complète, association parfaite avec les haricots noirs.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Tom kha gaï crevettes', ingredients: ['crevettes', 'lait de coco', 'citronnelle', 'galanga', 'champignons', 'riz jasmin'], calories: 430, protein_g: 26, fat_g: 18, carbs_g: 42, fiber_g: 3, imageUrl: IMG.curry, prepTime: '25 min', benefitsNote: 'Soupe thaïe réconfortante, la citronnelle et le galanga ont des propriétés anti-inflammatoires.', tags: ['halal', 'gluten-free'] },
+  { name: 'Quiche légumes chèvre', ingredients: ['pâte brisée', 'œufs', 'fromage de chèvre', 'courgette', 'poivron', 'crème légère'], calories: 460, protein_g: 18, fat_g: 26, carbs_g: 38, fiber_g: 3, imageUrl: IMG.eggs, prepTime: '35 min', benefitsNote: 'Version végétarienne de la quiche, les légumes apportent vitamines et fibres.', tags: ['vegetarian', 'halal'] },
 ];
 
 const SNACK_POOL: PoolItem[] = [
@@ -81,6 +98,16 @@ const SNACK_POOL: PoolItem[] = [
   { name: 'Noix et fruits secs', ingredients: ['amandes', 'noix de cajou', 'raisins secs'], calories: 230, protein_g: 7, fat_g: 16, carbs_g: 20, fiber_g: 3, imageUrl: IMG.grains, prepTime: '1 min', benefitsNote: 'Source concentrée d\'énergie, magnésium et acides gras essentiels.' },
   { name: 'Tartine ricotta miel', ingredients: ['pain complet', 'ricotta', 'miel', 'pistaches'], calories: 240, protein_g: 10, fat_g: 9, carbs_g: 30, fiber_g: 3, imageUrl: IMG.bread, prepTime: '3 min', benefitsNote: 'La ricotta est riche en protéines de lactosérum, facilement assimilables.' },
   { name: 'Energy balls dattes cacao', ingredients: ['dattes', 'cacao', 'flocons d\'avoine', 'beurre de cacahuète'], calories: 190, protein_g: 5, fat_g: 8, carbs_g: 26, fiber_g: 3, imageUrl: IMG.misc, prepTime: '10 min', benefitsNote: 'Énergie naturelle des dattes sans sucres ajoutés, riche en magnésium.' },
+  { name: 'Barre protéinée maison', ingredients: ['flocons d\'avoine', 'beurre de cacahuète', 'protéine vanille', 'miel', 'chocolat noir 70%'], calories: 220, protein_g: 15, fat_g: 9, carbs_g: 24, fiber_g: 3, imageUrl: IMG.misc, prepTime: '15 min', benefitsNote: 'Sans additifs ni conservateurs, contrôle total des ingrédients vs barres industrielles.', tags: ['vegetarian', 'halal', 'high-protein'] },
+  { name: 'Popcorn épices naturel', ingredients: ['maïs à popcorn', 'huile de coco', 'paprika', 'sel'], calories: 110, protein_g: 3, fat_g: 4, carbs_g: 18, fiber_g: 3, imageUrl: IMG.misc, prepTime: '5 min', benefitsNote: 'Collation légère et pauvre en calories, les fibres des grains de maïs rassasient.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Bruschettas tomate basilic', ingredients: ['pain grillé', 'tomates', 'basilic', 'ail', 'huile d\'olive'], calories: 190, protein_g: 5, fat_g: 8, carbs_g: 24, fiber_g: 3, imageUrl: IMG.bread, prepTime: '8 min', benefitsNote: 'Le lycopène des tomates est libéré par la chaleur, excellent antioxydant.', tags: ['vegetarian', 'vegan', 'halal'] },
+  { name: 'Dattes fourrées amandes', ingredients: ['dattes Medjool', 'amandes', 'beurre de cacahuète'], calories: 160, protein_g: 4, fat_g: 6, carbs_g: 26, fiber_g: 3, imageUrl: IMG.misc, prepTime: '5 min', benefitsNote: 'Les dattes Medjool sont riches en potassium et magnésium naturels.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Muffin banane avoine', ingredients: ['banane', 'flocons d\'avoine', 'œuf', 'miel', 'cannelle', 'noix'], calories: 200, protein_g: 6, fat_g: 6, carbs_g: 32, fiber_g: 3, imageUrl: IMG.misc, prepTime: '25 min', benefitsNote: 'Sucré naturellement par la banane, pauvre en sucres raffinés, riche en fibres.', tags: ['vegetarian', 'halal'] },
+  { name: 'Granola bar maison', ingredients: ['flocons d\'avoine', 'miel', 'amandes', 'graines de tournesol', 'canneberges'], calories: 210, protein_g: 5, fat_g: 8, carbs_g: 30, fiber_g: 4, imageUrl: IMG.grains, prepTime: '20 min', benefitsNote: 'Énergie soutenue grâce aux glucides complexes et aux graisses des noix.', tags: ['vegetarian', 'vegan', 'halal'] },
+  { name: 'Smoothie vert kale pomme', ingredients: ['kale', 'pomme', 'gingembre', 'citron', 'eau de coco'], calories: 130, protein_g: 3, fat_g: 1, carbs_g: 28, fiber_g: 4, imageUrl: IMG.smoothie, prepTime: '5 min', benefitsNote: 'Le kale est l\'un des aliments les plus denses en nutriments : fer, calcium, vitamines K, C, A.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Tartare algues avocat', ingredients: ['algues nori', 'avocat', 'concombre', 'sauce tamari', 'sésame', 'citron vert'], calories: 150, protein_g: 4, fat_g: 9, carbs_g: 12, fiber_g: 5, imageUrl: IMG.misc, prepTime: '10 min', benefitsNote: 'Les algues sont la source végétale la plus riche en iode et minéraux marins.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Olives feta menthe', ingredients: ['olives Kalamata', 'feta', 'menthe fraîche', 'huile d\'olive', 'citron'], calories: 170, protein_g: 5, fat_g: 14, carbs_g: 6, fiber_g: 2, imageUrl: IMG.misc, prepTime: '3 min', benefitsNote: 'Les olives sont riches en polyphénols et vitamine E, la feta en calcium.', tags: ['vegetarian', 'gluten-free', 'halal'] },
+  { name: 'Crackers houmous légumes', ingredients: ['crackers de riz', 'houmous', 'carottes', 'céleri', 'radis'], calories: 180, protein_g: 6, fat_g: 7, carbs_g: 24, fiber_g: 5, imageUrl: IMG.salad, prepTime: '5 min', benefitsNote: 'Snack équilibré glucides/protéines/fibres, le houmous est riche en acides aminés essentiels.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
 ];
 
 const DINNER_POOL: PoolItem[] = [
@@ -96,7 +123,25 @@ const DINNER_POOL: PoolItem[] = [
   { name: 'Poulet citron herbes', ingredients: ['poulet', 'courgette', 'poivron', 'citron', 'thym'], calories: 420, protein_g: 40, fat_g: 16, carbs_g: 22, fiber_g: 6, imageUrl: IMG.chicken, prepTime: '30 min', benefitsNote: 'Repas riche en protéines et pauvre en glucides, idéal pour la sèche.' },
   { name: 'Curry vert thaï crevettes', ingredients: ['crevettes', 'lait de coco', 'pâte curry vert', 'bambou', 'riz jasmin'], calories: 490, protein_g: 30, fat_g: 20, carbs_g: 50, fiber_g: 4, imageUrl: IMG.curry, prepTime: '25 min', benefitsNote: 'Le lait de coco contient des MCT, acides gras facilement convertis en énergie.' },
   { name: 'Gratin dauphinois poulet rôti', ingredients: ['poulet', 'pommes de terre', 'crème', 'ail', 'gruyère'], calories: 580, protein_g: 38, fat_g: 24, carbs_g: 52, fiber_g: 4, imageUrl: IMG.chicken, prepTime: '50 min', benefitsNote: 'Repas réconfortant, les pommes de terre sont riches en potassium et vitamine C.' },
+  { name: 'Ratatouille provençale', ingredients: ['aubergine', 'courgette', 'poivron', 'tomate', 'oignon', 'herbes de Provence', 'huile d\'olive'], calories: 220, protein_g: 6, fat_g: 10, carbs_g: 28, fiber_g: 8, imageUrl: IMG.salad, prepTime: '45 min', benefitsNote: 'Plat de légumes du Midi, riche en fibres et pauvre en calories, excellent pour la digestion.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Teriyaki saumon brocoli', ingredients: ['saumon', 'sauce teriyaki', 'brocoli', 'riz blanc', 'sésame', 'gingembre'], calories: 510, protein_g: 38, fat_g: 16, carbs_g: 48, fiber_g: 5, imageUrl: IMG.fish, prepTime: '20 min', benefitsNote: 'Le saumon laqué teriyaki est ultra-savoureux tout en restant riche en oméga-3.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Moussaka végétarienne', ingredients: ['aubergine', 'lentilles', 'tomates pelées', 'oignon', 'cannelle', 'béchamel légère'], calories: 420, protein_g: 18, fat_g: 16, carbs_g: 48, fiber_g: 10, imageUrl: IMG.curry, prepTime: '50 min', benefitsNote: 'Version végétarienne de la moussaka, les lentilles remplacent la viande tout en apportant des protéines.', tags: ['vegetarian', 'halal'] },
+  { name: 'Enchiladas poulet haricots', ingredients: ['tortillas', 'poulet', 'haricots rouges', 'sauce enchilada', 'fromage râpé', 'crème légère'], calories: 550, protein_g: 34, fat_g: 18, carbs_g: 62, fiber_g: 8, imageUrl: IMG.chicken, prepTime: '35 min', benefitsNote: 'Les haricots rouges doublent l\'apport en fibres et protéines végétales.', tags: ['halal', 'high-protein'] },
+  { name: 'Bouillabaisse simplifiée', ingredients: ['poisson blanc', 'crevettes', 'moules', 'tomate', 'safran', 'fenouil', 'pain grillé'], calories: 380, protein_g: 34, fat_g: 12, carbs_g: 28, fiber_g: 4, imageUrl: IMG.fish, prepTime: '40 min', benefitsNote: 'Soupe de poisson marseillaise riche en protéines et minéraux marins, légère en calories.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Dahl de lentilles corail', ingredients: ['lentilles corail', 'lait de coco', 'curcuma', 'cumin', 'gingembre', 'épinards', 'riz basmati'], calories: 440, protein_g: 20, fat_g: 12, carbs_g: 62, fiber_g: 12, imageUrl: IMG.curry, prepTime: '25 min', benefitsNote: 'Plat indien végétarien riche en fer, le curcuma est un puissant anti-inflammatoire naturel.', tags: ['vegetarian', 'vegan', 'gluten-free', 'halal'] },
+  { name: 'Poulet basquaise', ingredients: ['poulet', 'poivrons', 'tomates', 'oignon', 'ail', 'piment d\'Espelette', 'riz'], calories: 490, protein_g: 38, fat_g: 16, carbs_g: 44, fiber_g: 6, imageUrl: IMG.chicken, prepTime: '40 min', benefitsNote: 'Poulet mijoté aux légumes du pays Basque, riche en vitamine C grâce aux poivrons.', tags: ['halal', 'gluten-free', 'high-protein'] },
+  { name: 'Soupe minestrone', ingredients: ['haricots blancs', 'courgette', 'carotte', 'céleri', 'tomate', 'pâtes complètes', 'parmesan'], calories: 360, protein_g: 14, fat_g: 8, carbs_g: 56, fiber_g: 10, imageUrl: IMG.salad, prepTime: '30 min', benefitsNote: 'Soupe italienne complète riche en fibres et légumes, réconfortante et nourrissante.', tags: ['vegetarian', 'halal'] },
 ];
+
+// ─── Filter matching ─────────────────────────────────────────────────────────
+function matchesFilters(item: PoolItem, filters: string[]): boolean {
+  if (filters.length === 0) return true;
+  return filters.every(f => {
+    if (f === 'high-protein') return item.protein_g >= 20;
+    if (!item.tags) return false; // untagged items excluded when filters active
+    return item.tags.includes(f);
+  });
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
@@ -178,7 +223,16 @@ function getImageForDish(name: string, type: string): string {
 
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-function generateLocalVariedPlan(startDate: Date, numDays: number): MealPlanDay[] {
+function generateLocalVariedPlan(startDate: Date, numDays: number, filters: string[] = []): MealPlanDay[] {
+  const applyFilter = (pool: PoolItem[]) => {
+    const filtered = pool.filter(i => matchesFilters(i, filters));
+    return filtered.length >= 3 ? filtered : pool; // fallback to full pool if too few
+  };
+  const bkPool = applyFilter(BREAKFAST_POOL);
+  const luPool = applyFilter(LUNCH_POOL);
+  const snPool = applyFilter(SNACK_POOL);
+  const diPool = applyFilter(DINNER_POOL);
+
   // Track used dishes per slot type to maximize diversity across days
   const usedBreakfast = new Set<string>();
   const usedLunch = new Set<string>();
@@ -192,20 +246,20 @@ function generateLocalVariedPlan(startDate: Date, numDays: number): MealPlanDay[
     const toOptions = (items: PoolItem[]): MealPlanOption[] =>
       items.map(opt => ({ ...opt, price: getMealPrice(opt.name, opt.ingredients) }));
 
-    const bk = getThreeDistinct(BREAKFAST_POOL, i, usedBreakfast);
+    const bk = getThreeDistinct(bkPool, i, usedBreakfast);
     bk.forEach(b => usedBreakfast.add(b.name));
-    const lu = getThreeDistinct(LUNCH_POOL, i, usedLunch);
+    const lu = getThreeDistinct(luPool, i, usedLunch);
     lu.forEach(l => usedLunch.add(l.name));
-    const sn = getThreeDistinct(SNACK_POOL, i, usedSnack);
+    const sn = getThreeDistinct(snPool, i, usedSnack);
     sn.forEach(s => usedSnack.add(s.name));
-    const di = getThreeDistinct(DINNER_POOL, i, usedDinner);
+    const di = getThreeDistinct(diPool, i, usedDinner);
     di.forEach(d => usedDinner.add(d.name));
 
     // Reset tracking when pool is exhausted (for longer plans)
-    if (usedBreakfast.size >= BREAKFAST_POOL.length - 2) usedBreakfast.clear();
-    if (usedLunch.size >= LUNCH_POOL.length - 2) usedLunch.clear();
-    if (usedSnack.size >= SNACK_POOL.length - 2) usedSnack.clear();
-    if (usedDinner.size >= DINNER_POOL.length - 2) usedDinner.clear();
+    if (usedBreakfast.size >= bkPool.length - 2) usedBreakfast.clear();
+    if (usedLunch.size >= luPool.length - 2) usedLunch.clear();
+    if (usedSnack.size >= snPool.length - 2) usedSnack.clear();
+    if (usedDinner.size >= diPool.length - 2) usedDinner.clear();
 
     return {
       date: d.toISOString().split('T')[0], dayName,
@@ -234,16 +288,28 @@ export default function MealPlanPage() {
   const [generating, setGenerating] = useState(false);
   const [validated, setValidated] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(7);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [fastFoodIdx, setFastFoodIdx] = useState(0);
+
+  const DIETARY_FILTERS = [
+    { id: 'vegetarian', label: 'Végétarien' },
+    { id: 'vegan', label: 'Végan' },
+    { id: 'gluten-free', label: 'Sans gluten' },
+    { id: 'halal', label: 'Halal' },
+    { id: 'high-protein', label: 'Protéiné' },
+  ];
+  const toggleFilter = (id: string) =>
+    setActiveFilters(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
 
   const generatePlan = async () => {
     setGenerating(true);
     await new Promise(r => setTimeout(r, 800));
     const today = new Date();
     const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-    const days = generateLocalVariedPlan(monday, selectedDuration);
+    const days = generateLocalVariedPlan(monday, selectedDuration, activeFilters);
     setMealPlan({
       weekStart: monday.toISOString().split('T')[0], days,
-      calorieBudget: profile?.dailyCalorieBudget || 2000,
+      calorieBudget: profile?.dailyCalorieTarget || 2000,
       validated: false, recipes: [], groceryList: [],
       duration: selectedDuration,
     });
@@ -262,10 +328,10 @@ export default function MealPlanPage() {
   if (!mealPlan) {
     return (
       <AnimatedPage className="px-4 pt-12 pb-4 max-w-lg mx-auto">
-        <h1 className="text-3xl font-black text-text-primary tracking-tight mb-2">Plan repas</h1>
+        <h1 className="font-display text-3xl font-black text-text-primary tracking-tight mb-2">Plan repas</h1>
         <p className="text-sm text-text-muted mb-8">Vos repas personnalisés selon vos objectifs</p>
 
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-500 to-primary-700 p-6 shadow-xl mb-6">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-500 to-primary-700 p-6 shadow-float mb-6">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
           <div className="relative z-10">
@@ -282,14 +348,27 @@ export default function MealPlanPage() {
               {DURATION_OPTIONS.map(opt => (
                 <motion.button key={opt.days} whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedDuration(opt.days)}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedDuration === opt.days ? 'bg-white text-primary-600 shadow-lg' : 'bg-white/15 text-white/80'}`}>
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedDuration === opt.days ? 'bg-white text-primary-600 shadow-float' : 'bg-white/15 text-white/80'}`}>
                   {opt.label}
                 </motion.button>
               ))}
             </div>
 
+            {/* Dietary filters */}
+            <div className="mb-4">
+              <p className="text-white/60 text-xs font-medium mb-2 flex items-center gap-1.5"><Filter size={11} /> Filtres alimentaires</p>
+              <div className="flex flex-wrap gap-1.5">
+                {DIETARY_FILTERS.map(f => (
+                  <motion.button key={f.id} whileTap={{ scale: 0.93 }} onClick={() => toggleFilter(f.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${activeFilters.includes(f.id) ? 'bg-white text-primary-600' : 'bg-white/20 text-white/80'}`}>
+                    {activeFilters.includes(f.id) && <XIcon size={10} />}{f.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
             <motion.button whileTap={{ scale: 0.97 }} onClick={generatePlan} disabled={generating}
-              className="w-full py-3.5 bg-white text-primary-600 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
+              className="w-full py-3.5 bg-white text-primary-600 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float disabled:opacity-60">
               {generating ? (
                 <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><Sparkles size={18} /></motion.div> Génération...</>
               ) : (
@@ -338,7 +417,7 @@ export default function MealPlanPage() {
       <div className="px-4 pt-12 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-text-primary tracking-tight">Plan repas</h1>
+            <h1 className="font-display text-3xl font-black text-text-primary tracking-tight">Plan repas</h1>
             <p className="text-sm text-text-muted">
               {mealPlan.days.length} jours · Semaine du {new Date(mealPlan.weekStart).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
             </p>
@@ -360,6 +439,16 @@ export default function MealPlanPage() {
         </div>
       </div>
 
+      {/* Dietary filters - compact row */}
+      <div className="px-4 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        {DIETARY_FILTERS.map(f => (
+          <motion.button key={f.id} whileTap={{ scale: 0.93 }} onClick={() => toggleFilter(f.id)}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${activeFilters.includes(f.id) ? 'bg-primary-500 text-white' : 'bg-surface-100 text-text-muted border border-surface-200'}`}>
+            {f.label}
+          </motion.button>
+        ))}
+      </div>
+
       {/* Day selector - horizontal scroll */}
       <div className="px-4 mb-5">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -369,7 +458,7 @@ export default function MealPlanPage() {
             const isToday = day.date === new Date().toISOString().split('T')[0];
             return (
               <motion.button key={di} whileTap={{ scale: 0.95 }} onClick={() => setExpandedDay(di)}
-                className={`flex-shrink-0 w-14 rounded-2xl py-2.5 flex flex-col items-center gap-1 transition-all ${active ? 'bg-text-primary text-white shadow-lg' : 'bg-white border border-surface-200 text-text-primary'}`}>
+                className={`flex-shrink-0 w-14 rounded-2xl py-2.5 flex flex-col items-center gap-1 transition-all ${active ? 'bg-text-primary text-white shadow-float' : 'bg-white border border-surface-200 text-text-primary'}`}>
                 <span className={`text-[10px] font-medium ${active ? 'text-white/60' : 'text-text-muted'}`}>
                   {DAY_SHORT[day.dayName] || day.dayName.slice(0, 3)}
                 </span>
@@ -431,7 +520,7 @@ export default function MealPlanPage() {
       <div className="px-4 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-black text-text-primary">{selectedDay?.dayName}</h2>
+            <h2 className="font-display text-lg font-black text-text-primary">{selectedDay?.dayName}</h2>
             <p className="text-xs text-text-muted">
               {new Date(selectedDay?.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
               {dayCalories > 0 && ` · ${dayCalories} kcal`}
@@ -464,7 +553,7 @@ export default function MealPlanPage() {
                 </div>
                 <motion.div whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/meal-plan/dish/${expandedDay}/${si}`)}
-                  className="rounded-2xl overflow-hidden shadow-sm bg-white border border-surface-200 cursor-pointer">
+                  className="rounded-2xl overflow-hidden shadow-card bg-white border border-surface-200 cursor-pointer">
                   <div className="flex items-center gap-3 p-3">
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
                       <img src={opt.imageUrl} alt={opt.name} className="w-full h-full object-cover" />
@@ -501,7 +590,7 @@ export default function MealPlanPage() {
                   const isSelected = slot.selectedIndex === oi;
                   return (
                     <motion.div key={oi} whileTap={{ scale: 0.98 }}
-                      className={`relative rounded-2xl overflow-hidden transition-all ${isSelected ? 'ring-2 ring-primary-500 shadow-lg' : 'shadow-sm'}`}>
+                      className={`relative rounded-2xl overflow-hidden transition-all ${isSelected ? 'ring-2 ring-primary-500 shadow-float' : 'shadow-card'}`}>
                       <button onClick={() => selectMealOption(expandedDay, si, oi)} className="w-full text-left">
                         <div className="flex items-center gap-3 bg-white p-3">
                           <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
@@ -538,11 +627,58 @@ export default function MealPlanPage() {
         })}
       </div>
 
+      {/* Fast Food Réinventé */}
+      {(() => {
+        const recipe = HEALTHY_FAST_FOOD[fastFoodIdx];
+        return (
+          <div className="px-4 mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Flame size={14} className="text-orange-500" />
+                <p className="text-xs font-bold text-text-primary uppercase tracking-wide">Fast food réinventé</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <motion.button whileTap={{ scale: 0.9 }}
+                  onClick={() => setFastFoodIdx((fastFoodIdx - 1 + HEALTHY_FAST_FOOD.length) % HEALTHY_FAST_FOOD.length)}
+                  className="w-6 h-6 rounded-full bg-surface-100 flex items-center justify-center">
+                  <ChevronLeft size={12} className="text-text-muted" />
+                </motion.button>
+                <span className="text-[10px] text-text-muted">{fastFoodIdx + 1}/{HEALTHY_FAST_FOOD.length}</span>
+                <motion.button whileTap={{ scale: 0.9 }}
+                  onClick={() => setFastFoodIdx((fastFoodIdx + 1) % HEALTHY_FAST_FOOD.length)}
+                  className="w-6 h-6 rounded-full bg-surface-100 flex items-center justify-center">
+                  <ChevronRight size={12} className="text-text-muted" />
+                </motion.button>
+              </div>
+            </div>
+            <AnimatedCard className="overflow-hidden">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl">
+                    <Icon3D name={recipe.emoji} size={24} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-text-primary">{recipe.name}</p>
+                    <p className="text-[10px] text-text-muted mb-1">Inspiré de : {recipe.originalInspiration}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">{recipe.calories} kcal</span>
+                      <span className="text-[10px] text-text-muted bg-surface-100 px-2 py-0.5 rounded-full">P {recipe.protein_g}g</span>
+                      <span className="text-[10px] text-text-muted bg-surface-100 px-2 py-0.5 rounded-full">⏱ {recipe.prepTime} min</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-text-muted mt-2 leading-relaxed">{recipe.tips}</p>
+              </div>
+            </AnimatedCard>
+          </div>
+        );
+      })()}
+
       {/* Validate button */}
       {!mealPlan.validated && (
         <div className="px-4 mt-6">
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleValidate}
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-xl">
+            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-float">
             <Check size={18} /> Valider & générer les courses
           </motion.button>
         </div>

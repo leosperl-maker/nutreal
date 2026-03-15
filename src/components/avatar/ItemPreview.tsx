@@ -1,4 +1,5 @@
 import React from 'react';
+import { getFluentEmojiUrl } from '../../lib/fluentEmoji';
 
 /**
  * SVG-based item previews for the game inventory.
@@ -93,7 +94,7 @@ export default function ItemPreview({ itemId, emoji, type, size = 48, className 
   }
 
   // For accessories and pets, use Fluent 3D emoji (they're already distinct)
-  const url = getFluentUrl(emoji);
+  const url = getFluentEmojiUrl(emoji);
   if (url) {
     return <img src={url} alt={itemId} width={size} height={size} className={`inline-block ${className}`} loading="lazy" />;
   }
@@ -108,27 +109,4 @@ export default function ItemPreview({ itemId, emoji, type, size = 48, className 
       {label.charAt(0).toUpperCase()}
     </div>
   );
-}
-
-// Inline helper to avoid importing fluentEmoji in this file
-function getFluentUrl(name: string): string {
-  const CDN = 'https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@latest/assets';
-  const MAP: Record<string, string> = {
-    sparkles: 'Sparkles/3D/sparkles_3d.png',
-    glasses: 'Glasses/3D/glasses_3d.png',
-    sunglasses: 'Sunglasses/3D/sunglasses_3d.png',
-    billedCap: 'Billed cap/3D/billed_cap_3d.png',
-    watch: 'Watch/3D/watch_3d.png',
-    prayerBeads: 'Prayer beads/3D/prayer_beads_3d.png',
-    ribbon: 'Ribbon/3D/ribbon_3d.png',
-    headphone: 'Headphone/3D/headphone_3d.png',
-    backpack: 'Backpack/3D/backpack_3d.png',
-    crown: 'Crown/3D/crown_3d.png',
-    catFace: 'Cat face/3D/cat_face_3d.png',
-    dogFace: 'Dog face/3D/dog_face_3d.png',
-    parrot: 'Parrot/3D/parrot_3d.png',
-    rabbitFace: 'Rabbit face/3D/rabbit_face_3d.png',
-    hamster: 'Hamster/3D/hamster_3d.png',
-  };
-  return MAP[name] ? `${CDN}/${MAP[name]}` : '';
 }

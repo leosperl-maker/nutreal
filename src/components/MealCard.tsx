@@ -37,15 +37,15 @@ export default function MealCard({ meal, onDelete, compact }: MealCardProps) {
       )}
       
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-gray-800 text-sm truncate">{meal.dishName}</h4>
+        <h4 className="font-semibold text-text-primary text-sm truncate">{meal.dishName}</h4>
         {!compact && (
-          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+          <p className="text-xs text-text-muted mt-0.5 flex items-center gap-1">
             <Icon3D name={mealTypeLabels[meal.mealType]?.icon || 'forkAndKnife'} size={12} /> {mealTypeLabels[meal.mealType]?.label || meal.mealType}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1">
-          <Clock size={10} className="text-gray-300" />
-          <span className="text-[10px] text-gray-400">{time}</span>
+          <Clock size={10} className="text-surface-300" />
+          <span className="text-[10px] text-text-muted">{time}</span>
           <span className="text-xs font-semibold text-secondary-500">{meal.totalCalories} kcal</span>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function MealCard({ meal, onDelete, compact }: MealCardProps) {
       {onDelete && (
         <button
           onClick={() => onDelete(meal.id)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-300 hover:text-red-400"
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-surface-300 hover:text-red-400"
         >
           <Trash2 size={16} />
         </button>

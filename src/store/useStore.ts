@@ -5,7 +5,7 @@ import { calculateNutritionPlan } from '../lib/nutrition';
 
 // ── Existing interfaces ──
 export interface FoodItem { name: string; calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number; quantity_g: number; }
-export interface Meal { id: string; date: string; mealType: 'breakfast' | 'lunch' | 'snack' | 'dinner'; dishName: string; photoUrl?: string; foods: FoodItem[]; totalCalories: number; totalProtein: number; totalFat: number; totalCarbs: number; totalFiber: number; aiTip?: string; createdAt: string; }
+export interface Meal { id: string; date: string; mealType: 'breakfast' | 'lunch' | 'snack' | 'dinner'; dishName: string; photoUrl?: string; foods: FoodItem[]; totalCalories: number; totalProtein: number; totalFat: number; totalCarbs: number; totalFiber: number; aiTip?: string; createdAt: string; source?: 'photo' | 'barcode' | 'manual' | 'meal_plan'; moodRating?: '😋' | '😊' | '😐' | '😕' | '🤢'; }
 export interface WeightLog { date: string; weight: number; }
 export interface WaterLog { date: string; amount: number; }
 export interface RecipeStep { step: number; instruction: string; }
@@ -28,7 +28,7 @@ export interface FamilyMember {
   weightKg: number;
   heightCm: number;
   activityLevel: string;
-  dailyCalorieBudget: number;
+  dailyCalorieTarget: number;
 }
 export interface Family {
   id: string;
@@ -100,12 +100,19 @@ export interface AvatarConfig {
   hairColor: string;
   hairStyle: string;
   eyeColor: string;
-  outfit: string;
-  outfitColor: string;
-  accessory: string | null;
+  // Multi-slot clothing
+  top: string;
+  outerwear: string | null;
+  bottom: string;
+  shoes: string;
+  topColor: string;
+  outerwearColor: string;
+  bottomColor: string;
+  shoesColor: string;
+  // Multi-accessories
+  accessories: string[];
   pet: string | null;
   unlockedItems: string[];
-  avatarUrl: string | null; // Ready Player Me GLB URL
 }
 
 export interface CheckIn {
@@ -174,7 +181,7 @@ function getRealisticQty(ing: string, cat: string): { quantity: string; unit: st
 interface AppState {
   // Auth & onboarding
   isAuthenticated: boolean; userId: string | null; onboardingComplete: boolean;
-  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieBudget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; healthModules: string[]; healthDetails: { musculaire: string[]; osseux: string[]; articulaire: string[]; cerebral: string[] }; cycleData: { lastPeriodDate: string; cycleLength: number; periodLength: number } | null; medications: { name: string; frequency: string; time: string }[]; } | null;
+  profile: { name: string; sex: 'M' | 'F'; birthDate: string; heightCm: number; weightCurrentKg: number; weightGoalKg: number; activityLevel: string; medicalConditions: string[]; dietPreferences: string[]; dailyCalorieTarget: number; macroTargets: MacroTargets; tdee: number; estimatedGoalDate: string; location: string; groceryBudget: number; groceryCurrency: string; foodPreferences: string[]; groceryFrequency: string; cookingTime: string; householdSize: number; familyMode: boolean; healthModules: string[]; healthDetails: { musculaire: string[]; osseux: string[]; articulaire: string[]; cerebral: string[] }; cycleData: { lastPeriodDate: string; cycleLength: number; periodLength: number } | null; medications: { name: string; frequency: string; time: string }[]; goal: string; motivation: string[]; mealsPerDay: string; snackingHabit: string; cookedMealsFrequency: string; cookingRelation: string; sleepHours: string; stressLevel: string; waterHabit: string; alcoholFrequency: string; pace: string; } | null;
 
   // Tracking data
   meals: Meal[]; waterLogs: WaterLog[]; weightLogs: WeightLog[]; dailySteps: number; stepsGoal: number;
@@ -205,7 +212,7 @@ interface AppState {
   setProfile: (p: AppState['profile']) => void;
   updateProfile: (u: Partial<NonNullable<AppState['profile']>>) => void;
   recalculateNutrition: () => void;
-  addMeal: (m: Meal) => void; removeMeal: (id: string) => void;
+  addMeal: (m: Meal) => void; removeMeal: (id: string) => void; updateMeal: (id: string, u: Partial<Meal>) => void;
   addWater: (d: string, a: number) => void;
   addWeightLog: (d: string, w: number) => void;
   setDailySteps: (s: number) => void;
@@ -231,8 +238,6 @@ interface AppState {
   dismissLevelUp: () => void;
   setAvatarConfig: (config: AvatarConfig) => void;
   updateAvatarConfig: (updates: Partial<AvatarConfig>) => void;
-  /** @deprecated RPM is dead, kept for backwards compat */
-  setAvatarUrl: (url: string) => void;
   unlockAvatarItem: (itemId: string) => void;
   setSelectedTitle: (title: string) => void;
   setDailyMissions: (missions: AIMission[], date: string) => void;
@@ -245,6 +250,21 @@ interface AppState {
   completeRehabSession: (programId: string) => void;
   getXpForNextLevel: () => number;
   getXpProgress: () => number; // 0-1 progress toward next level
+  updateGoal: (goal: string) => void;
+  updateLifestyle: (data: Partial<{ mealsPerDay: string; snackingHabit: string; cookedMealsFrequency: string; sleepHours: string; stressLevel: string; waterHabit: string; alcoholFrequency: string; pace: string; }>) => void;
+  updateMedicalConditions: (conditions: string[]) => void;
+  // Articles
+  readArticles: string[];
+  markArticleRead: (id: string) => void;
+  // Sport favoris
+  favoriteSports: string[];
+  toggleFavoriteSport: (key: string) => void;
+  // RGPD
+  gdprConsent: boolean;
+  setGdprConsent: (v: boolean) => void;
+  // Dark mode
+  darkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
 export const useStore = create<AppState>()(persist((set, get) => ({
@@ -269,20 +289,29 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   checkIns: [],
   streakProtectionAvailable: false,
   streakProtectionUsedDate: null,
+  readArticles: [],
+  favoriteSports: [],
+  gdprConsent: false,
+  darkMode: false,
 
   // ── Existing actions ──
   setAuth: (a, u) => set({ isAuthenticated: a, userId: u }),
   setOnboardingComplete: (c) => set({ onboardingComplete: c }),
-  setProfile: (p) => set({ profile: p }),
+  setProfile: (p) => {
+    if (!p) { set({ profile: null }); return; }
+    const defaults = { goal: 'lose_weight' as const, motivation: [] as string[], mealsPerDay: '3' as const, snackingHabit: 'sometimes' as const, cookedMealsFrequency: 'sometimes' as const, cookingRelation: 'want_quick' as const, sleepHours: '7_8' as const, stressLevel: 'medium' as const, waterHabit: 'normal' as const, alcoholFrequency: 'never' as const, pace: 'moderate' as const };
+    set({ profile: { ...defaults, ...p } });
+  },
   updateProfile: (updates) => { set((s) => s.profile ? { profile: { ...s.profile, ...updates } } : s); get().recalculateNutrition(); },
   recalculateNutrition: () => set((s) => {
     if (!s.profile) return s;
     const p = s.profile;
-    const plan = calculateNutritionPlan({ name: p.name, sex: p.sex, birthDate: p.birthDate, heightCm: p.heightCm, weightCurrentKg: p.weightCurrentKg, weightGoalKg: p.weightGoalKg, activityLevel: p.activityLevel, medicalConditions: p.medicalConditions, dietPreferences: p.dietPreferences, location: p.location || '', groceryBudget: p.groceryBudget || 0, groceryCurrency: p.groceryCurrency || '€', foodPreferences: p.foodPreferences || [], groceryFrequency: p.groceryFrequency || 'weekly' });
-    return { profile: { ...p, dailyCalorieBudget: plan.dailyCalorieBudget, macroTargets: plan.macroTargets, tdee: plan.tdee, estimatedGoalDate: plan.estimatedGoalDate } };
+    const plan = calculateNutritionPlan({ name: p.name, sex: p.sex, birthDate: p.birthDate, heightCm: p.heightCm, weightCurrentKg: p.weightCurrentKg, weightGoalKg: p.weightGoalKg, activityLevel: p.activityLevel, medicalConditions: p.medicalConditions, dietPreferences: p.dietPreferences, location: p.location || '', groceryBudget: p.groceryBudget || 0, groceryCurrency: p.groceryCurrency || '€', foodPreferences: p.foodPreferences || [], groceryFrequency: p.groceryFrequency || 'weekly', goal: p.goal, pace: p.pace, sleepHours: p.sleepHours, stressLevel: p.stressLevel, alcoholFrequency: p.alcoholFrequency });
+    return { profile: { ...p, dailyCalorieTarget: plan.dailyCalorieTarget, macroTargets: plan.macroTargets, tdee: plan.tdee, estimatedGoalDate: plan.estimatedGoalDate } };
   }),
   addMeal: (m) => set((s) => ({ meals: [...s.meals, m] })),
   removeMeal: (id) => set((s) => ({ meals: s.meals.filter(m => m.id !== id) })),
+  updateMeal: (id, u) => set((s) => ({ meals: s.meals.map(m => m.id === id ? { ...m, ...u } : m) })),
   addWater: (d, a) => set((s) => { const e = s.waterLogs.find(w => w.date === d); if (e) return { waterLogs: s.waterLogs.map(w => w.date === d ? { ...w, amount: Math.max(0, w.amount + a) } : w) }; return { waterLogs: [...s.waterLogs, { date: d, amount: Math.max(0, a) }] }; }),
   addWeightLog: (d, w) => set((s) => { const e = s.weightLogs.find(l => l.date === d); if (e) return { weightLogs: s.weightLogs.map(l => l.date === d ? { ...l, weight: w } : l) }; return { weightLogs: [...s.weightLogs, { date: d, weight: w }] }; }),
   setDailySteps: (s) => set({ dailySteps: s }),
@@ -380,11 +409,6 @@ export const useStore = create<AppState>()(persist((set, get) => ({
   updateAvatarConfig: (updates) => set((s) => {
     if (!s.avatarConfig) return s;
     return { avatarConfig: { ...s.avatarConfig, ...updates } };
-  }),
-
-  setAvatarUrl: (url) => set((s) => {
-    const config = s.avatarConfig || { skinColor: '', hairColor: '', hairStyle: '', eyeColor: '', outfit: '', outfitColor: '', accessory: null, pet: null, unlockedItems: [], avatarUrl: null };
-    return { avatarConfig: { ...config, avatarUrl: url } };
   }),
 
   unlockAvatarItem: (itemId) => set((s) => {
@@ -491,6 +515,21 @@ export const useStore = create<AppState>()(persist((set, get) => ({
       aiAnalysis: { ...s.aiAnalysis, rehabPrograms: programs },
     };
   }),
+
+  updateGoal: (goal) => set((s) => s.profile ? { profile: { ...s.profile, goal } } : s),
+  updateLifestyle: (data) => set((s) => s.profile ? { profile: { ...s.profile, ...data } } : s),
+  updateMedicalConditions: (conditions) => set((s) => s.profile ? { profile: { ...s.profile, medicalConditions: conditions } } : s),
+
+  markArticleRead: (id) => set((s) => ({
+    readArticles: s.readArticles?.includes(id) ? s.readArticles : [...(s.readArticles ?? []), id],
+  })),
+  toggleFavoriteSport: (key) => set((s) => ({
+    favoriteSports: (s.favoriteSports ?? []).includes(key)
+      ? (s.favoriteSports ?? []).filter(k => k !== key)
+      : [...(s.favoriteSports ?? []), key],
+  })),
+  setGdprConsent: (v) => set({ gdprConsent: v }),
+  toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
 
   getXpForNextLevel: () => xpForNextLevel(get().level),
 

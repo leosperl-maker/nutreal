@@ -12,8 +12,22 @@ import {
   Clock, Flame, Trash2, Trophy, Youtube,
   ArrowLeft, Check, Play, Pause, RotateCcw,
   ChevronDown, ChevronUp, ChevronRight, Zap, Heart, Dumbbell, Wind,
-  Lock, AlertTriangle, Star,
+  Lock, AlertTriangle, Star, Share2,
 } from 'lucide-react';
+
+function playBeep(freq = 880, dur = 0.12) {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+    setTimeout(() => ctx.close(), (dur + 0.1) * 1000);
+  } catch { /* silently ignore */ }
+}
 
 interface Exercise {
   name: string;
@@ -66,7 +80,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
   },
   strength: {
     name: 'Musculation', emoji: 'personLiftingWeights', calPerMin: 7, type: 'strength',
-    gradient: 'from-violet-600 to-purple-800',
+    gradient: 'from-primary-600 to-primary-800',
     imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&q=80&auto=format',
     description: '45 min · Full body',
     youtubeVideoId: 'UBMk30rjy0o',
@@ -122,7 +136,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
   },
   swimming: {
     name: 'Natation', emoji: 'personSwimming', calPerMin: 9, type: 'cardio',
-    gradient: 'from-cyan-500 to-blue-600',
+    gradient: 'from-teal-500 to-teal-700',
     imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=80&auto=format',
     description: '30 min · Technique & cardio',
     youtubeVideoId: 'gh5_v5VY2oo',
@@ -149,7 +163,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
   },
   pushups: {
     name: 'Pompes', emoji: 'flexedBiceps', calPerMin: 8, type: 'strength',
-    gradient: 'from-indigo-500 to-blue-700',
+    gradient: 'from-primary-500 to-primary-700',
     imageUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=800&q=80&auto=format',
     description: '20 min · Pectoraux & triceps',
     youtubeVideoId: 'IODxDxX7oi4',
@@ -203,7 +217,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
   },
   stretching: {
     name: 'Stretching', emoji: 'personCartwheeling', calPerMin: 2, type: 'flexibility',
-    gradient: 'from-fuchsia-400 to-purple-500',
+    gradient: 'from-emerald-400 to-teal-500',
     imageUrl: 'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=800&q=80&auto=format',
     description: '20 min · Récupération & mobilité',
     youtubeVideoId: 'g_tea8ZNk5A',
@@ -217,7 +231,7 @@ const SPORT_PROGRAMS: Record<string, SportProgram> = {
   },
   dance: {
     name: 'Danse', emoji: 'womanDancing', calPerMin: 7, type: 'cardio',
-    gradient: 'from-pink-500 to-violet-600',
+    gradient: 'from-rose-400 to-primary-500',
     imageUrl: 'https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?w=800&q=80&auto=format',
     description: '30 min · Cardio fun',
     youtubeVideoId: 'ZWk19OVon2k',
@@ -244,10 +258,20 @@ function useTimer() {
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevMinRef = useRef(0);
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
+      intervalRef.current = setInterval(() => setSeconds(s => {
+        const next = s + 1;
+        const min = Math.floor(next / 60);
+        if (min > 0 && min !== prevMinRef.current && next % 60 === 0) {
+          prevMinRef.current = min;
+          playBeep(660, 0.15);
+          setTimeout(() => playBeep(880, 0.1), 200);
+        }
+        return next;
+      }), 1000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
@@ -258,19 +282,20 @@ function useTimer() {
     seconds, running,
     start: () => setRunning(true),
     pause: () => setRunning(false),
-    reset: () => { setRunning(false); setSeconds(0); },
+    reset: () => { setRunning(false); setSeconds(0); prevMinRef.current = 0; },
     fmt: (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`,
   };
 }
 
 // ─── Workout Detail Page ─────────────────────────────────────────────────────
 function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport: SportProgram; onBack: () => void }) {
-  const { addSportSession, addXP, showToast } = useStore();
+  const { addSportSession, addXP, showToast, favoriteSports, toggleFavoriteSport } = useStore();
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   const [manualDuration, setManualDuration] = useState(30);
   const [saved, setSaved] = useState(false);
   const [checkedExercises, setCheckedExercises] = useState<Set<number>>(new Set());
   const timer = useTimer();
+  const isFav = (favoriteSports ?? []).includes(sportKey);
 
   const today = new Date().toISOString().split('T')[0];
   const timerMinutes = Math.max(1, Math.round(timer.seconds / 60));
@@ -291,24 +316,63 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
       name: sport.name, duration_min: effectiveDuration,
       caloriesBurned: estimatedCal, createdAt: new Date().toISOString(),
     });
-    addXP(30); // Sport session XP
+    addXP(30);
+    playBeep(523, 0.1); setTimeout(() => playBeep(659, 0.1), 150); setTimeout(() => playBeep(784, 0.2), 300);
     setSaved(true);
-    showToast(`${estimatedCal} kcal brûlées ! +30 XP`);
     timer.reset();
-    setTimeout(() => { setSaved(false); onBack(); }, 2500);
   };
 
   const openYoutube = () => {
     window.open(`https://www.youtube.com/watch?v=${sport.youtubeVideoId}`, '_blank', 'noopener,noreferrer');
   };
 
+  const shareWorkout = () => {
+    const text = `Je viens de faire ${effectiveDuration} min de ${sport.name} et brûlé ${estimatedCal} kcal avec NutReal 💪`;
+    if (navigator.share) {
+      navigator.share({ title: 'NutReal — Séance terminée', text }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(text).then(() => showToast('Copié dans le presse-papier !'));
+    }
+  };
+
   if (saved) {
     return (
-      <AnimatedPage className="flex flex-col items-center justify-center min-h-screen px-4">
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-          <SuccessCheckmark size={80} />
-          <p className="text-xl font-bold text-text-primary mt-4">Séance terminée !</p>
-          <p className="text-sm text-text-secondary mt-1">{estimatedCal} kcal brûlées <Icon3D name="fire" size={16} /></p>
+      <AnimatedPage className="flex flex-col items-center justify-center min-h-screen px-4 pb-24 bg-surface-50">
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 200 }} className="text-center w-full max-w-sm">
+          <SuccessCheckmark size={90} />
+          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="font-display text-2xl font-black text-text-primary mt-4">Séance terminée !</motion.p>
+          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-sm text-text-secondary mt-1">{sport.name}</motion.p>
+          {/* Stats Grid */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="grid grid-cols-3 gap-3 mt-6">
+            {[
+              { label: 'Durée', value: `${effectiveDuration} min`, icon: '⏱' },
+              { label: 'Calories', value: `${estimatedCal}`, icon: '🔥' },
+              { label: 'Exercices', value: `${checkedExercises.size}/${sport.exercises.length}`, icon: '✅' },
+            ].map(stat => (
+              <div key={stat.label} className="bg-white rounded-2xl p-3 shadow-card border border-surface-100">
+                <div className="text-2xl mb-1">{stat.icon}</div>
+                <p className="text-lg font-black text-text-primary">{stat.value}</p>
+                <p className="text-[10px] text-text-muted">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mt-4 bg-primary-50 rounded-2xl p-4 flex items-center gap-3">
+            <Trophy size={24} className="text-primary-500 flex-shrink-0" />
+            <div className="text-left">
+              <p className="text-sm font-bold text-primary-700">+30 XP gagnés !</p>
+              <p className="text-xs text-primary-600">Continue comme ça 🚀</p>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="flex gap-3 mt-5">
+            <motion.button whileTap={{ scale: 0.95 }} onClick={shareWorkout}
+              className="flex-1 py-3 bg-white border border-surface-200 rounded-xl text-sm font-semibold text-text-secondary flex items-center justify-center gap-2 shadow-card">
+              <Share2 size={16} /> Partager
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={onBack}
+              className="flex-1 py-3 bg-primary-500 rounded-xl text-sm font-bold text-white shadow-float">
+              Retour
+            </motion.button>
+          </motion.div>
         </motion.div>
       </AnimatedPage>
     );
@@ -324,14 +388,18 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
           <button onClick={onBack} className="absolute top-12 left-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
             <ArrowLeft size={20} className="text-white" />
           </button>
+          <motion.button whileTap={{ scale: 0.85 }} onClick={() => toggleFavoriteSport(sportKey)}
+            className="absolute top-12 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
+            <Star size={20} className={isFav ? 'text-yellow-400 fill-yellow-400' : 'text-white'} />
+          </motion.button>
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${sport.type === 'cardio' ? 'bg-red-500/80 text-white' : sport.type === 'strength' ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
+              <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${sport.type === 'cardio' ? 'bg-red-500/80 text-white' : sport.type === 'strength' ? 'bg-primary-600/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
                 {sport.type === 'cardio' ? <><Icon3D name="fire" size={12} /> Cardio</> : sport.type === 'strength' ? <><Icon3D name="flexedBiceps" size={12} /> Force</> : <><Icon3D name="personCartwheeling" size={12} /> Souplesse</>}
               </span>
               <span className="text-white/70 text-xs">{sport.calPerMin} kcal/min</span>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight">{sport.name}</h1>
+            <h1 className="font-display text-3xl font-black text-white tracking-tight">{sport.name}</h1>
             <p className="text-white/60 text-sm mt-1">{sport.exercises.length} exercices · {sport.description}</p>
           </div>
         </div>
@@ -339,7 +407,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
         <div className="px-4 pt-5 space-y-4">
           {/* YouTube CTA */}
           <motion.button whileTap={{ scale: 0.97 }} onClick={openYoutube}
-            className="w-full bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-4 flex items-center gap-3 shadow-lg">
+            className="w-full bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-4 flex items-center gap-3 shadow-float">
             <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
               <Youtube size={22} className="text-white" />
             </div>
@@ -357,7 +425,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
               {sport.exercises.map((ex, i) => {
                 const done = checkedExercises.has(i);
                 return (
-                  <div key={i} className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all ${done ? 'border-green-300 bg-green-50/30' : 'border-surface-200'}`}>
+                  <div key={i} className={`bg-white border rounded-2xl overflow-hidden shadow-card transition-all ${done ? 'border-green-300 bg-green-50/30' : 'border-surface-200'}`}>
                     <div className="flex items-center gap-3 p-3">
                       <motion.button whileTap={{ scale: 0.85 }} onClick={() => toggleExercise(i)}
                         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-green-500' : `bg-gradient-to-br ${sport.gradient}`}`}>
@@ -388,7 +456,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
           </div>
 
           {/* Timer */}
-          <div className="bg-white border border-surface-200 rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border border-surface-200 rounded-2xl p-5 shadow-card">
             <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4 flex items-center gap-2">
               <Clock size={14} /> Chronomètre
             </h3>
@@ -399,12 +467,12 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
               <div className="flex gap-3 justify-center mb-4">
                 {!timer.running ? (
                   <motion.button whileTap={{ scale: 0.95 }} onClick={timer.start}
-                    className={`flex items-center gap-2 px-8 py-3 bg-gradient-to-r ${sport.gradient} text-white rounded-xl text-sm font-bold shadow-lg`}>
+                    className={`flex items-center gap-2 px-8 py-3 bg-gradient-to-r ${sport.gradient} text-white rounded-xl text-sm font-bold shadow-float`}>
                     <Play size={18} fill="white" /> Go
                   </motion.button>
                 ) : (
                   <motion.button whileTap={{ scale: 0.95 }} onClick={timer.pause}
-                    className="flex items-center gap-2 px-8 py-3 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-lg">
+                    className="flex items-center gap-2 px-8 py-3 bg-amber-500 text-white rounded-xl text-sm font-bold shadow-float">
                     <Pause size={18} fill="white" /> Pause
                   </motion.button>
                 )}
@@ -427,7 +495,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
           </div>
 
           {/* Calories burned */}
-          <div className={`bg-gradient-to-r ${sport.gradient} rounded-2xl p-5 flex items-center gap-4 shadow-lg`}>
+          <div className={`bg-gradient-to-r ${sport.gradient} rounded-2xl p-5 flex items-center gap-4 shadow-float`}>
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
               <Flame size={28} className="text-white" />
             </div>
@@ -440,7 +508,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
 
           {/* Validate */}
           <motion.button whileTap={{ scale: 0.97 }} onClick={validateSession}
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black text-base rounded-2xl flex items-center justify-center gap-3 shadow-xl">
+            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black text-base rounded-2xl flex items-center justify-center gap-3 shadow-float">
             <Trophy size={22} /> Terminer la séance
           </motion.button>
         </div>
@@ -451,7 +519,7 @@ function WorkoutDetail({ sportKey, sport, onBack }: { sportKey: SportKey; sport:
 
 // ─── Main Sport Page ─────────────────────────────────────────────────────────
 export default function SportPage() {
-  const { sportSessions, removeSportSession, aiAnalysis, completeRehabSession, addXP, showToast, level } = useStore();
+  const { sportSessions, removeSportSession, aiAnalysis, completeRehabSession, addXP, showToast, level, favoriteSports, toggleFavoriteSport } = useStore();
   const [selectedKey, setSelectedKey] = useState<SportKey | null>(null);
   const [category, setCategory] = useState('all');
   const [lockedModal, setLockedModal] = useState<{ restriction: SportRestriction; name: string } | null>(null);
@@ -508,7 +576,7 @@ export default function SportPage() {
       <div className="px-4 pt-12 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-text-primary tracking-tight">Sport</h1>
+            <h1 className="font-display text-3xl font-black text-text-primary tracking-tight">Sport</h1>
             <p className="text-sm text-text-muted mt-0.5">Trouvez votre workout du jour</p>
           </div>
         </div>
@@ -518,7 +586,7 @@ export default function SportPage() {
       {/* Today's Stats */}
       {todaySessions.length > 0 && (
         <div className="px-4 mb-5">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-4 shadow-lg">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-4 shadow-float">
             <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-2">Aujourd'hui</p>
             <div className="flex items-end justify-between">
               <div>
@@ -566,7 +634,7 @@ export default function SportPage() {
             return (
               <motion.button key={cat.key} whileTap={{ scale: 0.95 }}
                 onClick={() => setCategory(cat.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${active ? 'bg-text-primary text-white shadow-md' : 'bg-white border border-surface-200 text-text-secondary'}`}>
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${active ? 'bg-text-primary text-white shadow-card' : 'bg-white border border-surface-200 text-text-secondary'}`}>
                 <Icon size={14} />
                 {cat.label}
               </motion.button>
@@ -622,18 +690,49 @@ export default function SportPage() {
         </div>
       )}
 
+      {/* Favorites */}
+      {(favoriteSports ?? []).length > 0 && (
+        <div className="px-4 mb-5">
+          <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Star size={12} className="text-yellow-500 fill-yellow-400" /> Mes favoris
+          </h3>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+            {(favoriteSports ?? []).map(key => {
+              const prog = SPORT_PROGRAMS[key as SportKey];
+              if (!prog) return null;
+              return (
+                <motion.button key={key} whileTap={{ scale: 0.95 }}
+                  onClick={() => handleSportClick(key as SportKey, prog)}
+                  className="flex-shrink-0 relative h-28 w-36 rounded-2xl overflow-hidden shadow-card">
+                  <img src={prog.imageUrl} alt={prog.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-2">
+                    <p className="text-white font-bold text-xs">{prog.name}</p>
+                    <p className="text-white/60 text-[9px]">{prog.calPerMin} kcal/min</p>
+                  </div>
+                  <motion.button whileTap={{ scale: 0.8 }} onClick={e => { e.stopPropagation(); toggleFavoriteSport(key); }}
+                    className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/30 rounded-full flex items-center justify-center">
+                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                  </motion.button>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Featured Hero Card */}
       {featured && (
         <div className="px-4 mb-5">
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => handleSportClick(featured[0] as SportKey, featured[1])}
-            className="w-full relative h-52 rounded-3xl overflow-hidden shadow-xl">
+            className="w-full relative h-52 rounded-3xl overflow-hidden shadow-float">
             <img src={featured[1].imageUrl} alt={featured[1].name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5">
               <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Workout du jour</span>
-              <h2 className="text-2xl font-black text-white mt-1">{featured[1].name}</h2>
+              <h2 className="font-display text-2xl font-black text-white mt-1">{featured[1].name}</h2>
               <p className="text-white/60 text-xs mt-1">{featured[1].description} · {featured[1].calPerMin} kcal/min</p>
             </div>
             <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
@@ -661,7 +760,7 @@ export default function SportPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => handleSportClick(key as SportKey, prog)}
-                className={`relative h-40 rounded-2xl overflow-hidden shadow-md ${isLocked ? 'grayscale' : ''}`}>
+                className={`relative h-40 rounded-2xl overflow-hidden shadow-card ${isLocked ? 'grayscale' : ''}`}>
                 <img src={prog.imageUrl} alt={prog.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 {isLocked && (
@@ -684,12 +783,16 @@ export default function SportPage() {
                   <p className="text-white/50 text-[10px] mt-0.5">{prog.description}</p>
                 </div>
                 {!isLocked && (
-                  <div className="absolute top-2 right-2">
-                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full ${prog.type === 'cardio' ? 'bg-red-500/80 text-white' : prog.type === 'strength' ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full ${prog.type === 'cardio' ? 'bg-red-500/80 text-white' : prog.type === 'strength' ? 'bg-primary-600/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
                       {prog.calPerMin} kcal/min
                     </span>
                   </div>
                 )}
+                <motion.button whileTap={{ scale: 0.8 }} onClick={e => { e.stopPropagation(); toggleFavoriteSport(key); }}
+                  className="absolute top-2 left-2 w-6 h-6 bg-black/30 rounded-full flex items-center justify-center">
+                  <Star size={11} className={(favoriteSports ?? []).includes(key) ? 'text-yellow-400 fill-yellow-400' : 'text-white/70'} />
+                </motion.button>
               </motion.button>
             );
           })}
