@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Nutreal — Coach Nutrition IA',
         short_name: 'Nutreal',
         description: 'Votre coach nutrition et bien-être intelligent',
-        theme_color: '#10b981',
-        background_color: '#F8FAFB',
+        theme_color: '#0d3d22',
+        background_color: '#faf8f4',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
